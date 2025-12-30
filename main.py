@@ -1,11 +1,17 @@
 import csv
+import os
 import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify
 
 # --- 設定部分 ---
 
 # ここに取得したGeminiのAPIキーを貼り付けてください
-GOOGL_API_KEY = "AIzaSyCR42zXt_YfnL7Z7dWP_1lc9SlUlJQLcRU"
+GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+if not GOOGL_API_KEY:
+    # ローカル（自分のPC）で動かすとき用の予備コード
+    # 公開するときはこの行を削除するか無視されます
+    GOOGL_API_KEY = "AIzaSyCR42zXt_YfnL7Z7dWP_1lc9SlUlJQLcRU"
 
 # Geminiの設定
 genai.configure(api_key=GOOGL_API_KEY)
