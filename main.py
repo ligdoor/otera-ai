@@ -54,6 +54,7 @@ def generate_answer_with_ai(temple_info, user_question):
 
     --- 参照情報 ---
     寺名: {temple_info['name']}
+    宗派: {temple_info.get('sect', '不明')} 
     場所: {temple_info['address']}
     アクセス: {temple_info['access']}
     見どころ: {temple_info['detail']}
