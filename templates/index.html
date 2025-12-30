@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お寺情報AIチャット</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2em auto; padding: 0 1em; }
+        #chat-window { border: 1px solid #ccc; height: 400px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; }
+        .user-message { text-align: right; }
+        .ai-message { background-color: #f1f1f1; padding: 8px; border-radius: 5px; }
+        #input-area { display: flex; }
+        #user-input { flex-grow: 1; padding: 8px; }
+        button { padding: 8px 12px; }
+    </style>
+</head>
+<body>
+    <h1>お寺情報AIチャット</h1>
+    <p>「清水寺について教えて」のように、お寺の名前を入力してください。</p>
+    <div id="chat-window">
+        <!-- チャットのやり取りがここに表示される -->
+    </div>
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="メッセージを入力...">
+        <button onclick="sendMessage()">送信</button>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chatWindow = document.getElementById('chat-window');
+            const userText = input.value;
+
+            if (userText.trim() === '') return;
+
+            // ユーザーのメッセージを表示
+            chatWindow.innerHTML += `<div class="message user-message"><p>${userText}</p></div>`;
+            input.value = '';
+            chatWindow.scrollTop = chatWindow.scrollHeight; // 自動スクロール
+
+            // AIからの応答を待っている間のメッセージ
+            chatWindow.innerHTML += `<div class="message ai-message" id="loading"><p>AIが考えています...</p></div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            // サーバーにリクエストを送信
+            const response = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: userText })
+            });
+
+            const data = await response.json();
+            const aiText = data.answer.replace(/\n/g, '<br>'); // 改行を<br>タグに変換
+
+            // AIのメッセージを表示
+            document.getElementById('loading').remove(); // "考えています..."を削除
+            chatWindow.innerHTML += `<div class="message ai-message"><p>${aiText}</p></div>`;
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</body>
+</html>
