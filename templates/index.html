@@ -206,15 +206,15 @@
         });
     }
 
-    function onTempleSelect() {
+function onTempleSelect() {
         const select = document.getElementById('temple-select');
         const name = select.value;
         if (!name) return;
         select.value = ""; 
         hideMenu(); 
-        sendChatRequest(name);
+        // 第2引数に 'summary' (概要モード) を指定
+        sendChatRequest(name, 'summary');
     }
-
     async function onSectSelect() {
         const select = document.getElementById('sect-select');
         const sectName = select.value;
@@ -264,16 +264,17 @@
 
     function tapTempleList(name) {
         hideMenu();
-        sendChatRequest(name);
+        sendChatRequest(name, 'summary');
     }
-
-    function sendFreeChat() {
+    
+function sendFreeChat() {
         const input = document.getElementById('free-input');
         const text = input.value;
         if (text.trim() === '') return;
         input.value = '';
         hideMenu();
-        sendChatRequest(text);
+        // 第2引数に 'qa' (質問モード) を指定
+        sendChatRequest(text, 'qa');
     }
 
     async function sendChatRequest(text) {
