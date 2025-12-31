@@ -42,8 +42,11 @@ otera_database = load_otera_data("otera_data.csv")
 
 # --- AI回答生成 ---
 def generate_answer_with_ai(temple_info, user_question):
-    # Googleマップの検索用URLを作る
+    # Googleマップの検索用URL
     map_url = f"https://www.google.com/maps/search/?api=1&query={temple_info['address']}"
+    
+    # 住所コピー用のボタンHTML（JavaScriptの関数を呼び出す）
+    copy_btn_html = f"""<button class="copy-btn" onclick="copyToClipboard('{temple_info['address']}')">📋コピー</button>"""
     
     prompt = f"""
     あなたは親切なお寺の案内役です。
@@ -55,7 +58,7 @@ def generate_answer_with_ai(temple_info, user_question):
        - まず最初に、以下の情報を箇条書きでまとめて表示してください。
        - 寺名: {temple_info['name']}
        - 宗派: {temple_info.get('sect', '不明')}
-       - 住所: <a href="{map_url}" target="_blank" style="color:#007bff; text-decoration:underline;">{temple_info['address']} (📍地図を開く)</a>
+       - 住所: <a href="{map_url}" target="_blank" style="color:#007bff; text-decoration:underline;">{temple_info['address']} (📍地図)</a> {copy_btn_html}
        - アクセス: {temple_info['access']}
        
     2. **案内と解説**
@@ -71,7 +74,8 @@ def generate_answer_with_ai(temple_info, user_question):
         return response.text
     except Exception as e:
         return f"エラーが発生しました: {e}"
-# --- ルーティング ---
+    
+    # --- ルーティング ---
 
 @app.route("/")
 def index():

@@ -19,7 +19,6 @@
         }
         .message { 
             margin-bottom: 15px; line-height: 1.6; 
-            /* 【重要】スクロールした時にヘッダーに隠れないようにする設定 */
             scroll-margin-top: 90px; 
         }
         .user-message { text-align: right; }
@@ -27,6 +26,14 @@
         .ai-message { text-align: left; }
         .ai-message p { display: inline-block; background: #fff; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
         .ai-message a { color: #007bff; font-weight: bold; }
+
+        /* コピーボタンのデザイン */
+        .copy-btn {
+            background-color: #eee; border: 1px solid #ccc; border-radius: 5px;
+            padding: 3px 8px; font-size: 12px; cursor: pointer; margin-left: 5px;
+            color: #333; display: inline-block;
+        }
+        .copy-btn:active { background-color: #ddd; transform: translateY(1px); }
 
         /* カードデザイン */
         .temple-card {
@@ -37,7 +44,7 @@
         }
         .temple-card:active { background-color: #eee; transform: scale(0.98); }
         .card-name { font-weight: bold; color: #5d4037; font-size: 1.2rem; margin-bottom: 6px; }
-        .card-addr { font-size: 0.95rem; color: #666; }
+        .card-addr { font-size: 0.95rem; color: #666; display: flex; align-items: center; flex-wrap: wrap; gap: 5px;}
         .card-tap-hint { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #ccc; font-size: 1.2rem; }
 
         /* 操作エリア */
@@ -184,7 +191,19 @@
         controlArea.classList.remove('minimized');
         showMenuBtn.classList.remove('visible');
         document.body.style.paddingBottom = "300px";
-        window.scrollTo(0, document.body.scrollHeight); // メニューが出たら一番下へ
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    // --- 住所コピー機能 ---
+    function copyToClipboard(text) {
+        // カードをタップした判定にならないようにバブリングを止める（念のため）
+        if(window.event) window.event.stopPropagation();
+
+        navigator.clipboard.writeText(text).then(() => {
+            alert("住所をコピーしました：\n" + text);
+        }).catch(err => {
+            alert("コピーに失敗しました");
+        });
     }
 
     function onTempleSelect() {
@@ -225,7 +244,8 @@
                         <div class="card-name">${temple.name}</div>
                         <div class="card-addr">
                             ${temple.address}
-                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#5d4037; font-weight:bold;">📍地図</a>
+                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#5d4037; font-weight:bold; white-space:nowrap;">📍地図</a>
+                            <button class="copy-btn" onclick="copyToClipboard('${temple.address}')">📋コピー</button>
                         </div>
                         <div class="card-tap-hint">ᐳ</div>
                     </div>`;
@@ -235,7 +255,6 @@
                 msgDiv.className = 'message ai-message';
                 msgDiv.innerHTML = listHtml;
                 chatWindow.appendChild(msgDiv);
-                // リストの場合は先頭にスクロール
                 msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } catch (e) {
@@ -258,13 +277,8 @@
     }
 
     async function sendChatRequest(text) {
-        // ユーザーのメッセージを追加
         addMessage(text, 'user');
-        
-        // ローディング表示
         const loadingId = addMessage("考え中...", 'ai', true);
-        
-        // 「考え中」の時は、画面一番下にスクロールしてOK
         window.scrollTo(0, document.body.scrollHeight);
 
         try {
@@ -275,13 +289,9 @@
             });
             const data = await res.json();
             
-            // ローディングを削除
             document.getElementById(loadingId).remove();
             
-            // AIの回答を追加
             const aiMsgId = addMessage(data.answer, 'ai');
-            
-            // 【ここが修正点】回答の「先頭」にスクロールする
             const aiMsgDiv = document.getElementById(aiMsgId);
             setTimeout(() => {
                 aiMsgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -297,7 +307,6 @@
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
         if (isLoading) div.id = `msg-${Date.now()}`;
-        // 通常のID生成
         else div.id = `msg-${Date.now()}-${Math.random()}`;
         
         const p = document.createElement('p');
@@ -305,10 +314,13 @@
         div.appendChild(p);
         chatWindow.appendChild(div);
         
+        setTimeout(() => {
+             window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
+       
         return div.id;
     }
     
-    // 指定したメッセージIDまでスクロールする関数
     function scrollToMessage(id) {
         const el = document.getElementById(id);
         if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
