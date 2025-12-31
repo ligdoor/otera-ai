@@ -15,9 +15,13 @@
         #chat-window { 
             max-width: 600px; margin: 10px auto; 
             padding: 10px; 
-            min-height: 60vh; /* タップしやすいように高さを確保 */
+            min-height: 60vh;
         }
-        .message { margin-bottom: 15px; line-height: 1.6; }
+        .message { 
+            margin-bottom: 15px; line-height: 1.6; 
+            /* 【重要】スクロールした時にヘッダーに隠れないようにする設定 */
+            scroll-margin-top: 90px; 
+        }
         .user-message { text-align: right; }
         .user-message p { display: inline-block; background: #dcedc8; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); text-align: left;}
         .ai-message { text-align: left; }
@@ -36,22 +40,19 @@
         .card-addr { font-size: 0.95rem; color: #666; }
         .card-tap-hint { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #ccc; font-size: 1.2rem; }
 
-        /* 操作エリア（画面下固定） */
+        /* 操作エリア */
         .control-area {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: #fff; padding: 20px 15px; 
             box-shadow: 0 -2px 15px rgba(0,0,0,0.15);
             border-top-left-radius: 20px; border-top-right-radius: 20px;
             box-sizing: border-box; z-index: 1000;
-            transition: transform 0.3s ease-in-out; /* スライドのアニメーション */
+            transition: transform 0.3s ease-in-out;
         }
 
-        /* 隠す時のクラス（画面下にスライドさせる） */
-        .control-area.minimized {
-            transform: translateY(110%); /* 画面外へ移動 */
-        }
+        .control-area.minimized { transform: translateY(110%); }
 
-        /* メニュー再表示ボタン（普段は隠しておく） */
+        /* メニュー再表示ボタン */
         #show-menu-btn {
             position: fixed; bottom: 20px; right: 20px;
             background-color: #5d4037; color: white;
@@ -61,10 +62,7 @@
             display: flex; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
-        /* メニューが隠れた時だけ表示する */
-        #show-menu-btn.visible {
-            opacity: 1; pointer-events: auto;
-        }
+        #show-menu-btn.visible { opacity: 1; pointer-events: auto; }
 
         .control-group {
             max-width: 600px; margin: 0 auto;
@@ -98,7 +96,6 @@
         }
         button.send-btn:active { background-color: #3e2723; }
 
-        /* 閉じるためのハンドル（デザインのみ） */
         .close-handle {
             width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 5px;
             margin: -10px auto 15px auto;
@@ -112,22 +109,15 @@
     <h1>お寺ガイド</h1>
 </header>
 
-<!-- チャットエリア全体をクリックできるようにする -->
 <div id="chat-window" onclick="hideMenu()">
-    <div class="message ai-message"><p>お寺を選んだり、自由に質問してみてくださいね。<br>（画面をタップするとメニューを隠せます）</p></div>
+    <div class="message ai-message"><p>お寺を選んだり、自由に質問してみてくださいね。</p></div>
 </div>
 
-<!-- メニュー再表示ボタン -->
 <button id="show-menu-btn" onclick="showMenu()">🔍</button>
 
-<!-- 固定操作エリア -->
 <div class="control-area" id="control-area">
-    <!-- 装飾：閉じるハンドル -->
     <div class="close-handle" onclick="hideMenu()"></div>
-
     <div class="control-group">
-        
-        <!-- 1. お寺リスト -->
         <div>
             <span class="label-text">🏯 お寺の名前で選ぶ</span>
             <div class="custom-select-wrapper">
@@ -136,8 +126,6 @@
                 </select>
             </div>
         </div>
-
-        <!-- 2. 宗派リスト -->
         <div>
             <span class="label-text">📿 宗派で選ぶ</span>
             <div class="custom-select-wrapper">
@@ -146,8 +134,6 @@
                 </select>
             </div>
         </div>
-
-        <!-- 3. 自由入力チャット -->
         <div>
             <span class="label-text">💬 自由に質問する</span>
             <div class="text-input-wrapper">
@@ -155,7 +141,6 @@
                 <button class="send-btn" onclick="sendFreeChat()">送信</button>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -164,7 +149,6 @@
     const controlArea = document.getElementById('control-area');
     const showMenuBtn = document.getElementById('show-menu-btn');
 
-    // 初期データ読み込み
     window.onload = async function() {
         try {
             const tRes = await fetch('/get_temple_names');
@@ -176,7 +160,6 @@
                 opt.text = name;
                 tSelect.appendChild(opt);
             });
-
             const sRes = await fetch('/get_sects');
             const sData = await sRes.json();
             const sSelect = document.getElementById('sect-select');
@@ -191,36 +174,34 @@
         }
     };
 
-    // --- メニューの表示・非表示 ---
     function hideMenu() {
         controlArea.classList.add('minimized');
         showMenuBtn.classList.add('visible');
-        document.body.style.paddingBottom = "80px"; // 余白を減らす
+        document.body.style.paddingBottom = "80px";
     }
 
     function showMenu() {
         controlArea.classList.remove('minimized');
         showMenuBtn.classList.remove('visible');
-        document.body.style.paddingBottom = "300px"; // 余白を戻す
+        document.body.style.paddingBottom = "300px";
+        window.scrollTo(0, document.body.scrollHeight); // メニューが出たら一番下へ
     }
 
-    // --- お寺選択 ---
     function onTempleSelect() {
         const select = document.getElementById('temple-select');
         const name = select.value;
         if (!name) return;
         select.value = ""; 
-        hideMenu(); // 選択したらメニューを隠す
+        hideMenu(); 
         sendChatRequest(name);
     }
 
-    // --- 宗派選択 ---
     async function onSectSelect() {
         const select = document.getElementById('sect-select');
         const sectName = select.value;
         if (!sectName) return;
         select.value = "";
-        hideMenu(); // 選択したらメニューを隠す
+        hideMenu(); 
 
         addMessage(`【${sectName}】のお寺を探します`, 'user');
 
@@ -233,7 +214,8 @@
             const data = await res.json();
 
             if (data.results.length === 0) {
-                addMessage("その宗派のお寺は見つかりませんでした。", 'ai');
+                const msgId = addMessage("その宗派のお寺は見つかりませんでした。", 'ai');
+                scrollToMessage(msgId);
             } else {
                 let listHtml = `<p><b>${sectName}</b> のお寺一覧です。</p>`;
                 data.results.forEach(temple => {
@@ -248,37 +230,42 @@
                         <div class="card-tap-hint">ᐳ</div>
                     </div>`;
                 });
+                
                 const msgDiv = document.createElement('div');
                 msgDiv.className = 'message ai-message';
                 msgDiv.innerHTML = listHtml;
                 chatWindow.appendChild(msgDiv);
-                window.scrollTo(0, document.body.scrollHeight);
+                // リストの場合は先頭にスクロール
+                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         } catch (e) {
             addMessage("エラーが発生しました。", 'ai');
         }
     }
 
-    // --- リストタップ ---
     function tapTempleList(name) {
-        hideMenu(); // タップしたらメニューを隠す
+        hideMenu();
         sendChatRequest(name);
     }
 
-    // --- 自由入力送信 ---
     function sendFreeChat() {
         const input = document.getElementById('free-input');
         const text = input.value;
         if (text.trim() === '') return;
         input.value = '';
-        hideMenu(); // 送信したらメニューを隠す
+        hideMenu();
         sendChatRequest(text);
     }
 
-    // --- AIへの問い合わせ ---
     async function sendChatRequest(text) {
+        // ユーザーのメッセージを追加
         addMessage(text, 'user');
+        
+        // ローディング表示
         const loadingId = addMessage("考え中...", 'ai', true);
+        
+        // 「考え中」の時は、画面一番下にスクロールしてOK
+        window.scrollTo(0, document.body.scrollHeight);
 
         try {
             const res = await fetch('/ask', {
@@ -287,30 +274,44 @@
                 body: JSON.stringify({ question: text })
             });
             const data = await res.json();
+            
+            // ローディングを削除
             document.getElementById(loadingId).remove();
-            addMessage(data.answer, 'ai');
+            
+            // AIの回答を追加
+            const aiMsgId = addMessage(data.answer, 'ai');
+            
+            // 【ここが修正点】回答の「先頭」にスクロールする
+            const aiMsgDiv = document.getElementById(aiMsgId);
+            setTimeout(() => {
+                aiMsgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+
         } catch (e) {
             document.getElementById(loadingId).remove();
             addMessage("エラーが発生しました。", 'ai');
         }
     }
 
-    // --- メッセージ表示 ---
     function addMessage(text, sender, isLoading = false) {
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
         if (isLoading) div.id = `msg-${Date.now()}`;
+        // 通常のID生成
+        else div.id = `msg-${Date.now()}-${Math.random()}`;
+        
         const p = document.createElement('p');
         p.innerHTML = text.replace(/\n/g, '<br>');
         div.appendChild(p);
         chatWindow.appendChild(div);
         
-        // メニューが出ている場合と隠れている場合でスクロール位置を調整
-        setTimeout(() => {
-             window.scrollTo(0, document.body.scrollHeight);
-        }, 100);
-       
         return div.id;
+    }
+    
+    // 指定したメッセージIDまでスクロールする関数
+    function scrollToMessage(id) {
+        const el = document.getElementById(id);
+        if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 </script>
 
