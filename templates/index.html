@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI寺院案内</title>
-<style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; padding-bottom: 280px; /* 操作エリアが大きくなった分、余白を広げる */ }
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; padding-bottom: 300px; transition: padding-bottom 0.3s; }
         
         /* ヘッダー */
-        header { background-color: #5d4037; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { background-color: #5d4037; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 500;}
         h1 { margin: 0; font-size: 1.2rem; }
 
         /* チャット画面 */
         #chat-window { 
             max-width: 600px; margin: 10px auto; 
             padding: 10px; 
+            min-height: 60vh; /* タップしやすいように高さを確保 */
         }
         .message { margin-bottom: 15px; line-height: 1.6; }
         .user-message { text-align: right; }
         .user-message p { display: inline-block; background: #dcedc8; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); text-align: left;}
         .ai-message { text-align: left; }
         .ai-message p { display: inline-block; background: #fff; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
-        /* リンクの色調整 */
         .ai-message a { color: #007bff; font-weight: bold; }
 
         /* カードデザイン */
         .temple-card {
-            border: 1px solid #ddd; padding: 15px; /* カードも少しタップしやすく */
+            border: 1px solid #ddd; padding: 15px; 
             margin-top: 10px; border-radius: 10px; 
             background-color: #fff; cursor: pointer; position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -39,53 +39,70 @@
         /* 操作エリア（画面下固定） */
         .control-area {
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: #fff; padding: 20px 15px; /* 余白を広めに */
+            background: #fff; padding: 20px 15px; 
             box-shadow: 0 -2px 15px rgba(0,0,0,0.15);
             border-top-left-radius: 20px; border-top-right-radius: 20px;
             box-sizing: border-box; z-index: 1000;
+            transition: transform 0.3s ease-in-out; /* スライドのアニメーション */
+        }
+
+        /* 隠す時のクラス（画面下にスライドさせる） */
+        .control-area.minimized {
+            transform: translateY(110%); /* 画面外へ移動 */
+        }
+
+        /* メニュー再表示ボタン（普段は隠しておく） */
+        #show-menu-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background-color: #5d4037; color: white;
+            width: 60px; height: 60px; border-radius: 50%;
+            border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 24px; cursor: pointer; z-index: 900;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        /* メニューが隠れた時だけ表示する */
+        #show-menu-btn.visible {
+            opacity: 1; pointer-events: auto;
         }
 
         .control-group {
             max-width: 600px; margin: 0 auto;
-            display: flex; flex-direction: column; gap: 15px; /* ボタン同士の間隔を広げる */
+            display: flex; flex-direction: column; gap: 15px;
         }
 
-        /* ドロップダウンのデザイン強化 */
+        /* ドロップダウン */
         .custom-select-wrapper { position: relative; }
-        
         select {
-            width: 100%; 
-            padding: 14px 16px; /* 中の余白をたっぷり取る */
-            font-size: 18px;    /* 文字を大きく */
-            height: 56px;       /* 指で押しやすい高さ(最低44px以上推奨) */
+            width: 100%; padding: 14px 16px; font-size: 18px; height: 56px;
             border: 2px solid #5d4037; border-radius: 12px; 
-            background-color: #fffaf8; /* 薄い色をつけてボタン感を出す */
-            color: #333; font-weight: bold;
+            background-color: #fffaf8; color: #333; font-weight: bold;
             appearance: none; cursor: pointer;
         }
-        /* 矢印アイコンも大きく */
         .custom-select-wrapper::after {
             content: "▼"; font-size: 14px; color: #5d4037;
             position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;
         }
-        
-        /* ラベルも読みやすく */
         .label-text { font-size: 14px; color: #5d4037; font-weight: bold; margin-bottom: 5px; display: block; margin-left: 5px;}
 
         /* 自由入力エリア */
         .text-input-wrapper { display: flex; gap: 10px; margin-top: 5px; }
-        
         input[type="text"] {
             flex-grow: 1; padding: 14px; font-size: 16px; height: 56px; box-sizing: border-box;
             border: 1px solid #ccc; border-radius: 12px;
         }
-        
         button.send-btn {
-            padding: 0 25px; height: 56px; /* 入力欄と同じ高さに */
+            padding: 0 25px; height: 56px; 
             background-color: #5d4037; color: white; border: none; border-radius: 12px; 
             font-weight: bold; font-size: 16px; cursor: pointer; white-space: nowrap;
         }
         button.send-btn:active { background-color: #3e2723; }
+
+        /* 閉じるためのハンドル（デザインのみ） */
+        .close-handle {
+            width: 40px; height: 5px; background-color: #e0e0e0; border-radius: 5px;
+            margin: -10px auto 15px auto;
+        }
 
     </style>
 </head>
@@ -95,12 +112,19 @@
     <h1>お寺ガイド</h1>
 </header>
 
-<div id="chat-window">
-    <div class="message ai-message"><p>お寺を選んだり、自由に質問してみてくださいね。</p></div>
+<!-- チャットエリア全体をクリックできるようにする -->
+<div id="chat-window" onclick="hideMenu()">
+    <div class="message ai-message"><p>お寺を選んだり、自由に質問してみてくださいね。<br>（画面をタップするとメニューを隠せます）</p></div>
 </div>
 
+<!-- メニュー再表示ボタン -->
+<button id="show-menu-btn" onclick="showMenu()">🔍</button>
+
 <!-- 固定操作エリア -->
-<div class="control-area">
+<div class="control-area" id="control-area">
+    <!-- 装飾：閉じるハンドル -->
+    <div class="close-handle" onclick="hideMenu()"></div>
+
     <div class="control-group">
         
         <!-- 1. お寺リスト -->
@@ -137,6 +161,8 @@
 
 <script>
     const chatWindow = document.getElementById('chat-window');
+    const controlArea = document.getElementById('control-area');
+    const showMenuBtn = document.getElementById('show-menu-btn');
 
     // 初期データ読み込み
     window.onload = async function() {
@@ -165,21 +191,36 @@
         }
     };
 
+    // --- メニューの表示・非表示 ---
+    function hideMenu() {
+        controlArea.classList.add('minimized');
+        showMenuBtn.classList.add('visible');
+        document.body.style.paddingBottom = "80px"; // 余白を減らす
+    }
+
+    function showMenu() {
+        controlArea.classList.remove('minimized');
+        showMenuBtn.classList.remove('visible');
+        document.body.style.paddingBottom = "300px"; // 余白を戻す
+    }
+
     // --- お寺選択 ---
     function onTempleSelect() {
         const select = document.getElementById('temple-select');
         const name = select.value;
         if (!name) return;
         select.value = ""; 
+        hideMenu(); // 選択したらメニューを隠す
         sendChatRequest(name);
     }
 
-// --- 宗派選択 ---
+    // --- 宗派選択 ---
     async function onSectSelect() {
         const select = document.getElementById('sect-select');
         const sectName = select.value;
         if (!sectName) return;
         select.value = "";
+        hideMenu(); // 選択したらメニューを隠す
 
         addMessage(`【${sectName}】のお寺を探します`, 'user');
 
@@ -195,25 +236,18 @@
                 addMessage("その宗派のお寺は見つかりませんでした。", 'ai');
             } else {
                 let listHtml = `<p><b>${sectName}</b> のお寺一覧です。</p>`;
-                
                 data.results.forEach(temple => {
-                    // 地図用のURLを作成
                     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`;
-
                     listHtml += `
                     <div class="temple-card" onclick="tapTempleList('${temple.name}')">
                         <div class="card-name">${temple.name}</div>
                         <div class="card-addr">
                             ${temple.address}
-                            <!-- 地図ボタンを追加 (タップしても詳細画面に行かないよう stopPropagation を使う) -->
-                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#5d4037; font-weight:bold;">
-                                📍地図
-                            </a>
+                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#5d4037; font-weight:bold;">📍地図</a>
                         </div>
                         <div class="card-tap-hint">ᐳ</div>
                     </div>`;
                 });
-                
                 const msgDiv = document.createElement('div');
                 msgDiv.className = 'message ai-message';
                 msgDiv.innerHTML = listHtml;
@@ -224,8 +258,10 @@
             addMessage("エラーが発生しました。", 'ai');
         }
     }
+
     // --- リストタップ ---
     function tapTempleList(name) {
+        hideMenu(); // タップしたらメニューを隠す
         sendChatRequest(name);
     }
 
@@ -234,14 +270,14 @@
         const input = document.getElementById('free-input');
         const text = input.value;
         if (text.trim() === '') return;
-        input.value = ''; // 入力欄を空にする
+        input.value = '';
+        hideMenu(); // 送信したらメニューを隠す
         sendChatRequest(text);
     }
 
     // --- AIへの問い合わせ ---
     async function sendChatRequest(text) {
         addMessage(text, 'user');
-        
         const loadingId = addMessage("考え中...", 'ai', true);
 
         try {
@@ -264,13 +300,16 @@
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
         if (isLoading) div.id = `msg-${Date.now()}`;
-        
         const p = document.createElement('p');
         p.innerHTML = text.replace(/\n/g, '<br>');
-        
         div.appendChild(p);
         chatWindow.appendChild(div);
-        window.scrollTo(0, document.body.scrollHeight);
+        
+        // メニューが出ている場合と隠れている場合でスクロール位置を調整
+        setTimeout(() => {
+             window.scrollTo(0, document.body.scrollHeight);
+        }, 100);
+       
         return div.id;
     }
 </script>
