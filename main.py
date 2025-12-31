@@ -1,5 +1,6 @@
 import csv
 import os
+import pandas as pd
 from dotenv import load_dotenv
 import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify
@@ -19,26 +20,35 @@ model = genai.GenerativeModel('gemini-flash-latest')
 
 app = Flask(__name__)
 
-# --- データ読み込み ---
+# --- データ読み込み関数 (Excel版) ---
 def load_otera_data(filename):
     data = {}
     try:
-        with open(filename, mode='r', encoding='utf-8-sig') as file:
-            reader = csv.DictReader(file)
-            if reader.fieldnames:
-                reader.fieldnames = [name.strip() for name in reader.fieldnames]
-            
-            for row in reader:
-                if 'name' in row and row['name']:
-                    clean_row = {k: v.strip() if v else v for k, v in row.items()}
-                    if 'sect' not in clean_row or not clean_row['sect']:
-                        clean_row['sect'] = "不明"
-                    data[clean_row['name']] = clean_row
+        # Excelファイルを読み込む
+        # keep_default_na=False は、空欄をNaNではなく空文字""として読み込む設定
+        df = pd.read_excel(filename, keep_default_na=False)
+        
+        # 1行ずつ辞書に変換して登録
+        for index, row in df.iterrows():
+            if 'name' in row and row['name']:
+                # データの余分な空白を削除
+                clean_row = {k: str(v).strip() for k, v in row.items()}
+                
+                # 宗派が空欄なら「不明」を入れる
+                if not clean_row.get('sect'):
+                    clean_row['sect'] = "不明"
+                    
+                data[clean_row['name']] = clean_row
+                
+    except FileNotFoundError:
+        print(f"エラー: {filename} が見つかりません。")
     except Exception as e:
         print(f"データ読み込みエラー: {e}")
+        
     return data
 
-otera_database = load_otera_data("otera_data.csv")
+# ★拡張子を .xlsx に変更！
+otera_database = load_otera_data("otera_data.xlsx")
 
 # --- AI回答生成 ---
 def generate_answer_with_ai(temple_info, user_question):
