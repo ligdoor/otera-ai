@@ -19,11 +19,10 @@ model = genai.GenerativeModel('gemini-flash-latest')
 
 app = Flask(__name__)
 
-# --- データ読み込み関数 (文字化け対策済み) ---
+# --- データ読み込み ---
 def load_otera_data(filename):
     data = {}
     try:
-        # utf-8-sig でBOM問題を回避
         with open(filename, mode='r', encoding='utf-8-sig') as file:
             reader = csv.DictReader(file)
             if reader.fieldnames:
@@ -32,7 +31,6 @@ def load_otera_data(filename):
             for row in reader:
                 if 'name' in row and row['name']:
                     clean_row = {k: v.strip() if v else v for k, v in row.items()}
-                    # 宗派がない場合は「不明」としておく
                     if 'sect' not in clean_row or not clean_row['sect']:
                         clean_row['sect'] = "不明"
                     data[clean_row['name']] = clean_row
@@ -42,42 +40,56 @@ def load_otera_data(filename):
 
 otera_database = load_otera_data("otera_data.csv")
 
-# --- AI回答生成関数 ---
+# --- AI回答生成 ---
 def generate_answer_with_ai(temple_info, user_question):
+    # Googleマップの検索用URLを作る
+    map_url = f"https://www.google.com/maps/search/?api=1&query={temple_info['address']}"
+    
     prompt = f"""
-    あなたは親切なお寺の案内役です。以下の情報を元に回答してください。
+    あなたは親切なお寺の案内役です。
+    ユーザーから「{user_question}」について聞かれています。
     
-    --- 参照情報 ---
-    寺名: {temple_info['name']}
-    宗派: {temple_info.get('sect', '不明')}
-    住所: {temple_info['address']}
-    アクセス: {temple_info['access']}
-    見どころ: {temple_info['detail']}
-    注意点: {temple_info['caution']}
-    ---
+    【重要】回答は必ず以下の構成（順番）で作成してください。
     
-    質問: {user_question}
+    1. **基本情報**
+       - まず最初に、以下の情報を箇条書きでまとめて表示してください。
+       - 寺名: {temple_info['name']}
+       - 宗派: {temple_info.get('sect', '不明')}
+       - 住所: <a href="{map_url}" target="_blank" style="color:#007bff; text-decoration:underline;">{temple_info['address']} (📍地図を開く)</a>
+       - アクセス: {temple_info['access']}
+       
+    2. **案内と解説**
+       - その後に、以下のお寺の魅力や注意点を、親しみやすい文章で解説してください。
+       - 見どころ: {temple_info['detail']}
+       - 注意点: {temple_info['caution']}
+       
+    ※見出しや太字を使って、スマホでも読みやすく整形してください。
     """
+    
     try:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
         return f"エラーが発生しました: {e}"
-
 # --- ルーティング ---
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# 1. 登録されている「宗派の一覧」を返す
+# 【追加】お寺の名前一覧を返す
+@app.route("/get_temple_names", methods=["GET"])
+def get_temple_names():
+    names = sorted(list(otera_database.keys()))
+    return jsonify({"names": names})
+
+# 宗派一覧を返す
 @app.route("/get_sects", methods=["GET"])
 def get_sects():
-    # データベースから宗派だけを取り出して、重複をなくす(set)
     sects = sorted(list(set(t['sect'] for t in otera_database.values())))
     return jsonify({"sects": sects})
 
-# 2. 指定された宗派のお寺リストを返す
+# 宗派検索
 @app.route("/search_by_sect", methods=["POST"])
 def search_by_sect():
     target_sect = request.json['sect']
@@ -90,15 +102,16 @@ def search_by_sect():
             })
     return jsonify({"results": result_list})
 
-# 3. お寺の詳細をAIで答える（既存機能）
+# お寺詳細（AI）
 @app.route("/ask", methods=["POST"])
 def ask():
+    # ドロップダウンからお寺名が送られてくる前提
     user_question = request.json['question']
     
-    # 質問文にお寺の名前が含まれているか探す
     found_temple = None
+    # 完全一致で探す（ドロップダウン選択なので名前は正確）
     for name in otera_database.keys():
-        if name in user_question:
+        if name == user_question or name in user_question:
             found_temple = otera_database[name]
             break
             
@@ -106,8 +119,7 @@ def ask():
         answer = generate_answer_with_ai(found_temple, user_question)
         return jsonify({"answer": answer})
     else:
-        # 見つからない場合
-        return jsonify({"answer": "申し訳ありません。そのお寺の情報はデータベースに見当たりませんでした。"})
+        return jsonify({"answer": "データが見つかりませんでした。"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

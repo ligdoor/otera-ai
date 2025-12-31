@@ -4,61 +4,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI寺院案内</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+<style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; padding-bottom: 280px; /* 操作エリアが大きくなった分、余白を広げる */ }
         
         /* ヘッダー */
-        header { background-color: #5d4037; color: white; padding: 15px; text-align: center; }
+        header { background-color: #5d4037; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         h1 { margin: 0; font-size: 1.2rem; }
-
-        /* メインエリア */
-        .container { max-width: 600px; margin: 0 auto; padding: 10px; padding-bottom: 80px; }
-
-        /* ラジオボタン切り替えエリア */
-        .mode-switch {
-            display: flex; justify-content: center; margin-bottom: 15px; background: white; padding: 10px; border-radius: 8px;
-        }
-        .radio-label { margin: 0 10px; cursor: pointer; display: flex; align-items: center; }
-        .radio-label input { margin-right: 5px; transform: scale(1.2); }
 
         /* チャット画面 */
         #chat-window { 
-            height: 60vh; overflow-y: scroll; 
-            background: white; border-radius: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd;
+            max-width: 600px; margin: 10px auto; 
+            padding: 10px; 
         }
-        .message { margin-bottom: 15px; line-height: 1.5; }
+        .message { margin-bottom: 15px; line-height: 1.6; }
         .user-message { text-align: right; }
-        .user-message p { display: inline-block; background: #dcedc8; padding: 8px 12px; border-radius: 15px; margin: 0; }
+        .user-message p { display: inline-block; background: #dcedc8; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); text-align: left;}
         .ai-message { text-align: left; }
-        .ai-message p { display: inline-block; background: #f1f1f1; padding: 8px 12px; border-radius: 15px; margin: 0; }
+        .ai-message p { display: inline-block; background: #fff; padding: 10px 15px; border-radius: 15px; margin: 0; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); }
+        /* リンクの色調整 */
+        .ai-message a { color: #007bff; font-weight: bold; }
 
-        /* 宗派検索の結果リスト（カードデザイン） */
+        /* カードデザイン */
         .temple-card {
-            border: 1px solid #ddd; padding: 10px; margin-top: 5px; border-radius: 5px; 
-            background-color: #fff; cursor: pointer; transition: background 0.2s;
+            border: 1px solid #ddd; padding: 15px; /* カードも少しタップしやすく */
+            margin-top: 10px; border-radius: 10px; 
+            background-color: #fff; cursor: pointer; position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .temple-card:active { background-color: #e0e0e0; }
-        .card-name { font-weight: bold; color: #5d4037; }
-        .card-addr { font-size: 0.85rem; color: #666; }
+        .temple-card:active { background-color: #eee; transform: scale(0.98); }
+        .card-name { font-weight: bold; color: #5d4037; font-size: 1.2rem; margin-bottom: 6px; }
+        .card-addr { font-size: 0.95rem; color: #666; }
+        .card-tap-hint { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #ccc; font-size: 1.2rem; }
 
-        /* 入力エリア（画面下固定） */
-        .input-area {
+        /* 操作エリア（画面下固定） */
+        .control-area {
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: white; padding: 10px; box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-            display: flex; justify-content: center;
+            background: #fff; padding: 20px 15px; /* 余白を広めに */
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.15);
+            border-top-left-radius: 20px; border-top-right-radius: 20px;
+            box-sizing: border-box; z-index: 1000;
         }
-        .input-group { display: flex; width: 100%; max-width: 600px; box-sizing: border-box; padding: 0 10px; }
+
+        .control-group {
+            max-width: 600px; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 15px; /* ボタン同士の間隔を広げる */
+        }
+
+        /* ドロップダウンのデザイン強化 */
+        .custom-select-wrapper { position: relative; }
         
-        /* 入力フォームのスタイル */
-        input[type="text"], select {
-            flex-grow: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px;
+        select {
+            width: 100%; 
+            padding: 14px 16px; /* 中の余白をたっぷり取る */
+            font-size: 18px;    /* 文字を大きく */
+            height: 56px;       /* 指で押しやすい高さ(最低44px以上推奨) */
+            border: 2px solid #5d4037; border-radius: 12px; 
+            background-color: #fffaf8; /* 薄い色をつけてボタン感を出す */
+            color: #333; font-weight: bold;
+            appearance: none; cursor: pointer;
         }
-        button {
-            margin-left: 10px; padding: 10px 20px; background-color: #5d4037; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;
+        /* 矢印アイコンも大きく */
+        .custom-select-wrapper::after {
+            content: "▼"; font-size: 14px; color: #5d4037;
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none;
         }
         
-        /* 表示・非表示の制御 */
-        .hidden { display: none !important; }
+        /* ラベルも読みやすく */
+        .label-text { font-size: 14px; color: #5d4037; font-weight: bold; margin-bottom: 5px; display: block; margin-left: 5px;}
+
+        /* 自由入力エリア */
+        .text-input-wrapper { display: flex; gap: 10px; margin-top: 5px; }
+        
+        input[type="text"] {
+            flex-grow: 1; padding: 14px; font-size: 16px; height: 56px; box-sizing: border-box;
+            border: 1px solid #ccc; border-radius: 12px;
+        }
+        
+        button.send-btn {
+            padding: 0 25px; height: 56px; /* 入力欄と同じ高さに */
+            background-color: #5d4037; color: white; border: none; border-radius: 12px; 
+            font-weight: bold; font-size: 16px; cursor: pointer; white-space: nowrap;
+        }
+        button.send-btn:active { background-color: #3e2723; }
+
     </style>
 </head>
 <body>
@@ -67,158 +95,182 @@
     <h1>お寺ガイド</h1>
 </header>
 
-<div class="container">
-    <!-- モード切り替えラジオボタン -->
-    <div class="mode-switch">
-        <label class="radio-label">
-            <input type="radio" name="search-mode" value="temple" checked onchange="switchMode()"> お寺名で検索
-        </label>
-        <label class="radio-label">
-            <input type="radio" name="search-mode" value="sect" onchange="switchMode()"> 宗派で一覧
-        </label>
-    </div>
-
-    <!-- チャット表示エリア -->
-    <div id="chat-window">
-        <div class="message ai-message"><p>こんにちは！お寺の名前を入力するか、宗派から探すことができます。</p></div>
-    </div>
+<div id="chat-window">
+    <div class="message ai-message"><p>お寺を選んだり、自由に質問してみてくださいね。</p></div>
 </div>
 
-<!-- 入力エリア -->
-<div class="input-area">
-    
-    <!-- お寺名入力モード -->
-    <div id="temple-mode" class="input-group">
-        <input type="text" id="user-input" placeholder="例：月江寺について教えて">
-        <button onclick="sendChat()">送信</button>
-    </div>
+<!-- 固定操作エリア -->
+<div class="control-area">
+    <div class="control-group">
+        
+        <!-- 1. お寺リスト -->
+        <div>
+            <span class="label-text">🏯 お寺の名前で選ぶ</span>
+            <div class="custom-select-wrapper">
+                <select id="temple-select" onchange="onTempleSelect()">
+                    <option value="">お寺を選択...</option>
+                </select>
+            </div>
+        </div>
 
-    <!-- 宗派選択モード -->
-    <div id="sect-mode" class="input-group hidden">
-        <select id="sect-select">
-            <option value="">宗派を選択...</option>
-            <!-- ここにJavaScriptで宗派が追加されます -->
-        </select>
-        <button onclick="searchSect()">検索</button>
+        <!-- 2. 宗派リスト -->
+        <div>
+            <span class="label-text">📿 宗派で選ぶ</span>
+            <div class="custom-select-wrapper">
+                <select id="sect-select" onchange="onSectSelect()">
+                    <option value="">宗派を選択...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 3. 自由入力チャット -->
+        <div>
+            <span class="label-text">💬 自由に質問する</span>
+            <div class="text-input-wrapper">
+                <input type="text" id="free-input" placeholder="例：駐車場はある？" onkeypress="if(event.key === 'Enter') sendFreeChat()">
+                <button class="send-btn" onclick="sendFreeChat()">送信</button>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <script>
     const chatWindow = document.getElementById('chat-window');
 
-    // ページ読み込み時に宗派一覧を取得してプルダウンに入れる
+    // 初期データ読み込み
     window.onload = async function() {
-        const res = await fetch('/get_sects');
-        const data = await res.json();
-        const select = document.getElementById('sect-select');
-        data.sects.forEach(sect => {
-            const option = document.createElement('option');
-            option.value = sect;
-            option.text = sect;
-            select.appendChild(option);
-        });
+        try {
+            const tRes = await fetch('/get_temple_names');
+            const tData = await tRes.json();
+            const tSelect = document.getElementById('temple-select');
+            tData.names.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.text = name;
+                tSelect.appendChild(opt);
+            });
+
+            const sRes = await fetch('/get_sects');
+            const sData = await sRes.json();
+            const sSelect = document.getElementById('sect-select');
+            sData.sects.forEach(sect => {
+                const opt = document.createElement('option');
+                opt.value = sect;
+                opt.text = sect;
+                sSelect.appendChild(opt);
+            });
+        } catch (e) {
+            console.error("データ読み込み失敗", e);
+        }
     };
 
-    // モード切り替え処理
-    function switchMode() {
-        const mode = document.querySelector('input[name="search-mode"]:checked').value;
-        if (mode === 'temple') {
-            document.getElementById('temple-mode').classList.remove('hidden');
-            document.getElementById('sect-mode').classList.add('hidden');
-        } else {
-            document.getElementById('temple-mode').classList.add('hidden');
-            document.getElementById('sect-mode').classList.remove('hidden');
-        }
+    // --- お寺選択 ---
+    function onTempleSelect() {
+        const select = document.getElementById('temple-select');
+        const name = select.value;
+        if (!name) return;
+        select.value = ""; 
+        sendChatRequest(name);
     }
 
-    // --- お寺名検索（チャット）の処理 ---
-    async function sendChat(manualText = null) {
-        const input = document.getElementById('user-input');
-        const text = manualText || input.value; // 引数があればそれを使い、なければ入力欄を使う
-
-        if (text.trim() === '') return;
-
-        // ユーザーの吹き出し追加
-        addMessage(text, 'user');
-        if (!manualText) input.value = '';
-
-        // AIの吹き出し（ロード中）
-        const loadingId = addMessage("検索中...", 'ai', true);
-
-        // サーバーへ送信
-        const res = await fetch('/ask', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question: text })
-        });
-        const data = await res.json();
-
-        // ロード中メッセージを削除して回答を表示
-        document.getElementById(loadingId).remove();
-        addMessage(data.answer, 'ai');
-    }
-
-    // --- 宗派検索の処理 ---
-    async function searchSect() {
+// --- 宗派選択 ---
+    async function onSectSelect() {
         const select = document.getElementById('sect-select');
-        const sect = select.value;
-        if (!sect) return;
+        const sectName = select.value;
+        if (!sectName) return;
+        select.value = "";
 
-        addMessage(`【${sect}】のお寺を探します`, 'user');
+        addMessage(`【${sectName}】のお寺を探します`, 'user');
 
-        const res = await fetch('/search_by_sect', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sect: sect })
-        });
-        const data = await res.json();
-
-        // 結果をリストとしてチャット欄に表示
-        if (data.results.length === 0) {
-            addMessage("その宗派のお寺は見つかりませんでした。", 'ai');
-        } else {
-            let listHtml = `<p>以下の${sect}のお寺が見つかりました。<br>タップすると詳細が見れます。</p>`;
-            
-            data.results.forEach(temple => {
-                // クリックすると「〇〇寺について教えて」とチャットする仕組み
-                listHtml += `
-                <div class="temple-card" onclick="tapTemple('${temple.name}')">
-                    <div class="card-name">${temple.name}</div>
-                    <div class="card-addr">${temple.address}</div>
-                </div>`;
+        try {
+            const res = await fetch('/search_by_sect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sect: sectName })
             });
-            
-            // HTMLとしてメッセージを追加
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message ai-message';
-            msgDiv.innerHTML = listHtml;
-            chatWindow.appendChild(msgDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
+            const data = await res.json();
+
+            if (data.results.length === 0) {
+                addMessage("その宗派のお寺は見つかりませんでした。", 'ai');
+            } else {
+                let listHtml = `<p><b>${sectName}</b> のお寺一覧です。</p>`;
+                
+                data.results.forEach(temple => {
+                    // 地図用のURLを作成
+                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`;
+
+                    listHtml += `
+                    <div class="temple-card" onclick="tapTempleList('${temple.name}')">
+                        <div class="card-name">${temple.name}</div>
+                        <div class="card-addr">
+                            ${temple.address}
+                            <!-- 地図ボタンを追加 (タップしても詳細画面に行かないよう stopPropagation を使う) -->
+                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#5d4037; font-weight:bold;">
+                                📍地図
+                            </a>
+                        </div>
+                        <div class="card-tap-hint">ᐳ</div>
+                    </div>`;
+                });
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'message ai-message';
+                msgDiv.innerHTML = listHtml;
+                chatWindow.appendChild(msgDiv);
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        } catch (e) {
+            addMessage("エラーが発生しました。", 'ai');
+        }
+    }
+    // --- リストタップ ---
+    function tapTempleList(name) {
+        sendChatRequest(name);
+    }
+
+    // --- 自由入力送信 ---
+    function sendFreeChat() {
+        const input = document.getElementById('free-input');
+        const text = input.value;
+        if (text.trim() === '') return;
+        input.value = ''; // 入力欄を空にする
+        sendChatRequest(text);
+    }
+
+    // --- AIへの問い合わせ ---
+    async function sendChatRequest(text) {
+        addMessage(text, 'user');
+        
+        const loadingId = addMessage("考え中...", 'ai', true);
+
+        try {
+            const res = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text })
+            });
+            const data = await res.json();
+            document.getElementById(loadingId).remove();
+            addMessage(data.answer, 'ai');
+        } catch (e) {
+            document.getElementById(loadingId).remove();
+            addMessage("エラーが発生しました。", 'ai');
         }
     }
 
-    // リストのお寺をタップした時の処理
-    function tapTemple(name) {
-        // ラジオボタンをお寺モードに戻す
-        document.querySelector('input[value="temple"]').checked = true;
-        switchMode();
-        // チャット送信
-        sendChat(`${name}について教えて`);
-    }
-
-    // メッセージ追加用ツール関数
+    // --- メッセージ表示 ---
     function addMessage(text, sender, isLoading = false) {
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
         if (isLoading) div.id = `msg-${Date.now()}`;
         
-        // テキスト内の改行を反映
         const p = document.createElement('p');
         p.innerHTML = text.replace(/\n/g, '<br>');
         
         div.appendChild(p);
         chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
+        window.scrollTo(0, document.body.scrollHeight);
         return div.id;
     }
 </script>
