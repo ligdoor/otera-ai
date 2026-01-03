@@ -115,27 +115,52 @@ def admin():
     if session.get('is_admin'):
         return render_template("admin.html")
     else:
+        # スマホ対応ログイン画面
         return f"""
         <html>
         <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
             <style>
-                body {{ font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f6f8; }}
-                form {{ background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 300px; }}
-                input {{ padding: 10px; width: 100%; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }}
-                button {{ padding: 10px 20px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }}
+                body {{ 
+                    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; 
+                    display: flex; justify-content: center; align-items: center; 
+                    height: 100vh; margin: 0; background-color: #eef2f6; 
+                }}
+                .login-container {{ 
+                    background: white; padding: 40px 30px; border-radius: 16px; 
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+                    width: 90%; max-width: 400px; text-align: center; 
+                }}
+                h2 {{ color: #1a237e; margin-top: 0; font-size: 1.5rem; margin-bottom: 20px; }}
+                input {{ 
+                    width: 100%; padding: 15px; margin: 10px 0; 
+                    border: 2px solid #ddd; border-radius: 8px; 
+                    font-size: 18px; box-sizing: border-box; appearance: none;
+                }}
+                input:focus {{ border-color: #1a237e; outline: none; }}
+                button {{ 
+                    width: 100%; padding: 15px; margin-top: 20px; 
+                    background-color: #1a237e; color: white; 
+                    border: none; border-radius: 8px; 
+                    font-size: 18px; font-weight: bold; cursor: pointer; 
+                    box-shadow: 0 4px 6px rgba(26, 35, 126, 0.3);
+                }}
+                button:active {{ transform: scale(0.98); box-shadow: none; }}
+                p {{ color: #666; font-size: 0.9rem; margin-top: 20px; }}
             </style>
         </head>
         <body>
-            <form method="post">
-                <h2 style="color:#1a237e; margin-top:0;">管理者ログイン</h2>
-                <input type="password" name="password" placeholder="パスワード" required>
-                <button type="submit">ログイン</button>
-            </form>
+            <div class="login-container">
+                <form method="post">
+                    <h2>管理者ログイン</h2>
+                    <input type="password" name="password" placeholder="パスワードを入力" required>
+                    <button type="submit">ログインする</button>
+                    <p>※パスワードは専用シートで管理されています</p>
+                </form>
+            </div>
         </body>
         </html>
         """
-
 @app.route("/get_all_data")
 def get_all_data():
     if not session.get('is_admin'): return "Unauthorized", 401
