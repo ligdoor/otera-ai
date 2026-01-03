@@ -12,11 +12,7 @@ load_dotenv()
 # --- 設定 ---
 GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY")
 if not GOOGL_API_KEY:
-    # ローカル用フォールバック
     GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-
-# 管理画面パスワード
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "ars304444")
 
 if GOOGL_API_KEY:
     genai.configure(api_key=GOOGL_API_KEY)
@@ -25,7 +21,10 @@ if GOOGL_API_KEY:
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_session'
 
-SPREADSHEET_NAME = "otera_data"
+# ★シートを2つに分けました
+DATA_SPREADSHEET_NAME = "otera_data"       # お寺データ用（スタッフも編集可）
+CONFIG_SPREADSHEET_NAME = "otera_admin_config" # パスワード用（管理者のみ）
+
 gc = None 
 
 # スプレッドシート接続
@@ -42,12 +41,30 @@ def get_spreadsheet_client():
         gc = gspread.authorize(creds)
     return gc
 
-# データ読み込み
+# 【変更】パスワード専用シートから読み込む
+def get_admin_password():
+    try:
+        client = get_spreadsheet_client()
+        # パスワード管理用の別シートを開く
+        sheet = client.open(CONFIG_SPREADSHEET_NAME).sheet1
+        
+        records = sheet.get_all_records()
+        for row in records:
+            if row.get('key') == 'admin_password':
+                return str(row.get('value'))
+        
+        return "admin1234" # デフォルト
+    except Exception as e:
+        print(f"パスワード読み込みエラー: {e}")
+        # エラー時は安全のためデフォルトパスワード（またはログイン不可）にする
+        return "admin1234"
+
+# データ読み込み（お寺データ用シートから）
 def load_data_from_sheet():
     data = {}
     try:
         client = get_spreadsheet_client()
-        sheet = client.open(SPREADSHEET_NAME).sheet1
+        sheet = client.open(DATA_SPREADSHEET_NAME).sheet1
         records = sheet.get_all_records()
         for row in records:
             if 'name' in row and row['name']:
@@ -71,98 +88,105 @@ def index():
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
+    # 専用シートからパスワードを取得
+    current_password = get_admin_password()
+    
     if request.method == "POST":
-        password = request.form.get("password")
-        if password == ADMIN_PASSWORD:
+        input_password = request.form.get("password")
+        if input_password == current_password:
             session['is_admin'] = True
             return render_template("admin.html")
         else:
-            return "パスワードが違います", 403
+            return """
+            <script>alert('パスワードが違います'); window.location.href='/admin';</script>
+            """
     
     if session.get('is_admin'):
         return render_template("admin.html")
     else:
-        return """
-        <form method="post" style="text-align:center; margin-top:50px;">
-            <h2>管理者パスワードを入力</h2>
-            <input type="password" name="password" style="padding:10px;">
-            <button type="submit" style="padding:10px;">ログイン</button>
-        </form>
+        return f"""
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {{ font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f6f8; }}
+                form {{ background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 300px; }}
+                input {{ padding: 10px; width: 100%; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }}
+                button {{ padding: 10px 20px; background: #1a237e; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }}
+            </style>
+        </head>
+        <body>
+            <form method="post">
+                <h2 style="color:#1a237e; margin-top:0;">管理者ログイン</h2>
+                <input type="password" name="password" placeholder="パスワード" required>
+                <button type="submit">ログイン</button>
+            </form>
+        </body>
+        </html>
         """
 
 @app.route("/get_all_data")
 def get_all_data():
     if not session.get('is_admin'): return "Unauthorized", 401
+    global otera_database
+    otera_database = load_data_from_sheet()
     return jsonify(otera_database)
 
-# ヘルパー関数: スプレッドシートの操作用
-def get_sheet_and_headers():
+# ヘルパー関数: データ用シートを取得
+def get_data_sheet_and_headers():
     client = get_spreadsheet_client()
-    sheet = client.open(SPREADSHEET_NAME).sheet1
-    headers = sheet.row_values(1) # 1行目のヘッダーを取得
+    sheet = client.open(DATA_SPREADSHEET_NAME).sheet1
+    headers = sheet.row_values(1) 
     return sheet, headers
 
-# 更新API
 @app.route("/update_temple", methods=["POST"])
 def update_temple():
     if not session.get('is_admin'): return "Unauthorized", 401
     req = request.json
     original_name = req['original_name']
     new_data = req['data']
-    
     try:
-        sheet, headers = get_sheet_and_headers()
+        sheet, headers = get_data_sheet_and_headers()
         cell = sheet.find(original_name, in_column=1)
         if cell:
             row_idx = cell.row
             row_data = [new_data.get(h, "") for h in headers]
             sheet.update(f"A{row_idx}", [row_data])
-            
-            # メモリ更新 (キーが変わる場合を考慮して削除→追加)
-            if original_name in otera_database:
-                del otera_database[original_name]
+            if original_name in otera_database: del otera_database[original_name]
             otera_database[new_data['name']] = new_data
-            
             return jsonify({"status": "success"})
         else:
             return jsonify({"status": "not_found"}), 404
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 追加API
 @app.route("/add_temple", methods=["POST"])
 def add_temple():
     if not session.get('is_admin'): return "Unauthorized", 401
     req = request.json
     new_data = req['data']
     name = new_data.get('name')
-    
     if name in otera_database:
         return jsonify({"status": "error", "message": "その名前は既に存在します"}), 400
-
     try:
-        sheet, headers = get_sheet_and_headers()
+        sheet, headers = get_data_sheet_and_headers()
         row_data = [new_data.get(h, "") for h in headers]
         sheet.append_row(row_data)
-        
         otera_database[name] = new_data
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 削除API
 @app.route("/delete_temple", methods=["POST"])
 def delete_temple():
     if not session.get('is_admin'): return "Unauthorized", 401
     name = request.json.get('name')
-    
     try:
-        sheet, headers = get_sheet_and_headers()
+        sheet, headers = get_data_sheet_and_headers()
         cell = sheet.find(name, in_column=1)
         if cell:
             sheet.delete_rows(cell.row)
-            if name in otera_database:
-                del otera_database[name]
+            if name in otera_database: del otera_database[name]
             return jsonify({"status": "success"})
         else:
             return jsonify({"status": "not_found"}), 404
