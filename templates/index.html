@@ -7,13 +7,29 @@
     <style>
         body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; background-color: #eef2f6; padding-bottom: 350px; transition: background-color 0.3s; }
         
-        /* ヘッダー */
-        header { background-color: #1a237e; color: white; padding: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 500;}
-        h1 { margin: 0; font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; }
+        /* ヘッダー：フレックスボックスで整理 */
+        header { 
+            background-color: #1a237e; color: white; padding: 12px 15px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 500;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        /* タイトル：余ったスペースを使って中央に */
+        h1 { 
+            margin: 0; font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; 
+            flex-grow: 1; text-align: center;
+        }
 
+        /* ダークモードボタン */
         .dark-mode-toggle {
-            position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
             background: none; border: none; font-size: 1.2rem; cursor: pointer; color: white;
+            padding: 0; margin-right: 10px;
+        }
+        
+        /* 設定ボタン */
+        .admin-link {
+            color: white; text-decoration: none; font-size: 1.2rem;
+            margin-left: 10px;
         }
 
         /* チャット画面 */
@@ -73,14 +89,11 @@
         button.send-btn { padding: 0 20px; height: 50px; background-color: #1a237e; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 15px; cursor: pointer; white-space: nowrap; }
         .control-group { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
 
-        /* ★よくある質問ボタンエリア */
+        /* よくある質問ボタンエリア */
         #quick-qa-area {
-            display: none; /* 初期状態は非表示 */
-            gap: 8px; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;
+            display: none; gap: 8px; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;
         }
-        /* スクロールバーを隠す（見た目重視） */
         #quick-qa-area::-webkit-scrollbar { display: none; }
-        
         .qa-chip {
             background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;
             padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;
@@ -110,9 +123,9 @@
 <body>
 
 <header>
-    <h1>施行スタッフ用 寺院情報DB</h1>
     <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙</button>
-    <a href="/admin" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: white; text-decoration: none; font-size: 1.2rem;">⚙️</a>
+    <h1>施行スタッフ用 寺院情報DB</h1>
+    <a href="/admin" class="admin-link">⚙️</a>
 </header>
 
 <div id="chat-window" onclick="hideMenu()">
@@ -144,7 +157,6 @@
         <div>
             <span class="label-text">項目確認</span>
             
-            <!-- ★ここが新機能！よくある質問ボタン -->
             <div id="quick-qa-area">
                 <div class="qa-chip" onclick="askQuick('納棺の注意点は？')">⚰️ 納棺仕様</div>
                 <div class="qa-chip" onclick="askQuick('書き物の指定は？')">🖊️ 書き物</div>
@@ -167,7 +179,6 @@
     const showMenuBtn = document.getElementById('show-menu-btn');
     const quickQaArea = document.getElementById('quick-qa-area');
     
-    // 現在選択中のお寺名を保存する変数
     let currentTempleName = "";
 
     function toggleDarkMode() {
@@ -213,7 +224,7 @@
     function showMenu() {
         controlArea.classList.remove('minimized');
         showMenuBtn.classList.remove('visible');
-        document.body.style.paddingBottom = "350px"; // 高さを調整
+        document.body.style.paddingBottom = "350px"; 
         window.scrollTo(0, document.body.scrollHeight);
     }
     function copyToClipboard(text) {
@@ -225,11 +236,8 @@
         const select = document.getElementById('temple-select');
         const name = select.value;
         if (!name) return;
-        
-        // お寺が選ばれたら名前を記憶＆ボタンを表示
         currentTempleName = name;
         quickQaArea.style.display = "flex";
-        
         select.value = ""; 
         hideMenu(); 
         sendChatRequest(name, 'summary');
@@ -240,11 +248,8 @@
         const sectName = select.value;
         if (!sectName) return;
         select.value = "";
-        
-        // 宗派リストの時はお寺未定なのでボタン隠す
         currentTempleName = "";
         quickQaArea.style.display = "none";
-        
         hideMenu(); 
         addMessage(`【${sectName}】寺院一覧`, 'user');
         try {
@@ -282,21 +287,17 @@
     }
 
     function tapTempleList(name) { 
-        // リストからタップした時も記憶＆ボタン表示
         currentTempleName = name;
         quickQaArea.style.display = "flex";
-        
         hideMenu(); 
         sendChatRequest(name, 'summary'); 
     }
 
-    // ★よくある質問ボタンを押した時の処理
     function askQuick(question) {
         if (!currentTempleName) {
             alert("まず寺院を選択してください");
             return;
         }
-        // 「月江寺の納棺の注意点は？」という文章を作って送る
         const text = `${currentTempleName}の${question}`;
         hideMenu();
         sendChatRequest(text, 'qa');
@@ -306,13 +307,10 @@
         const input = document.getElementById('free-input');
         const text = input.value;
         if (text.trim() === '') return;
-        
-        // 自由入力の場合も、お寺を選んでいれば名前を補完する（親切設計）
         let sendText = text;
         if (currentTempleName && !text.includes(currentTempleName)) {
              sendText = `${currentTempleName}の${text}`;
         }
-        
         input.value = '';
         hideMenu();
         sendChatRequest(sendText, 'qa');
