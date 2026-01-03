@@ -16,7 +16,7 @@ if not GOOGL_API_KEY:
     GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 # 管理画面パスワード
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin1234")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "ars304444")
 
 if GOOGL_API_KEY:
     genai.configure(api_key=GOOGL_API_KEY)
