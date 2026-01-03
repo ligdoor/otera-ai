@@ -21,13 +21,12 @@ if GOOGL_API_KEY:
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_session'
 
-# ★シートを2つに分けました
-DATA_SPREADSHEET_NAME = "otera_data"       # お寺データ用（スタッフも編集可）
-CONFIG_SPREADSHEET_NAME = "otera_admin_config" # パスワード用（管理者のみ）
+# シート名設定
+DATA_SPREADSHEET_NAME = "otera_data"
+CONFIG_SPREADSHEET_NAME = "otera_admin_config"
 
 gc = None 
 
-# スプレッドシート接続
 def get_spreadsheet_client():
     global gc
     if gc is None:
@@ -41,25 +40,20 @@ def get_spreadsheet_client():
         gc = gspread.authorize(creds)
     return gc
 
-# 【変更】パスワード専用シートから読み込む
 def get_admin_password():
     try:
         client = get_spreadsheet_client()
-        # パスワード管理用の別シートを開く
         sheet = client.open(CONFIG_SPREADSHEET_NAME).sheet1
-        
         records = sheet.get_all_records()
         for row in records:
             if row.get('key') == 'admin_password':
                 return str(row.get('value'))
-        
-        return "admin1234" # デフォルト
+        return "admin1234"
     except Exception as e:
         print(f"パスワード読み込みエラー: {e}")
-        # エラー時は安全のためデフォルトパスワード（またはログイン不可）にする
         return "admin1234"
 
-# データ読み込み（お寺データ用シートから）
+# データを読み込んでメモリ(グローバル変数)に保存する関数
 def load_data_from_sheet():
     data = {}
     try:
@@ -75,6 +69,7 @@ def load_data_from_sheet():
         print(f"読み込みエラー: {e}")
     return data
 
+# 起動時に一度だけロード
 otera_database = load_data_from_sheet()
 
 
@@ -84,22 +79,26 @@ otera_database = load_data_from_sheet()
 def index():
     return render_template("index.html")
 
-# --- 管理画面関連 ---
+# --- 管理機能 ---
+
+# ★ここが新機能！手動でデータを更新するAPI
+@app.route("/reload_data", methods=["POST"])
+def reload_data():
+    if not session.get('is_admin'): return "Unauthorized", 401
+    global otera_database
+    otera_database = load_data_from_sheet()
+    return jsonify({"status": "success", "message": "データを更新しました"})
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    # 専用シートからパスワードを取得
     current_password = get_admin_password()
-    
     if request.method == "POST":
         input_password = request.form.get("password")
         if input_password == current_password:
             session['is_admin'] = True
             return render_template("admin.html")
         else:
-            return """
-            <script>alert('パスワードが違います'); window.location.href='/admin';</script>
-            """
+            return """<script>alert('パスワードが違います'); window.location.href='/admin';</script>"""
     
     if session.get('is_admin'):
         return render_template("admin.html")
@@ -128,11 +127,10 @@ def admin():
 @app.route("/get_all_data")
 def get_all_data():
     if not session.get('is_admin'): return "Unauthorized", 401
-    global otera_database
-    otera_database = load_data_from_sheet()
+    # 管理画面を開いた時は、今のメモリ上のデータを返すだけでOK
+    # (毎回ロードしないので高速)
     return jsonify(otera_database)
 
-# ヘルパー関数: データ用シートを取得
 def get_data_sheet_and_headers():
     client = get_spreadsheet_client()
     sheet = client.open(DATA_SPREADSHEET_NAME).sheet1
@@ -152,8 +150,11 @@ def update_temple():
             row_idx = cell.row
             row_data = [new_data.get(h, "") for h in headers]
             sheet.update(f"A{row_idx}", [row_data])
+            
+            # メモリも直接書き換える（スプレッドシート再読み込みを避けるため）
             if original_name in otera_database: del otera_database[original_name]
             otera_database[new_data['name']] = new_data
+            
             return jsonify({"status": "success"})
         else:
             return jsonify({"status": "not_found"}), 404
@@ -172,6 +173,7 @@ def add_temple():
         sheet, headers = get_data_sheet_and_headers()
         row_data = [new_data.get(h, "") for h in headers]
         sheet.append_row(row_data)
+        
         otera_database[name] = new_data
         return jsonify({"status": "success"})
     except Exception as e:
@@ -194,7 +196,7 @@ def delete_temple():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-# --- 通常アプリ機能 ---
+# --- アプリ機能 ---
 
 def generate_static_summary(temple_info):
     def get(key): return temple_info.get(key) or '記載なし'
@@ -239,9 +241,7 @@ def generate_answer_with_ai(temple_info, user_question):
 
 @app.route("/get_temple_names", methods=["GET"])
 def get_temple_names():
-    # ユーザーが使うときは最新データを取得
-    global otera_database
-    otera_database = load_data_from_sheet()
+    # ★変更点：毎回ロードせず、メモリ上のデータを返すだけ
     return jsonify({"names": sorted(list(otera_database.keys()))})
 
 @app.route("/get_sects", methods=["GET"])
@@ -266,10 +266,7 @@ def search_by_sect():
 
 @app.route("/ask", methods=["POST"])
 def ask():
-    # 念のためここでもロード
-    global otera_database
-    otera_database = load_data_from_sheet()
-    
+    # ★変更点：ここでもロードしない
     user_question = request.json['question']
     client_mode = request.json.get('mode')
     

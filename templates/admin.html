@@ -8,9 +8,23 @@
         body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
         
         /* ヘッダーエリア */
-        .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;}
+        .header-area { 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;
+        }
         h1 { color: #1a237e; margin: 0; font-size: 1.5rem; }
-        .back-link { text-decoration: none; color: #1a237e; font-weight: bold; border: 1px solid #1a237e; padding: 5px 10px; border-radius: 4px; }
+        
+        .header-btns { display: flex; gap: 10px; }
+        .back-link { 
+            text-decoration: none; color: #1a237e; font-weight: bold; 
+            border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white;
+        }
+        /* 更新ボタン */
+        .reload-btn {
+            background: #f57f17; color: white; border: none; padding: 8px 15px; 
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        .reload-btn:hover { background: #f9a825; }
         
         /* 操作バー */
         .action-bar { margin-bottom: 20px; }
@@ -50,8 +64,11 @@
 <body>
 
 <div class="header-area">
-    <h1>寺院データ管理</h1>
-    <a href="/" class="back-link">← メイン画面へ</a>
+    <h1>管理画面</h1>
+    <div class="header-btns">
+        <button class="reload-btn" onclick="reloadData()">🔄 データを最新にする</button>
+        <a href="/" class="back-link">← アプリへ</a>
+    </div>
 </div>
 
 <div class="action-bar">
@@ -67,41 +84,19 @@
     <div class="modal-content">
         <h2 id="modal-title">編集</h2>
         <form id="edit-form">
-            <input type="hidden" id="mode" value="edit"> <!-- edit か add か -->
+            <input type="hidden" id="mode" value="edit">
             <input type="hidden" id="original-name">
             
-            <div class="form-group">
-                <label>寺院名 (name) ※必須</label>
-                <input type="text" id="name" required>
-            </div>
-            <div class="form-group">
-                <label>宗派 (sect)</label>
-                <input type="text" id="sect">
-            </div>
-            <div class="form-group">
-                <label>住所 (address)</label>
-                <input type="text" id="address">
-            </div>
-            <div class="form-group">
-                <label>搬送持ち物 (transport)</label>
-                <textarea id="transport"></textarea>
-            </div>
-            <div class="form-group">
-                <label>納棺仕様 (nokanshiyo)</label>
-                <textarea id="nokanshiyo"></textarea>
-            </div>
-            <div class="form-group">
-                <label>書き物 (kakimono)</label>
-                <textarea id="kakimono"></textarea>
-            </div>
-            <div class="form-group">
-                <label>式の流れ (flow)</label>
-                <textarea id="flow"></textarea>
-            </div>
-            <div class="form-group">
-                <label>注意事項 (caution)</label>
-                <textarea id="caution"></textarea>
-            </div>
+            <!-- 項目一覧 -->
+            <div class="form-group"><label>寺院名 (name) ※必須</label><input type="text" id="name" required></div>
+            <div class="form-group"><label>宗派 (sect)</label><input type="text" id="sect"></div>
+            <div class="form-group"><label>住所 (address)</label><input type="text" id="address"></div>
+            <div class="form-group"><label>搬送持ち物 (transport)</label><textarea id="transport"></textarea></div>
+            <div class="form-group"><label>納棺仕様 (nokanshiyo)</label><textarea id="nokanshiyo"></textarea></div>
+            <div class="form-group"><label>書き物 (kakimono)</label><textarea id="kakimono"></textarea></div>
+            <div class="form-group"><label>式の流れ (flow)</label><textarea id="flow"></textarea></div>
+            <div class="form-group"><label>注意事項 (caution)</label><textarea id="caution"></textarea></div>
+            
             <div class="btn-group">
                 <button type="button" class="cancel-btn" onclick="closeModal()">キャンセル</button>
                 <button type="submit" class="save-btn">保存する</button>
@@ -113,28 +108,22 @@
 <script>
     const FIELDS = ['name', 'sect', 'address', 'transport', 'nokanshiyo', 'kakimono', 'flow', 'caution'];
 
-// 一覧取得
+    // 一覧取得
     function loadList() {
         fetch('/get_all_data')
             .then(res => res.json())
             .then(data => {
                 const list = document.getElementById('temple-list');
-                list.innerHTML = ''; // クリア
+                list.innerHTML = ''; 
                 const sortedKeys = Object.keys(data).sort();
                 
                 sortedKeys.forEach(key => {
                     const t = data[key];
                     const div = document.createElement('div');
                     div.className = 'temple-item';
-                    
-                    // 【修正点】名前の横に宗派を表示
-                    // (宗派がない場合は空欄)
                     const sectDisplay = t.sect ? ` <span style="font-weight:normal; font-size:0.9em; color:#666;">(${t.sect})</span>` : '';
-
                     div.innerHTML = `
-                        <span class="temple-name">
-                            ${t.name}${sectDisplay}
-                        </span>
+                        <span class="temple-name">${t.name}${sectDisplay}</span>
                         <div class="item-btns">
                             <button class="edit-btn" onclick='openEditModal(${JSON.stringify(t)})'>編集</button>
                             <button class="del-btn" onclick="deleteTemple('${t.name}')">削除</button>
@@ -144,11 +133,31 @@
                 });
             });
     }
-    loadList(); // 初回実行
+    loadList();
+
+    // ★データ更新処理
+    async function reloadData() {
+        if(!confirm("スプレッドシートから最新データを読み込みますか？")) return;
+        
+        const btn = document.querySelector('.reload-btn');
+        const originalText = btn.innerText;
+        btn.innerText = "更新中...";
+        btn.disabled = true;
+
+        const res = await fetch('/reload_data', { method: 'POST' });
+        
+        if(res.ok) {
+            alert("更新しました！");
+            loadList(); // リストも再取得
+        } else {
+            alert("更新に失敗しました");
+        }
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 
     const modal = document.getElementById('edit-modal');
 
-    // 新規追加モードで開く
     function openAddModal() {
         document.getElementById('modal-title').innerText = "新規寺院の追加";
         document.getElementById('mode').value = "add";
@@ -157,7 +166,6 @@
         modal.style.display = 'flex';
     }
 
-    // 編集モードで開く
     function openEditModal(temple) {
         document.getElementById('modal-title').innerText = `${temple.name} の編集`;
         document.getElementById('mode').value = "edit";
@@ -170,7 +178,6 @@
         modal.style.display = 'none';
     }
 
-    // 保存処理 (追加 or 更新)
     document.getElementById('edit-form').onsubmit = async function(e) {
         e.preventDefault();
         const mode = document.getElementById('mode').value;
@@ -178,7 +185,7 @@
         FIELDS.forEach(f => formData[f] = document.getElementById(f).value);
         const originalName = document.getElementById('original-name').value;
 
-        if(!confirm("この内容で保存してよろしいですか？")) return;
+        if(!confirm("保存してよろしいですか？")) return;
 
         let url = mode === 'add' ? '/add_temple' : '/update_temple';
         
@@ -191,6 +198,7 @@
         if(res.ok) {
             alert("保存しました！");
             closeModal();
+            // 保存後は自動でメモリも更新されるのでリロード不要だが、念のためリスト更新
             loadList();
         } else {
             const err = await res.json();
@@ -198,9 +206,8 @@
         }
     };
 
-    // 削除処理
     async function deleteTemple(name) {
-        if(!confirm(`本当に「${name}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) return;
+        if(!confirm(`本当に「${name}」を削除してもよろしいですか？`)) return;
         
         const res = await fetch('/delete_temple', {
             method: 'POST',
