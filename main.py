@@ -7,6 +7,7 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import timedelta
 
 load_dotenv()
 
@@ -19,6 +20,7 @@ if GOOGL_API_KEY:
 
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_session'
+app.permanent_session_lifetime = timedelta(minutes=30) # ★30分でログアウト
 
 # ★ここでシートを明確に分けています★
 DATA_SPREADSHEET_NAME = "otera_data"           # スタッフも触るデータ
@@ -107,6 +109,7 @@ def admin():
     if request.method == "POST":
         input_password = request.form.get("password")
         if input_password == current_password:
+            session.permanent = True # ★これを追加
             session['is_admin'] = True
             return render_template("admin.html")
         else:
