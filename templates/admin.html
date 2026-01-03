@@ -7,7 +7,6 @@
     <style>
         body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
         
-        /* ヘッダーエリア */
         .header-area { 
             display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;
@@ -19,14 +18,12 @@
             text-decoration: none; color: #1a237e; font-weight: bold; 
             border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white;
         }
-        /* 更新ボタン */
         .reload-btn {
             background: #f57f17; color: white; border: none; padding: 8px 15px; 
             border-radius: 4px; cursor: pointer; font-weight: bold;
         }
         .reload-btn:hover { background: #f9a825; }
         
-        /* 操作バー */
         .action-bar { margin-bottom: 20px; }
         .add-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold;}
         
@@ -37,10 +34,16 @@
             border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;
         }
         .temple-name { font-weight: bold; font-size: 1.1em; }
-        
         .item-btns { display: flex; gap: 10px; }
         .edit-btn { background: #1a237e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
         .del-btn { background: #c62828; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+
+        /* ログ表示エリア */
+        .log-area { margin-top: 40px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .log-area h3 { margin-top: 0; color: #555; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .log-table th, .log-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+        .log-table th { color: #777; }
 
         /* モーダル */
         .modal {
@@ -55,7 +58,6 @@
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
         input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         textarea { height: 60px; }
-
         .btn-group { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .save-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
         .cancel-btn { background: #757575; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
@@ -79,6 +81,17 @@
     <!-- リスト表示 -->
 </div>
 
+<!-- ログ表示 -->
+<div class="log-area">
+    <h3>最近の操作ログ (最新20件)</h3>
+    <table class="log-table">
+        <thead>
+            <tr><th>日時</th><th>操作</th><th>詳細</th></tr>
+        </thead>
+        <tbody id="log-list"></tbody>
+    </table>
+</div>
+
 <!-- 編集・追加用モーダル -->
 <div id="edit-modal" class="modal">
     <div class="modal-content">
@@ -87,7 +100,6 @@
             <input type="hidden" id="mode" value="edit">
             <input type="hidden" id="original-name">
             
-            <!-- 項目一覧 -->
             <div class="form-group"><label>寺院名 (name) ※必須</label><input type="text" id="name" required></div>
             <div class="form-group"><label>宗派 (sect)</label><input type="text" id="sect"></div>
             <div class="form-group"><label>住所 (address)</label><input type="text" id="address"></div>
@@ -108,7 +120,6 @@
 <script>
     const FIELDS = ['name', 'sect', 'address', 'transport', 'nokanshiyo', 'kakimono', 'flow', 'caution'];
 
-    // 一覧取得
     function loadList() {
         fetch('/get_all_data')
             .then(res => res.json())
@@ -116,7 +127,6 @@
                 const list = document.getElementById('temple-list');
                 list.innerHTML = ''; 
                 const sortedKeys = Object.keys(data).sort();
-                
                 sortedKeys.forEach(key => {
                     const t = data[key];
                     const div = document.createElement('div');
@@ -133,22 +143,36 @@
                 });
             });
     }
-    loadList();
+    
+    // ログ読み込み
+    function loadLogs() {
+        fetch('/get_logs')
+            .then(res => res.json())
+            .then(logs => {
+                const tbody = document.getElementById('log-list');
+                tbody.innerHTML = '';
+                logs.forEach(log => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.details}</td>`;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
 
-    // ★データ更新処理
+    loadList();
+    loadLogs(); // 初回実行
+
     async function reloadData() {
         if(!confirm("スプレッドシートから最新データを読み込みますか？")) return;
-        
         const btn = document.querySelector('.reload-btn');
         const originalText = btn.innerText;
         btn.innerText = "更新中...";
         btn.disabled = true;
-
         const res = await fetch('/reload_data', { method: 'POST' });
-        
         if(res.ok) {
             alert("更新しました！");
-            loadList(); // リストも再取得
+            loadList();
+            loadLogs(); // ログも更新
         } else {
             alert("更新に失敗しました");
         }
@@ -157,7 +181,6 @@
     }
 
     const modal = document.getElementById('edit-modal');
-
     function openAddModal() {
         document.getElementById('modal-title').innerText = "新規寺院の追加";
         document.getElementById('mode').value = "add";
@@ -165,7 +188,6 @@
         FIELDS.forEach(f => document.getElementById(f).value = "");
         modal.style.display = 'flex';
     }
-
     function openEditModal(temple) {
         document.getElementById('modal-title').innerText = `${temple.name} の編集`;
         document.getElementById('mode').value = "edit";
@@ -173,10 +195,7 @@
         FIELDS.forEach(f => document.getElementById(f).value = temple[f] || '');
         modal.style.display = 'flex';
     }
-
-    function closeModal() {
-        modal.style.display = 'none';
-    }
+    function closeModal() { modal.style.display = 'none'; }
 
     document.getElementById('edit-form').onsubmit = async function(e) {
         e.preventDefault();
@@ -184,22 +203,18 @@
         const formData = {};
         FIELDS.forEach(f => formData[f] = document.getElementById(f).value);
         const originalName = document.getElementById('original-name').value;
-
         if(!confirm("保存してよろしいですか？")) return;
-
         let url = mode === 'add' ? '/add_temple' : '/update_temple';
-        
         const res = await fetch(url, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ original_name: originalName, data: formData })
         });
-
         if(res.ok) {
             alert("保存しました！");
             closeModal();
-            // 保存後は自動でメモリも更新されるのでリロード不要だが、念のためリスト更新
             loadList();
+            loadLogs();
         } else {
             const err = await res.json();
             alert("エラー: " + (err.message || "不明なエラー"));
@@ -208,16 +223,15 @@
 
     async function deleteTemple(name) {
         if(!confirm(`本当に「${name}」を削除してもよろしいですか？`)) return;
-        
         const res = await fetch('/delete_temple', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ name: name })
         });
-
         if(res.ok) {
             alert("削除しました。");
             loadList();
+            loadLogs();
         } else {
             alert("削除に失敗しました。");
         }

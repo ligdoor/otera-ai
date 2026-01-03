@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 import pandas as pd
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -10,9 +11,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 load_dotenv()
 
 # --- 設定 ---
-GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GOOGL_API_KEY:
-    GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GOOGL_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 if GOOGL_API_KEY:
     genai.configure(api_key=GOOGL_API_KEY)
@@ -21,9 +20,9 @@ if GOOGL_API_KEY:
 app = Flask(__name__)
 app.secret_key = 'secret_key_for_session'
 
-# シート名設定
-DATA_SPREADSHEET_NAME = "otera_data"
-CONFIG_SPREADSHEET_NAME = "otera_admin_config"
+# ★ここでシートを明確に分けています★
+DATA_SPREADSHEET_NAME = "otera_data"           # スタッフも触るデータ
+CONFIG_SPREADSHEET_NAME = "otera_admin_config" # 管理者しか触れないパスワード
 
 gc = None 
 
@@ -40,9 +39,21 @@ def get_spreadsheet_client():
         gc = gspread.authorize(creds)
     return gc
 
+# ★ログ記録（データ用シートの logs タブに記録します）
+def add_log(action, details):
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('logs')
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sheet.append_row([timestamp, action, details])
+    except Exception as e:
+        print(f"ログ記録エラー: {e}")
+
+# ★パスワード読み込み（必ず CONFIG_SPREADSHEET_NAME を見に行きます）
 def get_admin_password():
     try:
         client = get_spreadsheet_client()
+        # ここで専用シートを開いています
         sheet = client.open(CONFIG_SPREADSHEET_NAME).sheet1
         records = sheet.get_all_records()
         for row in records:
@@ -53,7 +64,7 @@ def get_admin_password():
         print(f"パスワード読み込みエラー: {e}")
         return "admin1234"
 
-# データを読み込んでメモリ(グローバル変数)に保存する関数
+# データ読み込み
 def load_data_from_sheet():
     data = {}
     try:
@@ -69,7 +80,6 @@ def load_data_from_sheet():
         print(f"読み込みエラー: {e}")
     return data
 
-# 起動時に一度だけロード
 otera_database = load_data_from_sheet()
 
 
@@ -81,17 +91,19 @@ def index():
 
 # --- 管理機能 ---
 
-# ★ここが新機能！手動でデータを更新するAPI
 @app.route("/reload_data", methods=["POST"])
 def reload_data():
     if not session.get('is_admin'): return "Unauthorized", 401
     global otera_database
     otera_database = load_data_from_sheet()
-    return jsonify({"status": "success", "message": "データを更新しました"})
+    add_log("データ更新", "管理画面からリロードを実行")
+    return jsonify({"status": "success"})
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
+    # 毎回専用シートからパスワードを確認
     current_password = get_admin_password()
+    
     if request.method == "POST":
         input_password = request.form.get("password")
         if input_password == current_password:
@@ -127,9 +139,18 @@ def admin():
 @app.route("/get_all_data")
 def get_all_data():
     if not session.get('is_admin'): return "Unauthorized", 401
-    # 管理画面を開いた時は、今のメモリ上のデータを返すだけでOK
-    # (毎回ロードしないので高速)
     return jsonify(otera_database)
+
+@app.route("/get_logs")
+def get_logs():
+    if not session.get('is_admin'): return "Unauthorized", 401
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('logs')
+        records = sheet.get_all_records()
+        return jsonify(records[-20:][::-1]) 
+    except:
+        return jsonify([])
 
 def get_data_sheet_and_headers():
     client = get_spreadsheet_client()
@@ -151,10 +172,10 @@ def update_temple():
             row_data = [new_data.get(h, "") for h in headers]
             sheet.update(f"A{row_idx}", [row_data])
             
-            # メモリも直接書き換える（スプレッドシート再読み込みを避けるため）
             if original_name in otera_database: del otera_database[original_name]
             otera_database[new_data['name']] = new_data
             
+            add_log("編集", f"{original_name} の情報を更新")
             return jsonify({"status": "success"})
         else:
             return jsonify({"status": "not_found"}), 404
@@ -173,8 +194,9 @@ def add_temple():
         sheet, headers = get_data_sheet_and_headers()
         row_data = [new_data.get(h, "") for h in headers]
         sheet.append_row(row_data)
-        
         otera_database[name] = new_data
+        
+        add_log("追加", f"{name} を新規追加")
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -189,6 +211,8 @@ def delete_temple():
         if cell:
             sheet.delete_rows(cell.row)
             if name in otera_database: del otera_database[name]
+            
+            add_log("削除", f"{name} を削除")
             return jsonify({"status": "success"})
         else:
             return jsonify({"status": "not_found"}), 404
@@ -241,7 +265,6 @@ def generate_answer_with_ai(temple_info, user_question):
 
 @app.route("/get_temple_names", methods=["GET"])
 def get_temple_names():
-    # ★変更点：毎回ロードせず、メモリ上のデータを返すだけ
     return jsonify({"names": sorted(list(otera_database.keys()))})
 
 @app.route("/get_sects", methods=["GET"])
@@ -266,10 +289,7 @@ def search_by_sect():
 
 @app.route("/ask", methods=["POST"])
 def ask():
-    # ★変更点：ここでもロードしない
     user_question = request.json['question']
-    client_mode = request.json.get('mode')
-    
     found_temple = None
     if user_question in otera_database:
         found_temple = otera_database[user_question]
