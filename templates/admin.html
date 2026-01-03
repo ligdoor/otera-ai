@@ -113,7 +113,7 @@
 <script>
     const FIELDS = ['name', 'sect', 'address', 'transport', 'nokanshiyo', 'kakimono', 'flow', 'caution'];
 
-    // 一覧取得
+// 一覧取得
     function loadList() {
         fetch('/get_all_data')
             .then(res => res.json())
@@ -126,8 +126,15 @@
                     const t = data[key];
                     const div = document.createElement('div');
                     div.className = 'temple-item';
+                    
+                    // 【修正点】名前の横に宗派を表示
+                    // (宗派がない場合は空欄)
+                    const sectDisplay = t.sect ? ` <span style="font-weight:normal; font-size:0.9em; color:#666;">(${t.sect})</span>` : '';
+
                     div.innerHTML = `
-                        <span class="temple-name">${t.name}</span>
+                        <span class="temple-name">
+                            ${t.name}${sectDisplay}
+                        </span>
                         <div class="item-btns">
                             <button class="edit-btn" onclick='openEditModal(${JSON.stringify(t)})'>編集</button>
                             <button class="del-btn" onclick="deleteTemple('${t.name}')">削除</button>
