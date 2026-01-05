@@ -7,6 +7,7 @@ import google.generativeai as genai
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import time
 
 load_dotenv()
 
@@ -24,17 +25,28 @@ CONFIG_SPREADSHEET_NAME = "otera_admin_config"
 
 gc = None 
 
+# スプレッドシート接続（リトライ機能付き）
 def get_spreadsheet_client():
     global gc
     if gc is None:
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds_json_str = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-        if creds_json_str:
-            creds_dict = json.loads(creds_json_str)
-            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-        else:
-            creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-        gc = gspread.authorize(creds)
+        
+        # 3回までリトライする
+        for i in range(3):
+            try:
+                if creds_json_str:
+                    creds_dict = json.loads(creds_json_str)
+                    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+                else:
+                    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+                
+                gc = gspread.authorize(creds)
+                return gc
+            except Exception as e:
+                print(f"接続リトライ中({i+1}/3): {e}")
+                time.sleep(2) # 2秒待つ
+                
     return gc
 
 def get_admin_password():
