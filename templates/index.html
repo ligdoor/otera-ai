@@ -232,10 +232,18 @@
         navigator.clipboard.writeText(text).then(() => alert("コピーしました"));
     }
 
+    // ★画面クリア用関数（新規追加）
+    function clearChat() {
+        chatWindow.innerHTML = '';
+    }
+
     function onTempleSelect() {
         const select = document.getElementById('temple-select');
         const name = select.value;
         if (!name) return;
+        
+        clearChat(); // ★ここでクリア！
+        
         currentTempleName = name;
         quickQaArea.style.display = "flex";
         select.value = ""; 
@@ -247,6 +255,9 @@
         const select = document.getElementById('sect-select');
         const sectName = select.value;
         if (!sectName) return;
+        
+        clearChat(); // ★ここでクリア！
+        
         select.value = "";
         currentTempleName = "";
         quickQaArea.style.display = "none";
@@ -287,6 +298,8 @@
     }
 
     function tapTempleList(name) { 
+        clearChat(); // ★ここでクリア！
+        
         currentTempleName = name;
         quickQaArea.style.display = "flex";
         hideMenu(); 
@@ -300,6 +313,7 @@
         }
         const text = `${currentTempleName}の${question}`;
         hideMenu();
+        // 質問の時はクリアせず、履歴を残したほうが自然なのでクリアしない
         sendChatRequest(text, 'qa');
     }
 
@@ -313,6 +327,7 @@
         }
         input.value = '';
         hideMenu();
+        // 自由入力も履歴を残すためクリアしない
         sendChatRequest(sendText, 'qa');
     }
 

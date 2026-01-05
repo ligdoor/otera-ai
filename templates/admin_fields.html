@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>項目設定</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
+        .header-area { border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between;}
+        h1 { color: #1a237e; margin: 0; }
+        .back-link { text-decoration: none; color: #1a237e; font-weight: bold; border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white; }
+        
+        .field-list { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; max-width: 600px; margin: 0 auto; }
+        .field-item { display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: #fff; }
+        .field-item:last-child { border-bottom: none; }
+        
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .key-input { width: 150px; background: #f0f0f0; color: #555; }
+        .label-input { flex-grow: 1; }
+        
+        .handle { cursor: grab; font-size: 1.5rem; color: #aaa; margin-right: 10px; }
+        
+        .add-area { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ddd; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .save-btn { background: #2e7d32; width: 100%; margin-top: 20px; font-size: 1.2rem; }
+        .add-btn { background: #1a237e; }
+        .del-btn { background: #c62828; padding: 5px 10px; }
+
+    </style>
+</head>
+<body>
+
+<div class="header-area">
+    <h1>表示項目の設定</h1>
+    <a href="/admin" class="back-link">← 管理画面へ</a>
+</div>
+
+<div class="field-list">
+    <p>項目の追加・削除・並び替えができます。<br>※keyは半角英字推奨</p>
+    <div id="fields-container">
+        <!-- ここに項目が並ぶ -->
+    </div>
+
+    <div class="add-area">
+        <h3>新規項目追加</h3>
+        <input type="text" id="new-key" placeholder="ID (例: parking)">
+        <input type="text" id="new-label" placeholder="表示名 (例: 駐車場)">
+        <button class="btn add-btn" onclick="addField()">追加</button>
+    </div>
+
+    <button class="btn save-btn" onclick="saveFields()">設定を保存する</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+    let fields = [];
+
+    // 初期ロード
+    fetch('/get_fields')
+        .then(res => res.json())
+        .then(data => {
+            fields = data;
+            render();
+        });
+
+    function render() {
+        const container = document.getElementById('fields-container');
+        container.innerHTML = '';
+        
+        fields.forEach((f, index) => {
+            const div = document.createElement('div');
+            div.className = 'field-item';
+            // name は削除不可
+            const isFixed = f.key === 'name';
+            const delBtn = isFixed ? '' : `<button class="btn del-btn" onclick="removeField(${index})">×</button>`;
+            const readOnly = isFixed ? 'readonly' : '';
+            
+            div.innerHTML = `
+                <span class="handle">☰</span>
+                <input type="text" class="key-input" value="${f.key}" readonly>
+                <input type="text" class="label-input" value="${f.label}" onchange="updateLabel(${index}, this.value)">
+                ${delBtn}
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 並び替えライブラリ (SortableJS)
+    new Sortable(document.getElementById('fields-container'), {
+        handle: '.handle',
+        animation: 150,
+        onEnd: function (evt) {
+            const item = fields.splice(evt.oldIndex, 1)[0];
+            fields.splice(evt.newIndex, 0, item);
+        }
+    });
+
+    function addField() {
+        const key = document.getElementById('new-key').value.trim();
+        const label = document.getElementById('new-label').value.trim();
+        if(!key || !label) return alert("IDと表示名を入力してください");
+        
+        // 重複チェック
+        if(fields.some(f => f.key === key)) return alert("そのIDは既に使われています");
+
+        fields.push({ key: key, label: label, order: fields.length + 1 });
+        document.getElementById('new-key').value = '';
+        document.getElementById('new-label').value = '';
+        render();
+    }
+
+    function removeField(index) {
+        if(!confirm("この項目を表示から削除しますか？\n(データ自体は消えません)")) return;
+        fields.splice(index, 1);
+        render();
+    }
+
+    function updateLabel(index, val) {
+        fields[index].label = val;
+    }
+
+    async function saveFields() {
+        // orderを再割り当て
+        fields.forEach((f, i) => f.order = i + 1);
+        
+        if(!confirm("設定を保存して反映しますか？")) return;
+
+        const res = await fetch('/update_fields', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fields: fields })
+        });
+
+        if(res.ok) {
+            alert("保存しました！");
+            location.reload();
+        } else {
+            alert("エラーが発生しました");
+        }
+    }
+</script>
+</body>
+</html>
