@@ -5,46 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>寺院データ管理画面</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
+        body { font-family: sans-serif; margin: 0; padding: 10px; background-color: #f4f6f8; color: #333; }
         
+        /* ヘッダーエリア：スマホ用に縦並びも許容 */
         .header-area { 
-            display: flex; justify-content: space-between; align-items: center; 
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
             border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;
         }
-        h1 { color: #1a237e; margin: 0; font-size: 1.5rem; }
+        h1 { color: #1a237e; margin: 0; font-size: 1.3rem; white-space: nowrap; }
         
-        .header-btns { display: flex; gap: 10px; }
+        /* ボタン群：狭いときは折り返す */
+        .header-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        
+        /* 共通ボタン設定：文字改行禁止！ */
+        button, .back-link, .pass-btn, .reload-btn, .add-btn, .edit-btn, .del-btn, .save-btn, .cancel-btn {
+            white-space: nowrap; /* ★これが重要！文字の折り返しを禁止 */
+        }
+
         .back-link { 
             text-decoration: none; color: #1a237e; font-weight: bold; 
-            border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white;
+            border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white; font-size: 0.9rem;
         }
         .config-link { background:#e3f2fd; }
         
-        .reload-btn {
-            background: #f57f17; color: white; border: none; padding: 8px 15px; 
-            border-radius: 4px; cursor: pointer; font-weight: bold;
+        .pass-btn {
+            background: #555; color: white; border: none; padding: 8px 12px; 
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem;
         }
-        .reload-btn:hover { background: #f9a825; }
+
+        .reload-btn {
+            background: #f57f17; color: white; border: none; padding: 8px 12px; 
+            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem;
+        }
         
         .action-bar { margin-bottom: 20px; }
-        .add-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold;}
+        .add-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; width: 100%; }
         
-        /* リスト */
         .temple-list { margin-top: 10px; }
         .temple-item { 
             background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; 
-            border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; /* スマホ向けに縦並び */
         }
-        .temple-name { font-weight: bold; font-size: 1.1em; }
-        
-        .item-btns { display: flex; gap: 10px; }
-        .edit-btn { background: #1a237e; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        .del-btn { background: #c62828; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        /* PC画面なら横並びに戻す */
+        @media (min-width: 600px) {
+            .temple-item { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
 
-        /* ログエリア */
-        .log-area { margin-top: 40px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-        .log-area h3 { margin-top: 0; color: #555; }
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        .temple-name { font-weight: bold; font-size: 1.1em; }
+        .item-btns { display: flex; gap: 10px; width: 100%; }
+        .edit-btn { background: #1a237e; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; flex-grow: 1; }
+        .del-btn { background: #c62828; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; }
+
+        .log-area { margin-top: 40px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 500px; } /* 横スクロール対応 */
         .log-table th, .log-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
 
         /* モーダル */
@@ -54,26 +67,27 @@
         }
         .modal-content {
             background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px;
-            max-height: 90vh; overflow-y: auto;
+            max-height: 85vh; overflow-y: auto;
         }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        textarea { height: 60px; }
-
-        .btn-group { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .save-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-        .cancel-btn { background: #757575; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 80px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .save-btn { background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; flex-grow: 2; font-weight: bold;}
+        .cancel-btn { background: #757575; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; flex-grow: 1; }
     </style>
 </head>
 <body>
 
 <div class="header-area">
-    <h1>管理画面</h1>
+    <h1>管理画面 <small style="font-size:0.6em; color:#666;">({{ user_name }}さん)</small></h1>
     <div class="header-btns">
+        <button class="pass-btn" onclick="openPassModal()">🔑 パスワード変更</button>
         <a href="/admin/fields" class="back-link config-link">🔧 項目設定</a>
-        <button class="reload-btn" onclick="reloadData()">🔄 データを最新にする</button>
-        <a href="/" class="back-link">← アプリへ</a>
+        <button class="reload-btn" onclick="reloadData()">🔄 データ更新</button>
+        <a href="/" class="back-link">← アプリ</a>
+        <a href="/logout" class="back-link" style="border-color:#ccc; color:#666;">ログアウト</a>
     </div>
 </div>
 
@@ -81,84 +95,96 @@
     <button class="add-btn" onclick="openAddModal()">＋ 新規寺院を追加</button>
 </div>
 
-<div id="temple-list" class="temple-list">
-    <!-- リスト表示 -->
-</div>
+<div id="temple-list" class="temple-list"></div>
 
 <div class="log-area">
-    <h3>最近の操作ログ (最新20件)</h3>
+    <h3>最近の操作ログ</h3>
     <table class="log-table">
-        <thead><tr><th>日時</th><th>操作</th><th>詳細</th></tr></thead>
+        <thead><tr><th>日時</th><th>担当</th><th>操作</th><th>詳細</th></tr></thead>
         <tbody id="log-list"></tbody>
     </table>
 </div>
 
-<!-- 編集・追加用モーダル -->
+<!-- 編集モーダル -->
 <div id="edit-modal" class="modal">
     <div class="modal-content">
         <h2 id="modal-title">編集</h2>
         <form id="edit-form">
             <input type="hidden" id="mode" value="edit">
             <input type="hidden" id="original-name">
-            
-            <!-- ★ここが重要：フォームの中身をJavaScriptで空っぽにしておき、後で作る -->
             <div id="dynamic-form-fields"></div>
-            
             <div class="btn-group">
-                <button type="button" class="cancel-btn" onclick="closeModal()">キャンセル</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('edit-modal')">キャンセル</button>
                 <button type="submit" class="save-btn">保存する</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- ★パスワード変更モーダル -->
+<div id="pass-modal" class="modal">
+    <div class="modal-content" style="max-width:350px;">
+        <h2>パスワード変更</h2>
+        <form id="pass-form">
+            <div class="form-group">
+                <label>現在のパスワード</label>
+                <input type="password" id="current-pass" required>
+            </div>
+            <div class="form-group">
+                <label>新しいパスワード</label>
+                <input type="password" id="new-pass" required>
+            </div>
+            <div class="form-group">
+                <label>新しいパスワード(確認)</label>
+                <input type="password" id="new-pass-confirm" required>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="cancel-btn" onclick="closeModal('pass-modal')">キャンセル</button>
+                <button type="submit" class="save-btn">変更する</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-    // 項目設定（フィールド）をサーバーから取得して保持する変数
     let fieldConfig = [];
 
-    // 初期化処理
     async function init() {
-        // 項目設定を取得
         const res = await fetch('/get_fields');
         fieldConfig = await res.json();
-        
         loadList();
         loadLogs();
     }
     init();
 
     function loadList() {
-        fetch('/get_all_data')
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('temple-list');
-                list.innerHTML = ''; 
-                const sortedKeys = Object.keys(data).sort();
-                
-                sortedKeys.forEach(key => {
-                    const t = data[key];
-                    const div = document.createElement('div');
-                    div.className = 'temple-item';
-                    const sectDisplay = t.sect ? ` <span style="font-weight:normal; font-size:0.9em; color:#666;">(${t.sect})</span>` : '';
-                    div.innerHTML = `
-                        <span class="temple-name">${t.name}${sectDisplay}</span>
-                        <div class="item-btns">
-                            <button class="edit-btn" onclick='openEditModal(${JSON.stringify(t)})'>編集</button>
-                            <button class="del-btn" onclick="deleteTemple('${t.name}')">削除</button>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
+        fetch('/get_all_data').then(res=>res.json()).then(data => {
+            const list = document.getElementById('temple-list');
+            list.innerHTML = ''; 
+            const sortedKeys = Object.keys(data).sort();
+            sortedKeys.forEach(key => {
+                const t = data[key];
+                const div = document.createElement('div');
+                div.className = 'temple-item';
+                const sectDisplay = t.sect ? ` <span style="font-weight:normal;font-size:0.9em;color:#666;">(${t.sect})</span>` : '';
+                div.innerHTML = `
+                    <span class="temple-name">${t.name}${sectDisplay}</span>
+                    <div class="item-btns">
+                        <button class="edit-btn" onclick='openEditModal(${JSON.stringify(t)})'>編集</button>
+                        <button class="del-btn" onclick="deleteTemple('${t.name}')">削除</button>
+                    </div>`;
+                list.appendChild(div);
             });
+        });
     }
     
     function loadLogs() {
-        fetch('/get_logs').then(res => res.json()).then(logs => {
+        fetch('/get_logs').then(res=>res.json()).then(logs => {
             const tbody = document.getElementById('log-list');
             tbody.innerHTML = '';
             logs.forEach(log => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${log.timestamp}</td><td>${log.action}</td><td>${log.details}</td>`;
+                tr.innerHTML = `<td>${log.timestamp}</td><td>${log.user}</td><td>${log.action}</td><td>${log.details}</td>`;
                 tbody.appendChild(tr);
             });
         });
@@ -166,41 +192,58 @@
 
     async function reloadData() {
         if(!confirm("スプレッドシートから最新データを読み込みますか？")) return;
-        const btn = document.querySelector('.reload-btn');
-        const originalText = btn.innerText;
-        btn.innerText = "更新中...";
-        btn.disabled = true;
         await fetch('/reload_data', { method: 'POST' });
         alert("更新しました！");
         location.reload();
     }
 
-    const modal = document.getElementById('edit-modal');
-    const formContainer = document.getElementById('dynamic-form-fields');
+    // --- パスワード変更 ---
+    function openPassModal() {
+        document.getElementById('pass-modal').style.display = 'flex';
+        document.getElementById('pass-form').reset();
+    }
 
-    // ★フォームを動的に生成する関数
+    document.getElementById('pass-form').onsubmit = async function(e) {
+        e.preventDefault();
+        const currentPass = document.getElementById('current-pass').value;
+        const newPass = document.getElementById('new-pass').value;
+        const confirmPass = document.getElementById('new-pass-confirm').value;
+
+        if (newPass !== confirmPass) {
+            alert("新しいパスワードが一致しません");
+            return;
+        }
+
+        const res = await fetch('/change_password', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ current_pass: currentPass, new_pass: newPass })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            alert("パスワードを変更しました！");
+            closeModal('pass-modal');
+        } else {
+            alert("エラー: " + data.message);
+        }
+    };
+
+    // --- 編集フォーム ---
     function renderForm(data = {}) {
-        formContainer.innerHTML = ''; // クリア
-        
+        const container = document.getElementById('dynamic-form-fields');
+        container.innerHTML = ''; 
         fieldConfig.forEach(field => {
             const div = document.createElement('div');
             div.className = 'form-group';
             const value = data[field.key] || '';
             const required = field.key === 'name' ? 'required' : '';
-            
-            // name, sect, address は1行入力、それ以外はテキストエリア
             if (['name', 'sect', 'address'].includes(field.key)) {
-                div.innerHTML = `
-                    <label>${field.label} (${field.key})</label>
-                    <input type="text" id="input-${field.key}" value="${value}" ${required}>
-                `;
+                div.innerHTML = `<label>${field.label} (${field.key})</label><input type="text" id="input-${field.key}" value="${value}" ${required}>`;
             } else {
-                div.innerHTML = `
-                    <label>${field.label} (${field.key})</label>
-                    <textarea id="input-${field.key}">${value}</textarea>
-                `;
+                div.innerHTML = `<label>${field.label} (${field.key})</label><textarea id="input-${field.key}">${value}</textarea>`;
             }
-            formContainer.appendChild(div);
+            container.appendChild(div);
         });
     }
 
@@ -208,53 +251,41 @@
         document.getElementById('modal-title').innerText = "新規寺院の追加";
         document.getElementById('mode').value = "add";
         document.getElementById('original-name').value = "";
-        
-        renderForm({}); // 空のフォームを作る
-        
-        modal.style.display = 'flex';
+        renderForm({});
+        document.getElementById('edit-modal').style.display = 'flex';
     }
-
     function openEditModal(temple) {
         document.getElementById('modal-title').innerText = `${temple.name} の編集`;
         document.getElementById('mode').value = "edit";
         document.getElementById('original-name').value = temple.name;
-        
-        renderForm(temple); // データ入りのフォームを作る
-        
-        modal.style.display = 'flex';
+        renderForm(temple);
+        document.getElementById('edit-modal').style.display = 'flex';
     }
-
-    function closeModal() { modal.style.display = 'none'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     document.getElementById('edit-form').onsubmit = async function(e) {
         e.preventDefault();
         const mode = document.getElementById('mode').value;
         const originalName = document.getElementById('original-name').value;
-        
-        // フォームからデータを集める
         const formData = {};
         fieldConfig.forEach(field => {
-            const input = document.getElementById(`input-${field.key}`);
-            if (input) formData[field.key] = input.value;
+            const el = document.getElementById(`input-${field.key}`);
+            if(el) formData[field.key] = el.value;
         });
-
         if(!confirm("保存してよろしいですか？")) return;
-
         let url = mode === 'add' ? '/add_temple' : '/update_temple';
         const res = await fetch(url, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ original_name: originalName, data: formData })
         });
-
         if(res.ok) {
             alert("保存しました！");
-            closeModal();
-            loadList();
-            loadLogs();
+            closeModal('edit-modal');
+            loadList(); loadLogs();
         } else {
             const err = await res.json();
-            alert("エラー: " + (err.message || "不明なエラー"));
+            alert("エラー: " + err.message);
         }
     };
 
@@ -265,13 +296,8 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ name: name })
         });
-        if(res.ok) {
-            alert("削除しました。");
-            loadList();
-            loadLogs();
-        } else {
-            alert("削除に失敗しました。");
-        }
+        if(res.ok) { alert("削除しました。"); loadList(); loadLogs(); } 
+        else { alert("削除に失敗しました。"); }
     }
 </script>
 </body>
