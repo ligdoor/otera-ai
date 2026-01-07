@@ -244,9 +244,9 @@ def authenticate_user(user_id, password):
         records = sheet.get_all_records()
         for user in records:
             if str(user.get('user_id')) == user_id:
-                stored_hash = user.get('password_hash', '')
-                if stored_hash.startswith('$2b$'):
-                    if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+                stored_val = str(user.get('password', '') or user.get('password_hash', ''))
+                if stored_val.startswith('$2b$'):
+                    if bcrypt.checkpw(password.encode('utf-8'), stored_val.encode('utf-8')):
                         return user.get('name'), user.get('role', 'staff')
                 else:
                     if str(user.get('password')) == password:
