@@ -3,3 +3,16 @@
 credentials.json
 __pycache__/
 *.pyc
+
+# テスト・デバッグ用ファイル
+check_models.py
+
+# IDEの設定ファイル
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OSの一時ファイル
+.DS_Store
+Thumbs.db
