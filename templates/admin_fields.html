@@ -4,27 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>項目設定</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f6f8; color: #333; }
-        .header-area { border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between;}
-        h1 { color: #1a237e; margin: 0; }
-        .back-link { text-decoration: none; color: #1a237e; font-weight: bold; border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white; }
+<style>
+        body { font-family: sans-serif; margin: 0; padding: 10px; background-color: #f4f6f8; color: #333; }
         
-        .field-list { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; max-width: 600px; margin: 0 auto; }
-        .field-item { display: flex; gap: 10px; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: #fff; }
+        /* ヘッダー：スマホでも綺麗に並ぶように調整 */
+        .header-area { 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;
+        }
+        h1 { color: #1a237e; margin: 0; font-size: 1.2rem; }
+        .back-link { 
+            text-decoration: none; color: #1a237e; font-weight: bold; 
+            border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white; font-size: 0.9rem; white-space: nowrap;
+        }
+        
+        .field-list { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; max-width: 600px; margin: 0 auto; }
+        
+        /* 項目リスト：横スクロールしないように幅を自動調整 */
+        .field-item { 
+            display: flex; gap: 5px; align-items: center; padding: 10px 0; 
+            border-bottom: 1px solid #eee; background: #fff; 
+        }
         .field-item:last-child { border-bottom: none; }
         
-        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .key-input { width: 150px; background: #f0f0f0; color: #555; }
-        .label-input { flex-grow: 1; }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         
-        .handle { cursor: grab; font-size: 1.5rem; color: #aaa; margin-right: 10px; }
+        /* キー入力欄：少し狭く */
+        .key-input { width: 80px; background: #f0f0f0; color: #555; flex-shrink: 0; }
+        
+        /* ラベル入力欄：残りの幅を全部使う */
+        .label-input { flex-grow: 1; min-width: 0; /* これ重要：はみ出し防止 */ }
+        
+        /* ハンバーガーアイコン */
+        .handle { cursor: grab; font-size: 1.2rem; color: #aaa; margin-right: 5px; flex-shrink: 0; }
+        
+        /* 削除ボタン */
+        .del-btn { 
+            background: #c62828; color: white; border: none; padding: 0; 
+            width: 30px; height: 30px; border-radius: 4px; cursor: pointer; 
+            flex-shrink: 0; font-weight: bold; font-size: 1.2rem; line-height: 1;
+        }
         
         .add-area { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ddd; }
-        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
-        .save-btn { background: #2e7d32; width: 100%; margin-top: 20px; font-size: 1.2rem; }
+        
+        /* 追加エリアの入力欄も横並びに */
+        .add-inputs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .add-inputs input { width: 50%; }
+
+        .btn { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; width: 100%; box-sizing: border-box; }
+        .save-btn { background: #2e7d32; margin-top: 20px; font-size: 1.1rem; }
         .add-btn { background: #1a237e; }
-        .del-btn { background: #c62828; padding: 5px 10px; }
 
     </style>
 </head>
@@ -41,10 +70,12 @@
         <!-- ここに項目が並ぶ -->
     </div>
 
-    <div class="add-area">
+<div class="add-area">
         <h3>新規項目追加</h3>
-        <input type="text" id="new-key" placeholder="ID (例: parking)">
-        <input type="text" id="new-label" placeholder="表示名 (例: 駐車場)">
+        <div class="add-inputs">
+            <input type="text" id="new-key" placeholder="ID (例: parking)">
+            <input type="text" id="new-label" placeholder="表示名 (例: 駐車場)">
+        </div>
         <button class="btn add-btn" onclick="addField()">追加</button>
     </div>
 
