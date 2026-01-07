@@ -453,14 +453,17 @@ def delete_temple():
 def generate_static_summary(temple_info):
     def get(key): return temple_info.get(key) or '記載なし'
     temple_name = get('name')
+    # シングルクォートをエスケープ（f-string外で処理）
+    temple_name_escaped = temple_name.replace("'", "\\'")
+    
     map_url = f"https://www.google.com/maps/search/?api=1&query={temple_info.get('address','')}"
     copy_btn = f"""<button class="copy-btn" onclick="copyToClipboard('{temple_info.get('address','')}')">📋</button>"""
     
     html = f"""<div style="font-size:1.1em; font-weight:bold; color:#1a237e; margin-bottom:10px;">{temple_name} 情報</div>"""
     
-    # お気に入りボタンを追加
+    # お気に入りボタンを追加（エスケープ済みの変数を使用）
     html += f"""<div style="margin-bottom:15px;">
-        <script>document.write(addFavoriteButton('{temple_name.replace("'", "\\'")}'));</script>
+        <script>document.write(addFavoriteButton('{temple_name_escaped}'));</script>
     </div>"""
     
     html += f"""<b>【基本情報】</b><br>"""
@@ -501,11 +504,16 @@ def generate_answer_with_ai(temple_info, user_question):
         
         response = client.models.generate_content(
             model='gemini-2.0-flash-exp',
-            contents=prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                max_output_tokens=500
+            )
         )
         return response.text
     except Exception as e:
-        return f"エラー: {e}"
+        print(f"AI生成エラー: {e}")
+        return f"エラー: AI応答の生成に失敗しました"
 
 @app.route("/get_temple_names", methods=["GET"])
 def get_temple_names():
