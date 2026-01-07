@@ -10,6 +10,10 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import bcrypt
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import requests
 
 load_dotenv()
 
@@ -18,22 +22,28 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     client = genai.Client(api_key=GEMINI_API_KEY)
 
+# 通知設定
+SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))  # 強力なランダムキー
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=30)  # セッション30分
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # XSS対策
-app.config['SESSION_COOKIE_SECURE'] = True if os.environ.get('FLASK_ENV') == 'production' else False  # HTTPS強制（本番環境）
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF対策
+app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(minutes=30)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True if os.environ.get('FLASK_ENV') == 'production' else False
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 DATA_SPREADSHEET_NAME = "otera_data"
 CONFIG_SPREADSHEET_NAME = "otera_admin_config"
 
 gc = None 
-
-# ログイン試行記録（メモリ内保存、本番ではRedis推奨）
 login_attempts = {}
-LOCK_TIME = 300  # ロック時間（秒）5分
-MAX_ATTEMPTS = 5  # 最大試行回数
+LOCK_TIME = 300
+MAX_ATTEMPTS = 5
 
 def get_spreadsheet_client():
     global gc
@@ -48,7 +58,110 @@ def get_spreadsheet_client():
         gc = gspread.authorize(creds)
     return gc
 
-# ログ記録
+# --- 通知機能 ---
+
+def send_slack_notification(message, emoji=":bell:"):
+    """Slack通知を送信"""
+    if not SLACK_WEBHOOK_URL:
+        return
+    
+    try:
+        payload = {
+            "text": f"{emoji} {message}",
+            "username": "寺院管理システム",
+            "icon_emoji": ":temple:"
+        }
+        response = requests.post(SLACK_WEBHOOK_URL, json=payload, timeout=5)
+        if response.status_code == 200:
+            print(f"✅ Slack通知送信成功: {message}")
+        else:
+            print(f"❌ Slack通知失敗: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Slack通知エラー: {e}")
+
+def send_email_alert(subject, body, to_email=None):
+    """メール通知を送信"""
+    if not SMTP_USER or not SMTP_PASSWORD or not ADMIN_EMAIL:
+        return
+    
+    recipient = to_email or ADMIN_EMAIL
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USER
+        msg['To'] = recipient
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
+        
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+        
+        print(f"✅ メール送信成功: {subject}")
+    except Exception as e:
+        print(f"❌ メール送信エラー: {e}")
+
+def notify_suspicious_login(user_id, ip_address, reason):
+    """異常ログイン時の通知"""
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Slack通知
+    slack_msg = f"""
+🚨 *異常ログイン検知*
+• 時刻: {timestamp}
+• ユーザーID: {user_id}
+• IPアドレス: {ip_address}
+• 理由: {reason}
+    """
+    send_slack_notification(slack_msg, emoji=":warning:")
+    
+    # メール通知
+    email_subject = f"【警告】異常ログイン検知 - {user_id}"
+    email_body = f"""
+寺院管理システムで異常なログイン試行を検知しました。
+
+▼ 詳細情報
+━━━━━━━━━━━━━━━━━━━━━━
+日時: {timestamp}
+ユーザーID: {user_id}
+IPアドレス: {ip_address}
+検知理由: {reason}
+━━━━━━━━━━━━━━━━━━━━━━
+
+必要に応じて以下の対応を検討してください:
+1. 該当ユーザーアカウントの一時停止
+2. パスワードリセットの実施
+3. アクセスログの確認
+
+このメールは自動送信されています。
+    """
+    send_email_alert(email_subject, email_body)
+
+def notify_data_update(user_name, action, details):
+    """データ更新時のSlack通知"""
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    emoji_map = {
+        '追加': ':heavy_plus_sign:',
+        '編集': ':pencil2:',
+        '削除': ':wastebasket:',
+        'データ更新': ':arrows_counterclockwise:'
+    }
+    emoji = emoji_map.get(action, ':bell:')
+    
+    slack_msg = f"""
+📊 *データ更新通知*
+• 時刻: {timestamp}
+• 担当者: {user_name}
+• 操作: {action}
+• 内容: {details}
+    """
+    send_slack_notification(slack_msg, emoji=emoji)
+
+# --- ログ記録 ---
+
 def add_log(action, details, ip_address=None):
     try:
         user_name = session.get('user_name', '不明')
@@ -58,36 +171,44 @@ def add_log(action, details, ip_address=None):
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         ip = ip_address or request.remote_addr
         sheet.append_row([timestamp, user_name, user_id, action, details, ip])
+        
+        # データ更新系の操作はSlack通知
+        if action in ['追加', '編集', '削除', 'データ更新']:
+            notify_data_update(user_name, action, details)
+            
     except Exception as e:
         print(f"ログ記録エラー: {e}")
 
-# セッション更新（最終アクセス時刻を記録）
 def update_session_activity():
     session['last_activity'] = datetime.datetime.now().timestamp()
     session.permanent = True
 
-# セッションタイムアウトチェック
 def check_session_timeout():
     if 'last_activity' in session:
         elapsed = datetime.datetime.now().timestamp() - session['last_activity']
-        if elapsed > 1800:  # 30分 = 1800秒
+        if elapsed > 1800:
             session.clear()
             return False
     return True
 
-# 認証必須デコレータ
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('is_admin'):
+            # HTML画面へのアクセスの場合はログインページにリダイレクト
+            if request.path.startswith('/admin'):
+                return redirect(url_for('admin'))
+            # API呼び出しの場合はJSONエラーを返す
             return jsonify({"message": "認証が必要です"}), 401
         if not check_session_timeout():
+            session.clear()
+            if request.path.startswith('/admin'):
+                return redirect(url_for('admin'))
             return jsonify({"message": "セッションがタイムアウトしました"}), 401
         update_session_activity()
         return f(*args, **kwargs)
     return decorated_function
 
-# ログイン試行回数チェック
 def check_login_attempts(user_id):
     if user_id in login_attempts:
         attempts = login_attempts[user_id]
@@ -97,10 +218,12 @@ def check_login_attempts(user_id):
         elif attempts['count'] >= MAX_ATTEMPTS:
             login_attempts[user_id]['locked_until'] = datetime.datetime.now() + datetime.timedelta(seconds=LOCK_TIME)
             add_log("ログイン制限", f"user_id: {user_id} が{MAX_ATTEMPTS}回失敗したためロック")
+            
+            # 異常ログイン通知
+            notify_suspicious_login(user_id, request.remote_addr, f"{MAX_ATTEMPTS}回連続失敗")
             return False, f"試行回数が上限に達しました。{LOCK_TIME}秒間ロックされます。"
     return True, ""
 
-# ログイン試行回数を記録
 def record_login_attempt(user_id, success):
     if success:
         if user_id in login_attempts:
@@ -109,8 +232,11 @@ def record_login_attempt(user_id, success):
         if user_id not in login_attempts:
             login_attempts[user_id] = {'count': 0, 'locked_until': None}
         login_attempts[user_id]['count'] += 1
+        
+        # 3回失敗で警告通知
+        if login_attempts[user_id]['count'] == 3:
+            notify_suspicious_login(user_id, request.remote_addr, "3回連続失敗（警告）")
 
-# ユーザー認証（ログイン用）
 def authenticate_user(user_id, password):
     try:
         client = get_spreadsheet_client()
@@ -119,15 +245,12 @@ def authenticate_user(user_id, password):
         for user in records:
             if str(user.get('user_id')) == user_id:
                 stored_hash = user.get('password_hash', '')
-                # 平文パスワードとの互換性チェック（移行期間用）
-                if stored_hash.startswith('$2b$'):  # bcryptハッシュ
+                if stored_hash.startswith('$2b$'):
                     if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
                         return user.get('name'), user.get('role', 'staff')
-                else:  # 旧形式（平文）
+                else:
                     if str(user.get('password')) == password:
-                        # 初回ログイン時にハッシュ化
                         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                        # パスワードハッシュを更新
                         cell = sheet.find(user_id, in_column=1)
                         if cell:
                             sheet.update_cell(cell.row, 2, hashed)
@@ -137,7 +260,6 @@ def authenticate_user(user_id, password):
         print(f"認証エラー: {e}")
         return None, None
 
-# パスワード変更処理
 @app.route("/change_password", methods=["POST"])
 @login_required
 def change_password():
@@ -145,7 +267,6 @@ def change_password():
     new_pass = request.json['new_pass']
     user_id = session.get('user_id')
     
-    # パスワード強度チェック
     if len(new_pass) < 8:
         return jsonify({"message": "パスワードは8文字以上必要です"}), 400
     if not any(c.isdigit() for c in new_pass):
@@ -156,14 +277,11 @@ def change_password():
     try:
         client = get_spreadsheet_client()
         sheet = client.open(CONFIG_SPREADSHEET_NAME).worksheet('users')
-        
         cell = sheet.find(user_id, in_column=1)
         
         if cell:
             row_idx = cell.row
             stored_hash = sheet.cell(row_idx, 2).value
-            
-            # 現在のパスワード確認
             is_valid = False
             if stored_hash.startswith('$2b$'):
                 is_valid = bcrypt.checkpw(current_pass.encode('utf-8'), stored_hash.encode('utf-8'))
@@ -171,7 +289,6 @@ def change_password():
                 is_valid = (str(stored_hash) == current_pass)
             
             if is_valid:
-                # 新しいパスワードをハッシュ化
                 new_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 sheet.update_cell(row_idx, 2, new_hash)
                 add_log("パスワード変更", "自身のパスワードを変更しました")
@@ -181,11 +298,9 @@ def change_password():
                 return jsonify({"message": "現在のパスワードが間違っています"}), 400
         else:
             return jsonify({"message": "ユーザーが見つかりません"}), 404
-
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-# 項目定義
 def load_fields_config():
     fields = []
     try:
@@ -216,8 +331,6 @@ def load_data_from_sheet():
 otera_database = load_data_from_sheet()
 field_config = load_fields_config()
 
-# --- ルーティング ---
-
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -228,7 +341,6 @@ def admin():
         user_id = request.form.get("user_id")
         password = request.form.get("password")
         
-        # ログイン試行回数チェック
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
             add_log("ログイン失敗", f"user_id: {user_id} - {error_msg}", request.remote_addr)
@@ -238,7 +350,7 @@ def admin():
         
         if user_name:
             record_login_attempt(user_id, True)
-            session.clear()  # 既存セッションをクリア
+            session.clear()
             session['is_admin'] = True
             session['user_name'] = user_name
             session['user_id'] = user_id
@@ -287,7 +399,8 @@ def admin():
                 </form>
                 <div class="security-note">
                     <strong>⚠️ セキュリティ</strong><br>
-                    5回失敗すると5分間ロックされます<br>
+                    3回失敗で警告通知<br>
+                    5回失敗で5分間ロック<br>
                     30分無操作で自動ログアウト
                 </div>
                 <a href="/" class="back-link">← アプリへ戻る</a>
@@ -328,7 +441,7 @@ def get_logs():
         client = get_spreadsheet_client()
         sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('logs')
         records = sheet.get_all_records()
-        return jsonify(records[-50:][::-1])  # 最新50件
+        return jsonify(records[-50:][::-1])
     except: 
         return jsonify([])
 
@@ -368,7 +481,6 @@ def update_temple():
     original_name = req['original_name']
     new_data = req['data']
     
-    # 入力検証
     if not new_data.get('name'):
         return jsonify({"status": "error", "message": "寺院名は必須です"}), 400
     
@@ -448,12 +560,9 @@ def delete_temple():
         add_log("削除エラー", f"エラー: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- アプリ機能 ---
-
 def generate_static_summary(temple_info):
     def get(key): return temple_info.get(key) or '記載なし'
     temple_name = get('name')
-    # シングルクォートをエスケープ（f-string外で処理）
     temple_name_escaped = temple_name.replace("'", "\\'")
     
     map_url = f"https://www.google.com/maps/search/?api=1&query={temple_info.get('address','')}"
@@ -461,7 +570,6 @@ def generate_static_summary(temple_info):
     
     html = f"""<div style="font-size:1.1em; font-weight:bold; color:#1a237e; margin-bottom:10px;">{temple_name} 情報</div>"""
     
-    # お気に入りボタンを追加（エスケープ済みの変数を使用）
     html += f"""<div style="margin-bottom:15px;">
         <script>document.write(addFavoriteButton('{temple_name_escaped}'));</script>
     </div>"""
@@ -558,7 +666,6 @@ def ask():
         answer = generate_answer_with_ai(found_temple, user_question)
     return jsonify({"answer": answer})
 
-# セキュリティヘッダー追加
 @app.after_request
 def set_security_headers(response):
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -568,5 +675,4 @@ def set_security_headers(response):
     return response
 
 if __name__ == "__main__":
-    # 本番環境ではdebug=Falseにすること
     app.run(debug=True, port=5001)
