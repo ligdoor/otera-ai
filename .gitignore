@@ -6,7 +6,7 @@ __pycache__/
 
 # テスト・デバッグ用ファイル
 check_models.py
-
+pass.py
 # IDEの設定ファイル
 .vscode/
 .idea/
