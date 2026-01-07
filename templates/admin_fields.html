@@ -33,18 +33,25 @@
         .key-input { width: 80px; background: #f0f0f0; color: #555; flex-shrink: 0; }
         
         /* ラベル入力欄：残りの幅を全部使う */
-        .label-input { flex-grow: 1; min-width: 0; /* これ重要：はみ出し防止 */ }
-        
+        .label-input { 
+            flex-grow: 1; 
+            width: auto; /* 幅指定をリセット */
+            min-width: 0; /* はみ出し防止 */
+        }        
         /* ハンバーガーアイコン */
         .handle { cursor: grab; font-size: 1.2rem; color: #aaa; margin-right: 5px; flex-shrink: 0; }
         
-        /* 削除ボタン */
+        /* 削除ボタン：サイズを強力に固定 */
         .del-btn { 
             background: #c62828; color: white; border: none; padding: 0; 
-            width: 30px; height: 30px; border-radius: 4px; cursor: pointer; 
-            flex-shrink: 0; font-weight: bold; font-size: 1.2rem; line-height: 1;
+            width: 40px !important; /* !important で強制的に幅を固定 */
+            height: 40px !important; 
+            border-radius: 4px; cursor: pointer; 
+            flex-shrink: 0; /* 絶対に縮めない */
+            font-weight: bold; font-size: 1.5rem; line-height: 1;
+            display: flex; justify-content: center; align-items: center; /* バツ印を真ん中に */
         }
-        
+                
         .add-area { margin-top: 20px; padding-top: 20px; border-top: 2px dashed #ddd; }
         
         /* 追加エリアの入力欄も横並びに */
