@@ -5,142 +5,376 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>寺院データ管理画面</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 10px; background-color: #f4f6f8; color: #333; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+            margin: 0; padding: 0; background-color: #f4f6f8; color: #333; 
+        }
         
-        /* ヘッダーエリア：スマホ用に縦並びも許容 */
-        .header-area { 
+        /* ヘッダー */
+        header { 
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white; padding: 12px 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
+            position: sticky; top: 0; z-index: 500;
+        }
+        .header-content {
+            max-width: 1200px; margin: 0 auto;
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-            border-bottom: 2px solid #1a237e; padding-bottom: 10px; margin-bottom: 20px;
         }
-        h1 { color: #1a237e; margin: 0; font-size: 1.3rem; white-space: nowrap; }
-        
-        /* ボタン群：狭いときは折り返す */
-        .header-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        
-        /* 共通ボタン設定：文字改行禁止！ */
-        button, .back-link, .pass-btn, .reload-btn, .add-btn, .edit-btn, .del-btn, .save-btn, .cancel-btn {
-            white-space: nowrap; /* ★これが重要！文字の折り返しを禁止 */
+        .header-title {
+            display: flex; align-items: center; gap: 10px;
         }
+        h1 { 
+            margin: 0; font-size: 1.3rem; font-weight: bold;
+        }
+        .user-badge {
+            background: rgba(255,255,255,0.2); 
+            padding: 4px 12px; border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* ヘッダーボタン群 */
+        .header-btns { 
+            display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; 
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            color: white; border: none; padding: 8px 12px;
+            border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 500; white-space: nowrap;
+            display: flex; align-items: center; gap: 4px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.25); }
+        .header-btn.primary { background: #2e7d32; }
+        .header-btn.primary:hover { background: #1b5e20; }
+        .header-btn.warning { background: #f57f17; }
+        .header-btn.warning:hover { background: #e65100; }
+        .header-btn.danger { background: #d32f2f; }
+        .header-btn.danger:hover { background: #b71c1c; }
 
-        .back-link { 
-            text-decoration: none; color: #1a237e; font-weight: bold; 
-            border: 1px solid #1a237e; padding: 8px 12px; border-radius: 4px; background: white; font-size: 0.9rem;
-        }
-        .config-link { background:#e3f2fd; }
+        /* メインコンテンツ */
+        main { max-width: 1200px; margin: 0 auto; padding: 15px; }
         
-        .pass-btn {
-            background: #555; color: white; border: none; padding: 8px 12px; 
-            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem;
+        /* 新規追加ボタン */
+        .add-btn {
+            width: 100%; background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+            color: white; border: none; padding: 14px 20px; border-radius: 8px;
+            cursor: pointer; font-size: 1.05rem; font-weight: bold;
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 2px 8px rgba(46,125,50,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        .reload-btn {
-            background: #f57f17; color: white; border: none; padding: 8px 12px; 
-            border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.9rem;
-        }
+        .add-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46,125,50,0.4); }
+        .add-btn:active { transform: translateY(0); }
         
-        .action-bar { margin-bottom: 20px; }
-        .add-btn { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; width: 100%; }
-        
+        /* 寺院リスト */
         .temple-list { margin-top: 10px; }
         .temple-item { 
-            background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; 
-            border: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; /* スマホ向けに縦並び */
+            background: white; padding: 16px; margin-bottom: 12px; border-radius: 10px; 
+            border: 1px solid #e0e0e0; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: box-shadow 0.2s;
         }
-        /* PC画面なら横並びに戻す */
+        .temple-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        
+        .temple-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            flex-direction: column; gap: 12px;
+        }
         @media (min-width: 600px) {
-            .temple-item { flex-direction: row; justify-content: space-between; align-items: center; }
+            .temple-header { flex-direction: row; align-items: center; }
         }
-
-        .temple-name { font-weight: bold; font-size: 1.1em; }
-        .item-btns { display: flex; gap: 10px; width: 100%; }
-        .edit-btn { background: #1a237e; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; flex-grow: 1; }
-        .del-btn { background: #c62828; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; }
-
-        .log-area { margin-top: 40px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; }
-        .log-table { width: 100%; border-collapse: collapse; font-size: 0.85em; min-width: 500px; } /* 横スクロール対応 */
-        .log-table th, .log-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+        
+        .temple-info { flex: 1; }
+        .temple-name { font-weight: bold; font-size: 1.2em; color: #1a237e; margin-bottom: 4px; }
+        .temple-sect { 
+            display: inline-block; background: #e3f2fd; color: #1565c0;
+            padding: 2px 8px; border-radius: 4px; font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .temple-actions { 
+            display: flex; gap: 8px; width: 100%; 
+        }
+        @media (min-width: 600px) {
+            .temple-actions { width: auto; }
+        }
+        
+        .btn {
+            padding: 10px 16px; border: none; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-preview { background: #e3f2fd; color: #1565c0; flex: 1; }
+        .btn-preview:hover { background: #bbdefb; }
+        .btn-edit { background: #1a237e; color: white; flex: 1; }
+        .btn-edit:hover { background: #0d47a1; }
+        .btn-delete { background: #d32f2f; color: white; padding: 10px; }
+        .btn-delete:hover { background: #b71c1c; }
+        
+        /* ログエリア */
+        .log-area { 
+            margin-top: 40px; background: white; padding: 20px; 
+            border-radius: 10px; border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .log-area h3 { margin-top: 0; color: #1a237e; }
+        .log-container { overflow-x: auto; }
+        .log-table { 
+            width: 100%; border-collapse: collapse; font-size: 0.9em; 
+            min-width: 600px;
+        }
+        .log-table thead { background: #f5f5f5; }
+        .log-table th, .log-table td { 
+            padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0;
+        }
+        .log-table th { font-weight: 600; color: #555; }
+        .log-badge {
+            display: inline-block; padding: 4px 8px; border-radius: 4px;
+            font-size: 0.85em; font-weight: 600;
+        }
+        .log-badge.edit { background: #e3f2fd; color: #1565c0; }
+        .log-badge.add { background: #e8f5e9; color: #2e7d32; }
+        .log-badge.delete { background: #ffebee; color: #c62828; }
+        .log-badge.update { background: #fff3e0; color: #f57f17; }
 
         /* モーダル */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;
+            background: rgba(0,0,0,0.6); justify-content: center; align-items: center; 
+            z-index: 1000; padding: 20px;
         }
+        .modal.show { display: flex; }
         .modal-content {
-            background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px;
-            max-height: 85vh; overflow-y: auto;
+            background: white; border-radius: 12px; width: 100%; max-width: 600px;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease-out;
         }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-        textarea { height: 80px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .save-btn { background: #2e7d32; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; flex-grow: 2; font-weight: bold;}
-        .cancel-btn { background: #757575; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; flex-grow: 1; }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-header {
+            padding: 20px; border-bottom: 1px solid #e0e0e0;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f5f5f5;
+        }
+        .modal-header h2 { margin: 0; color: #1a237e; font-size: 1.3rem; }
+        .modal-close {
+            background: none; border: none; font-size: 1.8rem;
+            cursor: pointer; color: #666; width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: background 0.2s;
+        }
+        .modal-close:hover { background: #e0e0e0; }
+        .modal-body { padding: 20px; }
+        .modal-footer {
+            padding: 20px; border-top: 1px solid #e0e0e0;
+            display: flex; gap: 10px; background: #f9f9f9;
+        }
+        
+        /* フォーム */
+        .form-group { margin-bottom: 20px; }
+        .form-label { 
+            display: block; font-weight: 600; margin-bottom: 6px; 
+            color: #555; font-size: 0.95rem;
+        }
+        .form-input, .form-textarea {
+            width: 100%; padding: 12px; border: 2px solid #e0e0e0; 
+            border-radius: 6px; font-size: 1rem; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none; border-color: #1a237e;
+        }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .btn-cancel { 
+            flex: 1; background: #757575; color: white;
+        }
+        .btn-cancel:hover { background: #616161; }
+        .btn-save { 
+            flex: 2; background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+            color: white;
+        }
+        .btn-save:hover { background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%); }
+
+        /* プレビューモーダル */
+        .preview-content {
+            line-height: 1.8; font-size: 1rem;
+        }
+        .preview-title {
+            font-size: 1.2em; font-weight: bold; color: #1a237e; 
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1a237e;
+        }
+        .preview-field {
+            margin-bottom: 12px;
+        }
+        .preview-label {
+            font-weight: 600; color: #555;
+        }
+        .preview-value {
+            color: #333; margin-left: 4px;
+        }
+        .preview-transport {
+            color: #c62828; font-weight: bold;
+        }
+        
+        /* アイコン（絵文字で代用） */
+        .icon { font-style: normal; }
+        
+        /* レスポンシブ調整 */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.1rem; }
+            .header-content { gap: 8px; }
+            .header-btns { width: 100%; justify-content: flex-start; }
+            .temple-actions { flex-direction: column; }
+            .btn { padding: 12px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="header-area">
-    <h1>管理画面 <small style="font-size:0.6em; color:#666;">({{ user_name }}さん)</small></h1>
-    <div class="header-btns">
-        <button class="pass-btn" onclick="openPassModal()">🔑 パスワード変更</button>
-        <a href="/admin/fields" class="back-link config-link">🔧 項目設定</a>
-        <button class="reload-btn" onclick="reloadData()">🔄 データ更新</button>
-        <a href="/" class="back-link">← アプリ</a>
-        <a href="/logout" class="back-link" style="border-color:#ccc; color:#666;">ログアウト</a>
+<header>
+    <div class="header-content">
+        <div class="header-title">
+            <h1>管理画面</h1>
+            <span class="user-badge">{{ user_name }}さん</span>
+        </div>
+        <div class="header-btns">
+            <button class="header-btn" onclick="openPassModal()">
+                <span class="icon">🔑</span>
+                <span>パスワード変更</span>
+            </button>
+            <a href="/admin/fields" class="header-btn">
+                <span class="icon">⚙️</span>
+                <span>項目設定</span>
+            </a>
+            <button class="header-btn warning" onclick="reloadData()">
+                <span class="icon">🔄</span>
+                <span>データ更新</span>
+            </button>
+            <a href="/" class="header-btn">
+                <span class="icon">🏠</span>
+                <span>アプリへ</span>
+            </a>
+            <a href="/logout" class="header-btn danger">
+                <span class="icon">🚪</span>
+                <span>ログアウト</span>
+            </a>
+        </div>
     </div>
-</div>
+</header>
 
-<div class="action-bar">
-    <button class="add-btn" onclick="openAddModal()">＋ 新規寺院を追加</button>
-</div>
+<main>
+    <button class="add-btn" onclick="openAddModal()">
+        <span class="icon" style="font-size:1.3em">➕</span>
+        新規寺院を追加
+    </button>
 
-<div id="temple-list" class="temple-list"></div>
+    <div id="temple-list" class="temple-list"></div>
 
-<div class="log-area">
-    <h3>最近の操作ログ</h3>
-    <table class="log-table">
-        <thead><tr><th>日時</th><th>担当</th><th>操作</th><th>詳細</th></tr></thead>
-        <tbody id="log-list"></tbody>
-    </table>
-</div>
+    <div class="log-area">
+        <h3>📋 最近の操作ログ</h3>
+        <div class="log-container">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>日時</th>
+                        <th>担当</th>
+                        <th>操作</th>
+                        <th>詳細</th>
+                    </tr>
+                </thead>
+                <tbody id="log-list"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
 
 <!-- 編集モーダル -->
 <div id="edit-modal" class="modal">
     <div class="modal-content">
-        <h2 id="modal-title">編集</h2>
+        <div class="modal-header">
+            <h2 id="modal-title">編集</h2>
+            <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+        </div>
         <form id="edit-form">
-            <input type="hidden" id="mode" value="edit">
-            <input type="hidden" id="original-name">
-            <div id="dynamic-form-fields"></div>
-            <div class="btn-group">
-                <button type="button" class="cancel-btn" onclick="closeModal('edit-modal')">キャンセル</button>
-                <button type="submit" class="save-btn">保存する</button>
+            <div class="modal-body">
+                <input type="hidden" id="mode" value="edit">
+                <input type="hidden" id="original-name">
+                <div id="dynamic-form-fields"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('edit-modal')">
+                    キャンセル
+                </button>
+                <button type="submit" class="btn btn-save">
+                    <span class="icon">💾</span>
+                    保存する
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- ★パスワード変更モーダル -->
+<!-- プレビューモーダル -->
+<div id="preview-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>👁️ プレビュー</h2>
+            <button class="modal-close" onclick="closeModal('preview-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="preview-content" class="preview-content"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel" onclick="closeModal('preview-modal')" style="flex:1">
+                閉じる
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- パスワード変更モーダル -->
 <div id="pass-modal" class="modal">
-    <div class="modal-content" style="max-width:350px;">
-        <h2>パスワード変更</h2>
+    <div class="modal-content" style="max-width:400px;">
+        <div class="modal-header">
+            <h2>🔐 パスワード変更</h2>
+            <button class="modal-close" onclick="closeModal('pass-modal')">&times;</button>
+        </div>
         <form id="pass-form">
-            <div class="form-group">
-                <label>現在のパスワード</label>
-                <input type="password" id="current-pass" required>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">現在のパスワード</label>
+                    <input type="password" id="current-pass" class="form-input" required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">新しいパスワード</label>
+                    <input type="password" id="new-pass" class="form-input" required autocomplete="new-password">
+                    <small style="color:#666; font-size:0.85em;">
+                        8文字以上、英字と数字を含む
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">新しいパスワード（確認）</label>
+                    <input type="password" id="new-pass-confirm" class="form-input" required autocomplete="new-password">
+                </div>
             </div>
-            <div class="form-group">
-                <label>新しいパスワード</label>
-                <input type="password" id="new-pass" required>
-            </div>
-            <div class="form-group">
-                <label>新しいパスワード(確認)</label>
-                <input type="password" id="new-pass-confirm" required>
-            </div>
-            <div class="btn-group">
-                <button type="button" class="cancel-btn" onclick="closeModal('pass-modal')">キャンセル</button>
-                <button type="submit" class="save-btn">変更する</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('pass-modal')">
+                    キャンセル
+                </button>
+                <button type="submit" class="btn btn-save">
+                    <span class="icon">🔒</span>
+                    変更する
+                </button>
             </div>
         </form>
     </div>
@@ -148,58 +382,118 @@
 
 <script>
     let fieldConfig = [];
+    let templeData = {};
 
     async function init() {
-        const res = await fetch('/get_fields');
-        fieldConfig = await res.json();
-        loadList();
-        loadLogs();
+        try {
+            const res = await fetch('/get_fields');
+            fieldConfig = await res.json();
+            await loadList();
+            await loadLogs();
+        } catch (e) {
+            console.error('初期化エラー:', e);
+        }
     }
     init();
 
-    function loadList() {
-        fetch('/get_all_data').then(res=>res.json()).then(data => {
+    async function loadList() {
+        try {
+            const res = await fetch('/get_all_data');
+            templeData = await res.json();
             const list = document.getElementById('temple-list');
             list.innerHTML = ''; 
-            const sortedKeys = Object.keys(data).sort();
+            
+            const sortedKeys = Object.keys(templeData).sort();
+            
+            if (sortedKeys.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">登録されている寺院がありません</div>';
+                return;
+            }
+            
             sortedKeys.forEach(key => {
-                const t = data[key];
+                const t = templeData[key];
                 const div = document.createElement('div');
                 div.className = 'temple-item';
-                const sectDisplay = t.sect ? ` <span style="font-weight:normal;font-size:0.9em;color:#666;">(${t.sect})</span>` : '';
+                
+                const sectDisplay = t.sect ? `<span class="temple-sect">${t.sect}</span>` : '';
+                
                 div.innerHTML = `
-                    <span class="temple-name">${t.name}${sectDisplay}</span>
-                    <div class="item-btns">
-                        <button class="edit-btn" onclick='openEditModal(${JSON.stringify(t)})'>編集</button>
-                        <button class="del-btn" onclick="deleteTemple('${t.name}')">削除</button>
-                    </div>`;
+                    <div class="temple-header">
+                        <div class="temple-info">
+                            <div class="temple-name">${t.name}</div>
+                            ${sectDisplay}
+                        </div>
+                        <div class="temple-actions">
+                            <button class="btn btn-preview" onclick='openPreviewModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+                                <span class="icon">👁️</span>
+                                <span>プレビュー</span>
+                            </button>
+                            <button class="btn btn-edit" onclick='openEditModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+                                <span class="icon">✏️</span>
+                                <span>編集</span>
+                            </button>
+                            <button class="btn btn-delete" onclick="deleteTemple('${t.name.replace(/'/g, "\\'")}')">
+                                <span class="icon">🗑️</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
                 list.appendChild(div);
             });
-        });
+        } catch (e) {
+            console.error('データ読み込みエラー:', e);
+            alert('データの読み込みに失敗しました');
+        }
     }
     
-    function loadLogs() {
-        fetch('/get_logs').then(res=>res.json()).then(logs => {
+    async function loadLogs() {
+        try {
+            const res = await fetch('/get_logs');
+            const logs = await res.json();
             const tbody = document.getElementById('log-list');
             tbody.innerHTML = '';
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">ログがありません</td></tr>';
+                return;
+            }
+            
             logs.forEach(log => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td>${log.timestamp}</td><td>${log.user}</td><td>${log.action}</td><td>${log.details}</td>`;
+                
+                // 操作タイプに応じたバッジ
+                let badgeClass = 'update';
+                if (log.action === '編集') badgeClass = 'edit';
+                else if (log.action === '追加') badgeClass = 'add';
+                else if (log.action === '削除') badgeClass = 'delete';
+                
+                tr.innerHTML = `
+                    <td>${log.timestamp}</td>
+                    <td>${log.user}</td>
+                    <td><span class="log-badge ${badgeClass}">${log.action}</span></td>
+                    <td>${log.details}</td>
+                `;
                 tbody.appendChild(tr);
             });
-        });
+        } catch (e) {
+            console.error('ログ読み込みエラー:', e);
+        }
     }
 
     async function reloadData() {
-        if(!confirm("スプレッドシートから最新データを読み込みますか？")) return;
-        await fetch('/reload_data', { method: 'POST' });
-        alert("更新しました！");
-        location.reload();
+        if (!confirm("スプレッドシートから最新データを読み込みますか？")) return;
+        try {
+            await fetch('/reload_data', { method: 'POST' });
+            alert("✅ 更新しました！");
+            location.reload();
+        } catch (e) {
+            alert("❌ 更新に失敗しました");
+        }
     }
 
-    // --- パスワード変更 ---
+    // パスワード変更
     function openPassModal() {
-        document.getElementById('pass-modal').style.display = 'flex';
+        document.getElementById('pass-modal').classList.add('show');
         document.getElementById('pass-form').reset();
     }
 
@@ -210,95 +504,172 @@
         const confirmPass = document.getElementById('new-pass-confirm').value;
 
         if (newPass !== confirmPass) {
-            alert("新しいパスワードが一致しません");
+            alert("❌ 新しいパスワードが一致しません");
             return;
         }
 
-        const res = await fetch('/change_password', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ current_pass: currentPass, new_pass: newPass })
-        });
+        if (newPass.length < 8) {
+            alert("❌ パスワードは8文字以上必要です");
+            return;
+        }
 
-        const data = await res.json();
-        if (res.ok) {
-            alert("パスワードを変更しました！");
-            closeModal('pass-modal');
-        } else {
-            alert("エラー: " + data.message);
+        try {
+            const res = await fetch('/change_password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ current_pass: currentPass, new_pass: newPass })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("✅ パスワードを変更しました！");
+                closeModal('pass-modal');
+            } else {
+                alert("❌ エラー: " + data.message);
+            }
+        } catch (e) {
+            alert("❌ 通信エラーが発生しました");
         }
     };
 
-    // --- 編集フォーム ---
+    // プレビューモーダル
+    function openPreviewModal(temple) {
+        const content = document.getElementById('preview-content');
+        let html = `<div class="preview-title">${temple.name} 情報</div>`;
+        
+        fieldConfig.forEach(field => {
+            if (field.key === 'name') return;
+            const value = temple[field.key] || '記載なし';
+            const isTransport = field.key === 'transport';
+            
+            html += `
+                <div class="preview-field">
+                    <span class="preview-label">${field.label}:</span>
+                    <span class="preview-value ${isTransport ? 'preview-transport' : ''}">${value}</span>
+                </div>
+            `;
+        });
+        
+        content.innerHTML = html;
+        document.getElementById('preview-modal').classList.add('show');
+    }
+
+    // 編集フォーム
     function renderForm(data = {}) {
         const container = document.getElementById('dynamic-form-fields');
         container.innerHTML = ''; 
+        
         fieldConfig.forEach(field => {
             const div = document.createElement('div');
             div.className = 'form-group';
-            const value = data[field.key] || '';
+            const value = (data[field.key] || '').replace(/"/g, '&quot;');
             const required = field.key === 'name' ? 'required' : '';
+            
             if (['name', 'sect', 'address'].includes(field.key)) {
-                div.innerHTML = `<label>${field.label} (${field.key})</label><input type="text" id="input-${field.key}" value="${value}" ${required}>`;
+                div.innerHTML = `
+                    <label class="form-label">${field.label}</label>
+                    <input type="text" id="input-${field.key}" class="form-input" value="${value}" ${required}>
+                `;
             } else {
-                div.innerHTML = `<label>${field.label} (${field.key})</label><textarea id="input-${field.key}">${value}</textarea>`;
+                div.innerHTML = `
+                    <label class="form-label">${field.label}</label>
+                    <textarea id="input-${field.key}" class="form-textarea">${value}</textarea>
+                `;
             }
             container.appendChild(div);
         });
     }
 
     function openAddModal() {
-        document.getElementById('modal-title').innerText = "新規寺院の追加";
+        document.getElementById('modal-title').innerText = "➕ 新規寺院の追加";
         document.getElementById('mode').value = "add";
         document.getElementById('original-name').value = "";
         renderForm({});
-        document.getElementById('edit-modal').style.display = 'flex';
+        document.getElementById('edit-modal').classList.add('show');
     }
+
     function openEditModal(temple) {
-        document.getElementById('modal-title').innerText = `${temple.name} の編集`;
+        document.getElementById('modal-title').innerText = `✏️ ${temple.name} の編集`;
         document.getElementById('mode').value = "edit";
         document.getElementById('original-name').value = temple.name;
         renderForm(temple);
-        document.getElementById('edit-modal').style.display = 'flex';
+        document.getElementById('edit-modal').classList.add('show');
     }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function closeModal(id) { 
+        document.getElementById(id).classList.remove('show'); 
+    }
 
     document.getElementById('edit-form').onsubmit = async function(e) {
         e.preventDefault();
         const mode = document.getElementById('mode').value;
         const originalName = document.getElementById('original-name').value;
         const formData = {};
+        
         fieldConfig.forEach(field => {
             const el = document.getElementById(`input-${field.key}`);
-            if(el) formData[field.key] = el.value;
+            if (el) formData[field.key] = el.value.trim();
         });
-        if(!confirm("保存してよろしいですか？")) return;
-        let url = mode === 'add' ? '/add_temple' : '/update_temple';
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ original_name: originalName, data: formData })
-        });
-        if(res.ok) {
-            alert("保存しました！");
-            closeModal('edit-modal');
-            loadList(); loadLogs();
-        } else {
-            const err = await res.json();
-            alert("エラー: " + err.message);
+        
+        if (!formData.name) {
+            alert("❌ 寺院名は必須です");
+            return;
+        }
+        
+        if (!confirm("💾 保存してよろしいですか？")) return;
+        
+        try {
+            let url = mode === 'add' ? '/add_temple' : '/update_temple';
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ original_name: originalName, data: formData })
+            });
+            
+            if (res.ok) {
+                alert("✅ 保存しました！");
+                closeModal('edit-modal');
+                await loadList();
+                await loadLogs();
+            } else {
+                const err = await res.json();
+                alert("❌ エラー: " + err.message);
+            }
+        } catch (e) {
+            alert("❌ 通信エラーが発生しました");
         }
     };
 
     async function deleteTemple(name) {
-        if(!confirm(`本当に「${name}」を削除してもよろしいですか？`)) return;
-        const res = await fetch('/delete_temple', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: name })
-        });
-        if(res.ok) { alert("削除しました。"); loadList(); loadLogs(); } 
-        else { alert("削除に失敗しました。"); }
+        if (!confirm(`🗑️ 本当に「${name}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`)) return;
+        
+        try {
+            const res = await fetch('/delete_temple', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: name })
+            });
+            
+            if (res.ok) { 
+                alert("✅ 削除しました"); 
+                await loadList(); 
+                await loadLogs(); 
+            } else { 
+                alert("❌ 削除に失敗しました"); 
+            }
+        } catch (e) {
+            alert("❌ 通信エラーが発生しました");
+        }
     }
+
+    // モーダル外クリックで閉じる
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+    });
 </script>
 </body>
 </html>

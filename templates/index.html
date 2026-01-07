@@ -4,137 +4,242 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>寺院情報管理システム</title>
-
-        <!-- ファビコン設定 -->
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
     <style>
-        body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 0; padding: 0; background-color: #eef2f6; padding-bottom: 350px; transition: background-color 0.3s; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0; padding: 0; background-color: #f4f6f8; 
+            padding-bottom: 400px; transition: background-color 0.3s;
+        }
         
-        /* ヘッダー：フレックスボックスで整理 */
         header { 
-            background-color: #1a237e; color: white; padding: 12px 15px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 500;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white; padding: 12px 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
+            position: sticky; top: 0; z-index: 500;
+        }
+        .header-content {
+            max-width: 800px; margin: 0 auto;
             display: flex; justify-content: space-between; align-items: center;
         }
-        
-        /* タイトル：余ったスペースを使って中央に */
-        h1 { 
-            margin: 0; font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; 
-            flex-grow: 1; text-align: center;
+        h1 { margin: 0; font-size: 1.2rem; font-weight: bold; flex: 1; text-align: center; }
+        .header-btn {
+            background: none; border: none; font-size: 1.3rem;
+            cursor: pointer; color: white; padding: 4px 8px;
+            transition: transform 0.2s;
         }
+        .header-btn:hover { transform: scale(1.1); }
 
-        /* ダークモードボタン */
-        .dark-mode-toggle {
-            background: none; border: none; font-size: 1.2rem; cursor: pointer; color: white;
-            padding: 0; margin-right: 10px;
-        }
-        
-        /* 設定ボタン */
-        .admin-link {
-            color: white; text-decoration: none; font-size: 1.2rem;
-            margin-left: 10px;
-        }
-
-        /* チャット画面 */
-        #chat-window { 
-            max-width: 600px; margin: 0 auto; padding: 15px; min-height: 60vh;
-        }
+        #chat-window { max-width: 800px; margin: 0 auto; padding: 15px; min-height: 60vh; }
         .message { 
-            margin-bottom: 20px; line-height: 1.6; font-size: 15px; scroll-margin-top: 80px; 
+            margin-bottom: 20px; line-height: 1.6; font-size: 15px; 
+            scroll-margin-top: 80px; animation: messageSlide 0.3s ease-out;
         }
+        @keyframes messageSlide {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
         .user-message { text-align: right; }
-        .user-message p { display: inline-block; background: #c5cae9; color: #000; padding: 10px 15px; border-radius: 8px; margin: 0; text-align: left; font-weight: bold;}
+        .user-message p { 
+            display: inline-block; background: linear-gradient(135deg, #5e35b1 0%, #673ab7 100%);
+            color: white; padding: 12px 16px; border-radius: 18px 18px 4px 18px;
+            margin: 0; text-align: left; font-weight: 500;
+            box-shadow: 0 2px 8px rgba(94,53,177,0.3);
+        }
         
         .ai-message { text-align: left; }
         .ai-message p { 
-            display: inline-block; background: #fff; padding: 15px; border-radius: 4px; 
-            margin: 0; border: 1px solid #ccc; width: 100%; box-sizing: border-box;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: inline-block; background: white; padding: 16px; 
+            border-radius: 4px 18px 18px 18px; margin: 0; 
+            border: 1px solid #e0e0e0; width: 100%; max-width: 100%;
+            box-sizing: border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .ai-message a { color: #1a237e; font-weight: bold; }
+        .ai-message a { color: #1a237e; font-weight: 600; text-decoration: none; border-bottom: 2px solid #1a237e; }
+        .ai-message a:hover { background: #e8eaf6; }
 
-        .copy-btn { background-color: #fff; border: 1px solid #1a237e; color: #1a237e; border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; margin-left: 8px; }
+        .copy-btn { 
+            background-color: #fff; border: 2px solid #1a237e; 
+            color: #1a237e; border-radius: 6px; padding: 4px 10px; 
+            font-size: 13px; cursor: pointer; margin-left: 8px;
+            transition: all 0.2s; font-weight: 600;
+        }
+        .copy-btn:hover { background-color: #1a237e; color: white; transform: scale(1.05); }
 
-        /* カードデザイン */
         .temple-card {
-            border: 1px solid #ccc; border-left: 5px solid #1a237e;
-            padding: 12px; margin-top: 8px; border-radius: 4px; 
-            background-color: #fff; cursor: pointer; position: relative;
+            border: 2px solid #e0e0e0; border-left: 5px solid #1a237e;
+            padding: 14px 50px 14px 14px; margin-top: 10px; border-radius: 8px; 
+            background-color: white; cursor: pointer; position: relative;
+            transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .temple-card:active { background-color: #f5f5f5; }
-        .card-name { font-weight: bold; color: #333; font-size: 1.1rem; margin-bottom: 4px; }
-        .card-addr { font-size: 0.9rem; color: #555; display: flex; align-items: center; }
-        .card-tap-hint { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999; font-weight: bold;}
+        .temple-card:hover { 
+            border-color: #1a237e; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .card-name { font-weight: bold; color: #1a237e; font-size: 1.15rem; margin-bottom: 6px; }
+        .card-addr { 
+            font-size: 0.95rem; color: #555; 
+            display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+        }
+        
+        /* お気に入りボタン - カード右上に配置 */
+        .favorite-btn {
+            position: absolute; top: 12px; right: 12px;
+            background: none; border: none; font-size: 1.8rem;
+            cursor: pointer; padding: 4px; transition: transform 0.2s;
+            z-index: 10;
+        }
+        .favorite-btn:hover { transform: scale(1.2); }
+        .favorite-btn:active { transform: scale(0.9); }
 
-        /* 操作エリア */
         .control-area {
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: #fff; padding: 15px; 
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            border-top: 1px solid #ddd;
+            background: white; padding: 16px; 
+            box-shadow: 0 -2px 16px rgba(0,0,0,0.15);
+            border-top: 1px solid #e0e0e0;
             box-sizing: border-box; z-index: 1000;
-            transition: transform 0.3s ease-in-out, background-color 0.3s;
+            transition: transform 0.3s ease-in-out;
         }
-        .control-area.minimized { transform: translateY(110%); }
+        .control-area.minimized { transform: translateY(100%); }
 
         #show-menu-btn {
-            position: fixed; bottom: 20px; right: 20px; background-color: #1a237e; color: white; width: 56px; height: 56px; border-radius: 50%; border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 24px; cursor: pointer; z-index: 900; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            position: fixed; bottom: 20px; right: 20px; 
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white; width: 60px; height: 60px; 
+            border-radius: 50%; border: none; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+            font-size: 24px; cursor: pointer; z-index: 900; 
+            opacity: 0; pointer-events: none; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
         }
         #show-menu-btn.visible { opacity: 1; pointer-events: auto; }
-        .close-handle { width: 40px; height: 4px; background-color: #ccc; border-radius: 2px; margin: -8px auto 12px auto; }
+        #show-menu-btn:hover { transform: scale(1.1); }
 
-        /* フォーム */
+        .close-handle { 
+            width: 50px; height: 5px; background-color: #ccc; 
+            border-radius: 3px; margin: -8px auto 15px auto; cursor: pointer;
+        }
+
+        .control-group { 
+            max-width: 800px; margin: 0 auto; 
+            display: flex; flex-direction: column; gap: 14px; 
+        }
+        .label-text { 
+            font-size: 0.9rem; color: #555; font-weight: 600; 
+            display: flex; align-items: center; gap: 6px;
+        }
         .custom-select-wrapper { position: relative; }
-        select, input[type="text"] { width: 100%; padding: 12px; font-size: 16px; height: 50px; border: 1px solid #999; border-radius: 4px; background-color: #fff; color: #333; font-weight: bold; appearance: none; box-sizing: border-box;}
-        .custom-select-wrapper::after { content: "▼"; font-size: 12px; color: #333; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; }
-        .label-text { font-size: 13px; color: #555; font-weight: bold; margin-bottom: 4px; display: block; }
+        select, input[type="text"] { 
+            width: 100%; padding: 14px; font-size: 16px; 
+            height: 52px; border: 2px solid #e0e0e0; 
+            border-radius: 8px; background-color: white; 
+            color: #333; font-weight: 500; appearance: none; 
+            box-sizing: border-box; transition: border-color 0.2s;
+        }
+        select:focus, input[type="text"]:focus { outline: none; border-color: #1a237e; }
+        .custom-select-wrapper::after { 
+            content: "▼"; font-size: 12px; color: #333; 
+            position: absolute; right: 15px; top: 50%; 
+            transform: translateY(-50%); pointer-events: none; 
+        }
+        
         .text-input-wrapper { display: flex; gap: 8px; margin-top: 5px; }
-        button.send-btn { padding: 0 20px; height: 50px; background-color: #1a237e; color: white; border: none; border-radius: 4px; font-weight: bold; font-size: 15px; cursor: pointer; white-space: nowrap; }
-        .control-group { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+        button.send-btn { 
+            padding: 0 22px; height: 52px; 
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white; border: none; border-radius: 8px; 
+            font-weight: bold; font-size: 15px; cursor: pointer; 
+            white-space: nowrap; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(26,35,126,0.3);
+        }
+        button.send-btn:hover { 
+            background: linear-gradient(135deg, #0d47a1 0%, #1a237e 100%);
+            transform: translateY(-2px);
+        }
 
-        /* よくある質問ボタンエリア */
+        .favorites-toggle {
+            display: flex; gap: 8px; margin-bottom: 10px;
+            background: #f5f5f5; padding: 4px; border-radius: 8px;
+        }
+        .fav-tab {
+            flex: 1; padding: 10px; border: none; background: none;
+            border-radius: 6px; cursor: pointer; font-weight: 600;
+            transition: all 0.2s; font-size: 0.9rem;
+            color: #666;
+        }
+        .fav-tab.active { 
+            background: white; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            color: #1a237e; 
+        }
+
         #quick-qa-area {
-            display: none; gap: 8px; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;
+            display: none; gap: 8px; margin-bottom: 10px; 
+            overflow-x: auto; white-space: nowrap; padding-bottom: 5px;
         }
         #quick-qa-area::-webkit-scrollbar { display: none; }
         .qa-chip {
-            background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;
-            padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold;
-            cursor: pointer; display: inline-block;
+            background-color: #e3f2fd; color: #1565c0; 
+            border: 2px solid #bbdefb; padding: 10px 16px; 
+            border-radius: 20px; font-size: 14px; font-weight: 600;
+            cursor: pointer; display: inline-block; transition: all 0.2s;
         }
-        .qa-chip:active { background-color: #bbdefb; }
+        .qa-chip:hover { background-color: #bbdefb; transform: scale(1.05); }
+
+        .clear-chat-btn {
+            position: fixed; top: 70px; right: 15px;
+            background: rgba(255,255,255,0.9); color: #666;
+            border: 2px solid #e0e0e0; padding: 8px 12px;
+            border-radius: 20px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; z-index: 400; transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .clear-chat-btn:hover { background: white; border-color: #d32f2f; color: #d32f2f; }
 
         /* ダークモード */
         body.dark-mode { background-color: #121212; color: #e0e0e0; }
-        body.dark-mode header { background-color: #000; }
-        body.dark-mode .control-area { background-color: #1e1e1e; border-top: 1px solid #333; }
+        body.dark-mode header { background: linear-gradient(135deg, #000 0%, #1a237e 100%); }
+        body.dark-mode .control-area { background-color: #1e1e1e; border-top-color: #333; }
         body.dark-mode .ai-message p { background-color: #2c2c2c; border-color: #444; color: #e0e0e0; }
-        body.dark-mode .user-message p { background-color: #3f51b5; color: #fff; }
-        body.dark-mode select, body.dark-mode input[type="text"] { background-color: #2c2c2c; color: #fff; border-color: #555; }
+        body.dark-mode .user-message p { background: linear-gradient(135deg, #4527a0 0%, #512da8 100%); }
+        body.dark-mode select, body.dark-mode input[type="text"] { background-color: #2c2c2c; color: #fff; border-color: #444; }
         body.dark-mode .label-text { color: #aaa; }
         body.dark-mode .custom-select-wrapper::after { color: #fff; }
         body.dark-mode .temple-card { background-color: #2c2c2c; border-color: #444; }
-        body.dark-mode .card-name { color: #fff; }
+        body.dark-mode .card-name { color: #90caf9; }
         body.dark-mode .card-addr { color: #ccc; }
-        body.dark-mode .ai-message a { color: #82b1ff; } 
+        body.dark-mode .ai-message a { color: #82b1ff; border-color: #82b1ff; }
         body.dark-mode .copy-btn { background-color: #444; color: #fff; border-color: #666; }
-        body.dark-mode .qa-chip { background-color: #333; color: #90caf9; border-color: #555; }
-        body.dark-mode .qa-chip:active { background-color: #444; }
-
+        body.dark-mode .qa-chip { background-color: #1e3a5f; color: #90caf9; border-color: #2c5282; }
+        body.dark-mode .clear-chat-btn { background: rgba(46,46,46,0.9); color: #aaa; border-color: #444; }
+        
+        /* ダークモード時のタブ */
+        body.dark-mode .favorites-toggle { background: #2c2c2c; }
+        body.dark-mode .fav-tab { color: #aaa; }
+        body.dark-mode .fav-tab.active { 
+            background: #3c3c3c; 
+            color: #90caf9; 
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌙</button>
-    <h1>施行スタッフ用 寺院情報DB</h1>
-    <a href="/admin" class="admin-link">⚙️</a>
+    <div class="header-content">
+        <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
+        <h1>🏯 寺院情報データベース</h1>
+        <a href="/admin" class="header-btn">⚙️</a>
+    </div>
 </header>
 
+<button class="clear-chat-btn" onclick="clearAllChat()">🗑️ クリア</button>
+
 <div id="chat-window" onclick="hideMenu()">
-    <div class="message ai-message"><p>寺院名を選択してください。</p></div>
+    <div class="message ai-message">
+        <p>👋 <strong>ようこそ！</strong><br>寺院名を選択して詳細情報を確認できます。</p>
+    </div>
 </div>
 
 <button id="show-menu-btn" onclick="showMenu()">🔍</button>
@@ -142,16 +247,22 @@
 <div class="control-area" id="control-area">
     <div class="close-handle" onclick="hideMenu()"></div>
     <div class="control-group">
+        <div class="favorites-toggle">
+            <button class="fav-tab active" onclick="switchTab('all')">🏯 すべて</button>
+            <button class="fav-tab" onclick="switchTab('favorites')">⭐ お気に入り</button>
+        </div>
+
         <div>
-            <span class="label-text">寺院検索（詳細表示）</span>
+            <span class="label-text"><span>🔍</span>寺院検索（詳細表示）</span>
             <div class="custom-select-wrapper">
                 <select id="temple-select" onchange="onTempleSelect()">
                     <option value="">寺院を選択...</option>
                 </select>
             </div>
         </div>
+
         <div>
-            <span class="label-text">宗派別リスト</span>
+            <span class="label-text"><span>📿</span>宗派別リスト</span>
             <div class="custom-select-wrapper">
                 <select id="sect-select" onchange="onSectSelect()">
                     <option value="">宗派を選択...</option>
@@ -160,8 +271,7 @@
         </div>
         
         <div>
-            <span class="label-text">項目確認</span>
-            
+            <span class="label-text"><span>💬</span>項目確認</span>
             <div id="quick-qa-area">
                 <div class="qa-chip" onclick="askQuick('納棺の注意点は？')">⚰️ 納棺仕様</div>
                 <div class="qa-chip" onclick="askQuick('書き物の指定は？')">🖊️ 書き物</div>
@@ -169,10 +279,9 @@
                 <div class="qa-chip" onclick="askQuick('搬送時の持ち物は？')">🚗 搬送持ち物</div>
                 <div class="qa-chip" onclick="askQuick('注意事項は？')">⚠️ 注意事項</div>
             </div>
-
             <div class="text-input-wrapper">
                 <input type="text" id="free-input" placeholder="確認事項を入力" onkeypress="if(event.key === 'Enter') sendFreeChat()">
-                <button class="send-btn" onclick="sendFreeChat()">確認</button>
+                <button class="send-btn" onclick="sendFreeChat()">📤 確認</button>
             </div>
         </div>
     </div>
@@ -185,41 +294,65 @@
     const quickQaArea = document.getElementById('quick-qa-area');
     
     let currentTempleName = "";
+    let favorites = JSON.parse(localStorage.getItem('temple_favorites') || '[]');
+    let currentTab = 'all';
+    let allTemples = [];
 
     function toggleDarkMode() {
         document.body.classList.toggle('dark-mode');
-        if(document.body.classList.contains('dark-mode')) {
-            localStorage.setItem('theme', 'dark');
-        } else {
-            localStorage.setItem('theme', 'light');
-        }
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
     }
-    if(localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
-    }
+    if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
     window.onload = async function() {
         try {
             const tRes = await fetch('/get_temple_names');
             const tData = await tRes.json();
-            const tSelect = document.getElementById('temple-select');
-            tData.names.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.text = name;
-                tSelect.appendChild(opt);
-            });
+            allTemples = tData.names;
+            updateTempleSelect();
+            
             const sRes = await fetch('/get_sects');
             const sData = await sRes.json();
             const sSelect = document.getElementById('sect-select');
             sData.sects.forEach(sect => {
                 const opt = document.createElement('option');
-                opt.value = sect;
-                opt.text = sect;
+                opt.value = sect; opt.text = sect;
                 sSelect.appendChild(opt);
             });
         } catch (e) { console.error(e); }
     };
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.fav-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.includes(tab === 'all' ? 'すべて' : 'お気に入り'));
+        });
+        updateTempleSelect();
+    }
+
+    function updateTempleSelect() {
+        const tSelect = document.getElementById('temple-select');
+        tSelect.innerHTML = '<option value="">寺院を選択...</option>';
+        const displayTemples = currentTab === 'favorites' ? allTemples.filter(n => favorites.includes(n)) : allTemples;
+        displayTemples.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name; opt.text = favorites.includes(name) ? `⭐ ${name}` : name;
+            tSelect.appendChild(opt);
+        });
+    }
+
+    function toggleFavorite(name, event) {
+        event.stopPropagation();
+        event.preventDefault();
+        const index = favorites.indexOf(name);
+        if (index > -1) favorites.splice(index, 1);
+        else favorites.push(name);
+        localStorage.setItem('temple_favorites', JSON.stringify(favorites));
+        updateTempleSelect();
+        
+        // ボタンの表示を即座に更新
+        event.target.textContent = favorites.includes(name) ? '⭐' : '☆';
+    }
 
     function hideMenu() {
         controlArea.classList.add('minimized');
@@ -229,17 +362,18 @@
     function showMenu() {
         controlArea.classList.remove('minimized');
         showMenuBtn.classList.remove('visible');
-        document.body.style.paddingBottom = "350px"; 
-        window.scrollTo(0, document.body.scrollHeight);
-    }
-    function copyToClipboard(text) {
-        if(window.event) window.event.stopPropagation();
-        navigator.clipboard.writeText(text).then(() => alert("コピーしました"));
+        document.body.style.paddingBottom = "400px"; 
     }
 
-    // ★画面クリア用関数（新規追加）
-    function clearChat() {
-        chatWindow.innerHTML = '';
+    function copyToClipboard(text) {
+        if(window.event) window.event.stopPropagation();
+        navigator.clipboard.writeText(text);
+    }
+
+    function clearAllChat() {
+        if (!confirm('会話履歴をクリアしますか？')) return;
+        chatWindow.innerHTML = '<div class="message ai-message"><p>👋 <strong>ようこそ！</strong><br>寺院名を選択して詳細情報を確認できます。</p></div>';
+        currentTempleName = ""; quickQaArea.style.display = "none";
     }
 
     function onTempleSelect() {
@@ -247,132 +381,124 @@
         const name = select.value;
         if (!name) return;
         
-        clearChat(); // ★ここでクリア！
+        // ユーザーメッセージを先に表示
+        addMessage(name, 'user');
         
-        currentTempleName = name;
+        currentTempleName = name; 
         quickQaArea.style.display = "flex";
         select.value = ""; 
         hideMenu(); 
-        sendChatRequest(name, 'summary');
+        
+        // サーバーにリクエスト
+        sendChatRequest(name, 'summary', false); // falseで「照会中」を表示しない
     }
 
     async function onSectSelect() {
         const select = document.getElementById('sect-select');
         const sectName = select.value;
         if (!sectName) return;
-        
-        clearChat(); // ★ここでクリア！
-        
-        select.value = "";
-        currentTempleName = "";
-        quickQaArea.style.display = "none";
+        select.value = ""; currentTempleName = ""; quickQaArea.style.display = "none";
         hideMenu(); 
-        addMessage(`【${sectName}】寺院一覧`, 'user');
+        addMessage(`📿 【${sectName}】寺院一覧`, 'user');
+        
+        const loadingId = addMessage('照会中...', 'ai', true);
+        
         try {
             const res = await fetch('/search_by_sect', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sect: sectName })
             });
             const data = await res.json();
-            if (data.results.length === 0) {
-                const msgId = addMessage("該当データなし", 'ai');
-                scrollToMessage(msgId);
-            } else {
-                let listHtml = `<p><b>${sectName}</b> 一覧</p>`;
-                data.results.forEach(temple => {
-                    const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`;
-                    listHtml += `
-                    <div class="temple-card" onclick="tapTempleList('${temple.name}')">
-                        <div class="card-name">${temple.name}</div>
-                        <div class="card-addr">
-                            ${temple.address}
-                            <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()" style="margin-left:8px; color:#1a237e; font-weight:bold; white-space:nowrap;">📍地図</a>
-                            <button class="copy-btn" onclick="copyToClipboard('${temple.address}')">📋</button>
-                        </div>
-                        <div class="card-tap-hint">詳細 ></div>
-                    </div>`;
-                });
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'message ai-message';
-                msgDiv.innerHTML = listHtml;
-                chatWindow.appendChild(msgDiv);
-                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById(loadingId).remove();
+            
+            if (data.results.length === 0) { 
+                addMessage("該当する寺院がありません", 'ai'); 
+                return; 
             }
-        } catch (e) { addMessage("通信エラー", 'ai'); }
+            
+            let listHtml = `<p><b>${sectName}</b> の寺院（${data.results.length}件）</p>`;
+            data.results.forEach(temple => {
+                const isFav = favorites.includes(temple.name);
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`;
+                listHtml += `<div class="temple-card" onclick="tapTempleList('${temple.name.replace(/'/g, "\\'")}')">
+                    <button class="favorite-btn" onclick="toggleFavorite('${temple.name.replace(/'/g, "\\'")}', event)">${isFav ? '⭐' : '☆'}</button>
+                    <div class="card-name">${temple.name}</div>
+                    <div class="card-addr">${temple.address}
+                        <a href="${mapUrl}" target="_blank" onclick="event.stopPropagation()">📍地図</a>
+                        <button class="copy-btn" onclick="copyToClipboard('${temple.address.replace(/'/g, "\\'")}')">📋</button>
+                    </div></div>`;
+            });
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ai-message'; 
+            msgDiv.innerHTML = listHtml;
+            chatWindow.appendChild(msgDiv);
+            msgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) { 
+            document.getElementById(loadingId).remove();
+            addMessage("❌ エラーが発生しました", 'ai'); 
+        }
     }
 
     function tapTempleList(name) { 
-        clearChat(); // ★ここでクリア！
-        
-        currentTempleName = name;
+        addMessage(name, 'user');
+        currentTempleName = name; 
         quickQaArea.style.display = "flex";
         hideMenu(); 
-        sendChatRequest(name, 'summary'); 
+        sendChatRequest(name, 'summary', false);
     }
 
     function askQuick(question) {
-        if (!currentTempleName) {
-            alert("まず寺院を選択してください");
-            return;
-        }
-        const text = `${currentTempleName}の${question}`;
-        hideMenu();
-        // 質問の時はクリアせず、履歴を残したほうが自然なのでクリアしない
-        sendChatRequest(text, 'qa');
+        if (!currentTempleName) { alert("⚠️ まず寺院を選択してください"); return; }
+        hideMenu(); 
+        sendChatRequest(`${currentTempleName}の${question}`, 'qa', true);
     }
 
     function sendFreeChat() {
         const input = document.getElementById('free-input');
-        const text = input.value;
-        if (text.trim() === '') return;
+        const text = input.value.trim();
+        if (!text) return;
         let sendText = text;
-        if (currentTempleName && !text.includes(currentTempleName)) {
-             sendText = `${currentTempleName}の${text}`;
-        }
-        input.value = '';
-        hideMenu();
-        // 自由入力も履歴を残すためクリアしない
-        sendChatRequest(sendText, 'qa');
+        if (currentTempleName && !text.includes(currentTempleName)) sendText = `${currentTempleName}の${text}`;
+        input.value = ''; 
+        hideMenu(); 
+        sendChatRequest(sendText, 'qa', true);
     }
 
-    async function sendChatRequest(text, mode) {
-        addMessage(text, 'user');
-        const loadingId = addMessage("照会中...", 'ai', true);
+    async function sendChatRequest(text, mode, showUserMessage = true) {
+        if (showUserMessage) {
+            addMessage(text, 'user');
+        }
+        
+        const loadingId = addMessage('照会中...', 'ai', true);
         window.scrollTo(0, document.body.scrollHeight);
+        
         try {
             const res = await fetch('/ask', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ question: text, mode: mode })
             });
             const data = await res.json();
             document.getElementById(loadingId).remove();
             const aiMsgId = addMessage(data.answer, 'ai');
-            const aiMsgDiv = document.getElementById(aiMsgId);
-            setTimeout(() => { aiMsgDiv.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+            setTimeout(() => { 
+                document.getElementById(aiMsgId).scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+            }, 100);
         } catch (e) {
             document.getElementById(loadingId).remove();
-            addMessage("システムエラー", 'ai');
+            addMessage("❌ システムエラーが発生しました", 'ai');
         }
     }
 
     function addMessage(text, sender, isLoading = false) {
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
-        if (isLoading) div.id = `msg-${Date.now()}`;
-        else div.id = `msg-${Date.now()}-${Math.random()}`;
+        div.id = `msg-${Date.now()}-${Math.random()}`;
         const p = document.createElement('p');
         p.innerHTML = text.replace(/\n/g, '<br>');
         div.appendChild(p);
         chatWindow.appendChild(div);
         setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 100);
         return div.id;
-    }
-    
-    function scrollToMessage(id) {
-        const el = document.getElementById(id);
-        if(el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 </script>
 </body>
