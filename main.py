@@ -896,6 +896,23 @@ def update_fields():
     # 既存のコード
     pass
 
+@app.route("/get_current_user")
+@login_required
+def get_current_user():
+    """現在ログイン中のユーザー情報を取得"""
+    return jsonify({
+        "user_id": session.get('user_id'),
+        "user_name": session.get('user_name'),
+        "role": session.get('role', 'viewer')
+    })
+
+@app.route("/admin/users")
+@login_required
+@role_required('admin')
+def admin_users():
+    """ユーザー管理画面（管理者のみ）"""
+    return render_template("admin_users.html")
+
 # ユーザー管理用エンドポイント（新規追加）
 @app.route("/get_users")
 @login_required
