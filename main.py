@@ -16,8 +16,20 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
+import pytz
 
 load_dotenv()
+
+# タイムゾーン設定（日本時間）
+JST = pytz.timezone('Asia/Tokyo')
+
+def get_jst_now():
+    """日本時間の現在時刻を取得"""
+    return datetime.datetime.now(JST)
+
+def get_jst_timestamp():
+    """日本時間のタイムスタンプ文字列を取得"""
+    return get_jst_now().strftime('%Y-%m-%d %H:%M:%S')
 
 # --- 設定 ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
@@ -141,7 +153,7 @@ def send_email_alert(subject, body, to_email=None):
 
 def notify_suspicious_login(user_id, ip_address, reason):
     """異常ログイン時の通知"""
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = get_jst_timestamp()
     
     # Slack通知
     slack_msg = f"""
@@ -177,7 +189,7 @@ IPアドレス: {ip_address}
 
 def notify_data_update(user_name, action, details):
     """データ更新時のSlack通知"""
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = get_jst_timestamp()
     
     emoji_map = {
         '追加': ':heavy_plus_sign:',
@@ -204,7 +216,7 @@ def add_log(action, details, ip_address=None):
         user_id = session.get('user_id', '不明')
         client = get_spreadsheet_client()
         sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('logs')
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = get_jst_timestamp()
         ip = ip_address or request.remote_addr
         sheet.append_row([timestamp, user_name, user_id, action, details, ip])
         
@@ -216,12 +228,12 @@ def add_log(action, details, ip_address=None):
         print(f"ログ記録エラー: {e}")
 
 def update_session_activity():
-    session['last_activity'] = datetime.datetime.now().timestamp()
+    session['last_activity'] = get_jst_now().timestamp()
     session.permanent = True
 
 def check_session_timeout():
     if 'last_activity' in session:
-        elapsed = datetime.datetime.now().timestamp() - session['last_activity']
+        elapsed = get_jst_now().timestamp() - session['last_activity']
         if elapsed > 1800:
             session.clear()
             return False
@@ -249,10 +261,10 @@ def check_login_attempts(user_id):
     if user_id in login_attempts:
         attempts = login_attempts[user_id]
         if attempts['locked_until'] and datetime.datetime.now() < attempts['locked_until']:
-            remaining = int((attempts['locked_until'] - datetime.datetime.now()).total_seconds())
+            remaining = int((attempts['locked_until'] - get_jst_now()).total_seconds())
             return False, f"アカウントがロックされています。{remaining}秒後に再試行してください。"
         elif attempts['count'] >= MAX_ATTEMPTS:
-            login_attempts[user_id]['locked_until'] = datetime.datetime.now() + datetime.timedelta(seconds=LOCK_TIME)
+            login_attempts[user_id]['locked_until'] = get_jst_now() + datetime.timedelta(seconds=LOCK_TIME)
             add_log("ログイン制限", f"user_id: {user_id} が{MAX_ATTEMPTS}回失敗したためロック")
             
             # 異常ログイン通知
@@ -733,7 +745,7 @@ def ask():
     try:
         client = get_spreadsheet_client()
         sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('access_log')
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = get_jst_timestamp()
         sheet.append_row([timestamp, found_temple['name'], user_question])
     except:
         pass  # ログ失敗してもエラーにしない
@@ -775,7 +787,7 @@ def export_csv():
             byte_output,
             mimetype='text/csv',
             as_attachment=True,
-            download_name=f'temples_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            download_name=f'temples_{get_jst_now().strftime("%Y%m%d_%H%M%S")}.csv'
         )
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -937,7 +949,7 @@ def add_user():
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         # 追加
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = get_jst_timestamp()
         sheet.append_row([user_id, hashed, name, role, timestamp, ''])
         
         add_log("ユーザー追加", f"{name}（{role}）を追加")
@@ -1084,7 +1096,7 @@ def add_comment():
         client = get_spreadsheet_client()
         sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('comments')
         
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = get_jst_timestamp()
         user_name = session.get('user_name', '不明')
         
         sheet.append_row([timestamp, temple_name, user_name, comment_text])
