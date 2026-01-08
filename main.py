@@ -860,42 +860,6 @@ def role_required(*allowed_roles):
         return decorated_function
     return decorator
 
-# 既存のエンドポイントに権限制御を追加
-@app.route("/update_temple", methods=["POST"])
-@login_required
-@role_required('admin', 'editor')  # 管理者と編集者のみ
-def update_temple():
-    # 既存のコード
-    pass
-
-@app.route("/add_temple", methods=["POST"])
-@login_required
-@role_required('admin', 'editor')  # 管理者と編集者のみ
-def add_temple():
-    # 既存のコード
-    pass
-
-@app.route("/delete_temple", methods=["POST"])
-@login_required
-@role_required('admin', 'editor')  # 管理者と編集者のみ
-def delete_temple():
-    # 既存のコード
-    pass
-
-@app.route("/import_csv", methods=["POST"])
-@login_required
-@role_required('admin', 'editor')  # 管理者と編集者のみ
-def import_csv():
-    # 既存のコード
-    pass
-
-@app.route("/update_fields", methods=["POST"])
-@login_required
-@role_required('admin')  # 管理者のみ
-def update_fields():
-    # 既存のコード
-    pass
-
 @app.route("/get_current_user")
 @login_required
 def get_current_user():
@@ -1037,17 +1001,6 @@ def delete_user():
             return jsonify({"message": "ユーザーが見つかりません"}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-
-# 現在のユーザー情報を取得
-@app.route("/get_current_user")
-@login_required
-def get_current_user():
-    """現在ログイン中のユーザー情報を取得"""
-    return jsonify({
-        "user_id": session.get('user_id'),
-        "user_name": session.get('user_name'),
-        "role": session.get('role', 'viewer')
-    })
 
 # === 検索機能 ===
 
