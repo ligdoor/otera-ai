@@ -45,6 +45,13 @@ login_attempts = {}
 LOCK_TIME = 300
 MAX_ATTEMPTS = 5
 
+# キャッシュ設定
+CACHE_TIMEOUT = 300  # 5分間キャッシュ
+cache_data = {
+    'temples': {'data': None, 'timestamp': 0},
+    'fields': {'data': None, 'timestamp': 0}
+}
+
 def get_spreadsheet_client():
     global gc
     if gc is None:
@@ -244,9 +251,9 @@ def authenticate_user(user_id, password):
         records = sheet.get_all_records()
         for user in records:
             if str(user.get('user_id')) == user_id:
-                stored_val = str(user.get('password', '') or user.get('password_hash', ''))
-                if stored_val.startswith('$2b$'):
-                    if bcrypt.checkpw(password.encode('utf-8'), stored_val.encode('utf-8')):
+                stored_hash = user.get('password_hash', '')
+                if stored_hash.startswith('$2b$'):
+                    if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
                         return user.get('name'), user.get('role', 'staff')
                 else:
                     if str(user.get('password')) == password:
@@ -300,33 +307,75 @@ def change_password():
             return jsonify({"message": "ユーザーが見つかりません"}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+    
+def is_cache_valid(cache_key):
+    """キャッシュが有効か確認"""
+    if cache_data[cache_key]['data'] is None:
+        return False
+    elapsed = datetime.datetime.now().timestamp() - cache_data[cache_key]['timestamp']
+    return elapsed < CACHE_TIMEOUT
 
-def load_fields_config():
-    fields = []
+def get_cached_or_fetch(cache_key, fetch_function):
+    """キャッシュから取得、期限切れなら再取得"""
+    if is_cache_valid(cache_key):
+        print(f"✅ キャッシュから取得: {cache_key}")
+        return cache_data[cache_key]['data']
+    
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('fields')
-        records = sheet.get_all_records()
-        records.sort(key=lambda x: x['order'])
-        fields = records
-    except:
-        fields = [{'key': 'name', 'label': '寺院名', 'order': 1}]
-    return fields
+        data = fetch_function()
+        cache_data[cache_key]['data'] = data
+        cache_data[cache_key]['timestamp'] = datetime.datetime.now().timestamp()
+        print(f"✅ データ取得成功: {cache_key}")
+        return data
+    except Exception as e:
+        print(f"❌ データ取得失敗: {cache_key} - {e}")
+        if cache_data[cache_key]['data'] is not None:
+            print(f"⚠️ 古いキャッシュを返却: {cache_key}")
+            return cache_data[cache_key]['data']
+        raise e
+    
+def load_fields_config():
+    """項目設定を読み込み（キャッシュ対応）"""
+    def fetch():
+        fields = []
+        try:
+            client = get_spreadsheet_client()
+            sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('fields')
+            records = sheet.get_all_records()
+            records.sort(key=lambda x: x['order'])
+            fields = records
+        except Exception as e:
+            print(f"項目設定読み込みエラー: {e}")
+            fields = [{'key': 'name', 'label': '寺院名', 'order': 1}]
+        return fields
+    
+    return get_cached_or_fetch('fields', fetch)
 
 def load_data_from_sheet():
-    data = {}
-    try:
-        client = get_spreadsheet_client()
-        sheet = client.open(DATA_SPREADSHEET_NAME).sheet1
-        records = sheet.get_all_records()
-        for row in records:
-            if 'name' in row and row['name']:
-                clean_row = {k: str(v).strip() for k, v in row.items()}
-                data[clean_row['name']] = clean_row
-        print("★データ更新完了")
-    except Exception as e:
-        print(f"読み込みエラー: {e}")
-    return data
+    """寺院データを読み込み（キャッシュ対応）"""
+    def fetch():
+        data = {}
+        try:
+            client = get_spreadsheet_client()
+            sheet = client.open(DATA_SPREADSHEET_NAME).sheet1
+            # バッチ取得で高速化
+            all_values = sheet.get_all_values()
+            if len(all_values) > 0:
+                headers = all_values[0]
+                for row in all_values[1:]:
+                    if len(row) > 0 and row[0]:  # name列が空でない
+                        row_dict = {}
+                        for i, header in enumerate(headers):
+                            if i < len(row):
+                                row_dict[header] = str(row[i]).strip()
+                        if 'name' in row_dict and row_dict['name']:
+                            data[row_dict['name']] = row_dict
+            print(f"★データ更新完了: {len(data)}件")
+        except Exception as e:
+            print(f"読み込みエラー: {e}")
+        return data
+    
+    return get_cached_or_fetch('temples', fetch)
 
 otera_database = load_data_from_sheet()
 field_config = load_fields_config()
@@ -419,16 +468,32 @@ def logout():
 @app.route("/reload_data", methods=["POST"])
 @login_required
 def reload_data():
+    """データを強制リロード（キャッシュクリア）"""
     global otera_database, field_config
-    otera_database = load_data_from_sheet()
-    field_config = load_fields_config()
-    add_log("データ更新", "管理画面からリロードを実行")
-    return jsonify({"status": "success"})
+    
+    try:
+        # キャッシュをクリア
+        cache_data['temples']['data'] = None
+        cache_data['fields']['data'] = None
+        
+        otera_database = load_data_from_sheet()
+        field_config = load_fields_config()
+        add_log("データ更新", f"管理画面からリロードを実行（{len(otera_database)}件）")
+        return jsonify({"status": "success", "count": len(otera_database)})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/get_all_data")
 @login_required
 def get_all_data():
-    return jsonify(otera_database)
+    """全寺院データを取得（キャッシュ使用）"""
+    try:
+        # 最新データを取得（キャッシュがあれば使用）
+        data = load_data_from_sheet()
+        return jsonify(data)
+    except Exception as e:
+        print(f"データ取得エラー: {e}")
+        return jsonify({"error": "データの読み込みに失敗しました"}), 500
 
 @app.route("/get_fields")
 def get_fields():

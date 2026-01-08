@@ -229,6 +229,27 @@
         /* アイコン（絵文字で代用） */
         .icon { font-style: normal; }
         
+        /* ローディング表示 */
+        .loading-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 9999;
+            justify-content: center; align-items: center;
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-content {
+            background: white; padding: 30px; border-radius: 12px;
+            text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #1a237e;
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* レスポンシブ調整 */
         @media (max-width: 600px) {
             h1 { font-size: 1.1rem; }
@@ -297,6 +318,16 @@
         </div>
     </div>
 </main>
+
+<!-- ローディングオーバーレイ -->
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p style="margin:0; font-size:1.1rem; font-weight:600; color:#1a237e;">
+            データを読み込み中...
+        </p>
+    </div>
+</div>
 
 <!-- 編集モーダル -->
 <div id="edit-modal" class="modal">
@@ -384,7 +415,16 @@
     let fieldConfig = [];
     let templeData = {};
 
+    // ローディング表示制御
+    function showLoading() {
+        document.getElementById('loading-overlay').classList.add('show');
+    }
+    function hideLoading() {
+        document.getElementById('loading-overlay').classList.remove('show');
+    }
+
     async function init() {
+        showLoading();
         try {
             const res = await fetch('/get_fields');
             fieldConfig = await res.json();
@@ -392,15 +432,22 @@
             await loadLogs();
         } catch (e) {
             console.error('初期化エラー:', e);
+            alert('❌ データの読み込みに失敗しました。ページをリロードしてください。');
+        } finally {
+            hideLoading();
         }
     }
     init();
 
     async function loadList() {
+        const list = document.getElementById('temple-list');
+        list.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">読み込み中...</div>';
+        
         try {
             const res = await fetch('/get_all_data');
+            if (!res.ok) throw new Error('データ取得失敗');
+            
             templeData = await res.json();
-            const list = document.getElementById('temple-list');
             list.innerHTML = ''; 
             
             const sortedKeys = Object.keys(templeData).sort();
@@ -442,7 +489,15 @@
             });
         } catch (e) {
             console.error('データ読み込みエラー:', e);
-            alert('データの読み込みに失敗しました');
+            list.innerHTML = `
+                <div style="text-align:center; padding:40px;">
+                    <p style="color:#d32f2f; font-size:1.1rem; margin-bottom:15px;">❌ データの読み込みに失敗しました</p>
+                    <button class="btn btn-edit" onclick="location.reload()" style="max-width:200px; margin:0 auto;">
+                        <span class="icon">🔄</span>
+                        <span>再読み込み</span>
+                    </button>
+                </div>
+            `;
         }
     }
     
