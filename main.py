@@ -982,13 +982,6 @@ def add_user():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-@app.route("/admin/users")
-@login_required
-@role_required('admin')
-def admin_users():
-    """ユーザー管理画面（管理者のみ）"""
-    return render_template("admin_users.html")
-
 @app.route("/update_user_role", methods=["POST"])
 @login_required
 @role_required('admin')
