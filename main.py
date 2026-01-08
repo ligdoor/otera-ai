@@ -2,11 +2,13 @@ import os
 import json
 import datetime
 import secrets
+import csv
+import io
 from functools import wraps
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import bcrypt
@@ -64,6 +66,33 @@ def get_spreadsheet_client():
             creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
         gc = gspread.authorize(creds)
     return gc
+
+def is_cache_valid(cache_key):
+    """キャッシュが有効か確認"""
+    if cache_data[cache_key]['data'] is None:
+        return False
+    elapsed = datetime.datetime.now().timestamp() - cache_data[cache_key]['timestamp']
+    return elapsed < CACHE_TIMEOUT
+
+def get_cached_or_fetch(cache_key, fetch_function):
+    """キャッシュから取得、期限切れなら再取得"""
+    if is_cache_valid(cache_key):
+        print(f"✅ キャッシュから取得: {cache_key}")
+        return cache_data[cache_key]['data']
+    
+    try:
+        data = fetch_function()
+        cache_data[cache_key]['data'] = data
+        cache_data[cache_key]['timestamp'] = datetime.datetime.now().timestamp()
+        print(f"✅ データ取得成功: {cache_key}")
+        return data
+    except Exception as e:
+        print(f"❌ データ取得失敗: {cache_key} - {e}")
+        # キャッシュがあれば古いデータでも返す
+        if cache_data[cache_key]['data'] is not None:
+            print(f"⚠️ 古いキャッシュを返却: {cache_key}")
+            return cache_data[cache_key]['data']
+        raise e
 
 # --- 通知機能 ---
 
@@ -307,33 +336,7 @@ def change_password():
             return jsonify({"message": "ユーザーが見つかりません"}), 404
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-    
-def is_cache_valid(cache_key):
-    """キャッシュが有効か確認"""
-    if cache_data[cache_key]['data'] is None:
-        return False
-    elapsed = datetime.datetime.now().timestamp() - cache_data[cache_key]['timestamp']
-    return elapsed < CACHE_TIMEOUT
 
-def get_cached_or_fetch(cache_key, fetch_function):
-    """キャッシュから取得、期限切れなら再取得"""
-    if is_cache_valid(cache_key):
-        print(f"✅ キャッシュから取得: {cache_key}")
-        return cache_data[cache_key]['data']
-    
-    try:
-        data = fetch_function()
-        cache_data[cache_key]['data'] = data
-        cache_data[cache_key]['timestamp'] = datetime.datetime.now().timestamp()
-        print(f"✅ データ取得成功: {cache_key}")
-        return data
-    except Exception as e:
-        print(f"❌ データ取得失敗: {cache_key} - {e}")
-        if cache_data[cache_key]['data'] is not None:
-            print(f"⚠️ 古いキャッシュを返却: {cache_key}")
-            return cache_data[cache_key]['data']
-        raise e
-    
 def load_fields_config():
     """項目設定を読み込み（キャッシュ対応）"""
     def fetch():
@@ -725,11 +728,230 @@ def ask():
                 break
     if not found_temple: 
         return jsonify({"answer": "データが見つかりません。"})
+    
+    # 閲覧回数をカウント
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('access_log')
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sheet.append_row([timestamp, found_temple['name'], user_question])
+    except:
+        pass  # ログ失敗してもエラーにしない
+    
     if user_question == found_temple['name']:
         answer = generate_static_summary(found_temple)
     else:
         answer = generate_answer_with_ai(found_temple, user_question)
     return jsonify({"answer": answer})
+
+# === CSV インポート/エクスポート ===
+
+@app.route("/export_csv")
+@login_required
+def export_csv():
+    """CSVエクスポート"""
+    try:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # ヘッダー
+        headers = [f['key'] for f in field_config]
+        writer.writerow(headers)
+        
+        # データ
+        for temple in otera_database.values():
+            row = [temple.get(h, '') for h in headers]
+            writer.writerow(row)
+        
+        # バイナリに変換
+        output.seek(0)
+        byte_output = io.BytesIO()
+        byte_output.write(output.getvalue().encode('utf-8-sig'))  # BOM付きUTF-8
+        byte_output.seek(0)
+        
+        add_log("CSVエクスポート", f"{len(otera_database)}件のデータをエクスポート")
+        
+        return send_file(
+            byte_output,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'temples_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/import_csv", methods=["POST"])
+@login_required
+def import_csv():
+    """CSVインポート"""
+    if 'file' not in request.files:
+        return jsonify({"status": "error", "message": "ファイルが選択されていません"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"status": "error", "message": "ファイルが選択されていません"}), 400
+    
+    try:
+        # CSVを読み込み
+        stream = io.StringIO(file.stream.read().decode("utf-8-sig"))
+        csv_reader = csv.DictReader(stream)
+        
+        imported_count = 0
+        updated_count = 0
+        errors = []
+        
+        sheet, headers = get_data_sheet_and_headers()
+        
+        for row_num, row in enumerate(csv_reader, start=2):
+            try:
+                name = row.get('name', '').strip()
+                if not name:
+                    continue
+                
+                # 既存データか確認
+                existing = name in otera_database
+                
+                # スプレッドシートに書き込み
+                if existing:
+                    cell = sheet.find(name, in_column=1)
+                    if cell:
+                        row_data = [row.get(h, '') for h in headers]
+                        sheet.update(f"A{cell.row}", [row_data])
+                        updated_count += 1
+                else:
+                    row_data = [row.get(h, '') for h in headers]
+                    sheet.append_row(row_data)
+                    imported_count += 1
+                
+                otera_database[name] = dict(row)
+                
+            except Exception as e:
+                errors.append(f"行{row_num}: {str(e)}")
+        
+        # キャッシュクリア
+        cache_data['temples']['data'] = None
+        
+        add_log("CSVインポート", f"新規{imported_count}件、更新{updated_count}件")
+        
+        return jsonify({
+            "status": "success",
+            "imported": imported_count,
+            "updated": updated_count,
+            "errors": errors
+        })
+        
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# === 検索機能 ===
+
+@app.route("/search_temples", methods=["POST"])
+def search_temples():
+    """フリーワード検索"""
+    keyword = request.json.get('keyword', '').strip().lower()
+    
+    if not keyword:
+        return jsonify({"results": []})
+    
+    results = []
+    for temple in otera_database.values():
+        # 名前、宗派、住所で検索
+        searchable = f"{temple.get('name', '')} {temple.get('sect', '')} {temple.get('address', '')}".lower()
+        
+        if keyword in searchable:
+            results.append({
+                "name": temple.get('name'),
+                "sect": temple.get('sect', ''),
+                "address": temple.get('address', '')
+            })
+    
+    return jsonify({"results": results[:20]})  # 最大20件
+
+# === アクセス統計 ===
+
+@app.route("/get_access_stats")
+@login_required
+def get_access_stats():
+    """閲覧回数統計"""
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('access_log')
+        records = sheet.get_all_records()
+        
+        # 集計
+        temple_counts = {}
+        for record in records:
+            temple_name = record.get('temple_name', '')
+            if temple_name:
+                temple_counts[temple_name] = temple_counts.get(temple_name, 0) + 1
+        
+        # ソート
+        sorted_stats = sorted(temple_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        
+        return jsonify({
+            "stats": [{"name": name, "count": count} for name, count in sorted_stats]
+        })
+    except:
+        return jsonify({"stats": []})
+
+# === コメント・メモ機能 ===
+
+@app.route("/get_comments/<temple_name>")
+def get_comments(temple_name):
+    """特定寺院のコメント取得"""
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('comments')
+        records = sheet.get_all_records()
+        
+        comments = [r for r in records if r.get('temple_name') == temple_name]
+        comments.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        
+        return jsonify({"comments": comments})
+    except:
+        return jsonify({"comments": []})
+
+@app.route("/add_comment", methods=["POST"])
+@login_required
+def add_comment():
+    """コメント追加"""
+    temple_name = request.json.get('temple_name')
+    comment_text = request.json.get('comment')
+    
+    if not temple_name or not comment_text:
+        return jsonify({"status": "error", "message": "必須項目が入力されていません"}), 400
+    
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('comments')
+        
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        user_name = session.get('user_name', '不明')
+        
+        sheet.append_row([timestamp, temple_name, user_name, comment_text])
+        
+        add_log("コメント追加", f"{temple_name} にコメントを追加")
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/delete_comment", methods=["POST"])
+@login_required
+def delete_comment():
+    """コメント削除"""
+    row_number = request.json.get('row_number')
+    
+    try:
+        client = get_spreadsheet_client()
+        sheet = client.open(DATA_SPREADSHEET_NAME).worksheet('comments')
+        sheet.delete_rows(row_number)
+        
+        add_log("コメント削除", f"行{row_number}のコメントを削除")
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.after_request
 def set_security_headers(response):

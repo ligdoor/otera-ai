@@ -294,6 +294,23 @@
 </header>
 
 <main>
+    <!-- CSV機能とアクセス統計 -->
+    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        <button class="btn btn-edit" onclick="exportCSV()" style="flex:1; min-width:200px;">
+            <span class="icon">📥</span>
+            <span>CSVエクスポート</span>
+        </button>
+        <label class="btn btn-edit" style="flex:1; min-width:200px; cursor:pointer;">
+            <span class="icon">📤</span>
+            <span>CSVインポート</span>
+            <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="importCSV()">
+        </label>
+        <button class="btn btn-preview" onclick="showAccessStats()" style="flex:1; min-width:200px;">
+            <span class="icon">📊</span>
+            <span>アクセス統計</span>
+        </button>
+    </div>
+
     <button class="add-btn" onclick="openAddModal()">
         <span class="icon" style="font-size:1.3em">➕</span>
         新規寺院を追加
@@ -411,6 +428,53 @@
     </div>
 </div>
 
+<!-- アクセス統計モーダル -->
+<div id="stats-modal" class="modal">
+    <div class="modal-content" style="max-width:600px;">
+        <div class="modal-header">
+            <h2>📊 アクセス統計</h2>
+            <button class="modal-close" onclick="closeModal('stats-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h3 style="margin-top:0;">よく閲覧される寺院 TOP10</h3>
+            <div id="stats-content">読み込み中...</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel" onclick="closeModal('stats-modal')" style="flex:1">
+                閉じる
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- コメントモーダル -->
+<div id="comment-modal" class="modal">
+    <div class="modal-content" style="max-width:700px;">
+        <div class="modal-header">
+            <h2 id="comment-modal-title">💬 スタッフメモ</h2>
+            <button class="modal-close" onclick="closeModal('comment-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
+                <!-- コメント一覧 -->
+            </div>
+            <div class="form-group">
+                <label class="form-label">新しいメモを追加</label>
+                <textarea id="new-comment" class="form-textarea" placeholder="駐車場の位置、注意事項など..." rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel" onclick="closeModal('comment-modal')">
+                閉じる
+            </button>
+            <button class="btn btn-save" onclick="addComment()">
+                <span class="icon">💬</span>
+                メモを追加
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     let fieldConfig = [];
     let templeData = {};
@@ -471,6 +535,10 @@
                             ${sectDisplay}
                         </div>
                         <div class="temple-actions">
+                            <button class="btn btn-preview" onclick="openCommentModal('${t.name.replace(/'/g, "\\'")}')">
+                                <span class="icon">💬</span>
+                                <span>メモ</span>
+                            </button>
                             <button class="btn btn-preview" onclick='openPreviewModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
                                 <span class="icon">👁️</span>
                                 <span>プレビュー</span>
@@ -725,6 +793,165 @@
             }
         });
     });
+
+    // === CSV機能 ===
+    async function exportCSV() {
+        showLoading();
+        try {
+            window.location.href = '/export_csv';
+            setTimeout(hideLoading, 1000);
+        } catch (e) {
+            hideLoading();
+            alert('❌ エクスポートに失敗しました');
+        }
+    }
+
+    async function importCSV() {
+        const fileInput = document.getElementById('csv-file');
+        const file = fileInput.files[0];
+        
+        if (!file) return;
+        
+        if (!confirm(`「${file.name}」をインポートしますか？\n既存データは上書きされます。`)) {
+            fileInput.value = '';
+            return;
+        }
+        
+        showLoading();
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const res = await fetch('/import_csv', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                let message = `✅ インポート完了\n\n新規: ${data.imported}件\n更新: ${data.updated}件`;
+                if (data.errors.length > 0) {
+                    message += `\n\nエラー:\n${data.errors.join('\n')}`;
+                }
+                alert(message);
+                await loadList();
+                await loadLogs();
+            } else {
+                alert('❌ エラー: ' + data.message);
+            }
+        } catch (e) {
+            alert('❌ インポートに失敗しました: ' + e.message);
+        } finally {
+            hideLoading();
+            fileInput.value = '';
+        }
+    }
+
+    // === アクセス統計 ===
+    async function showAccessStats() {
+        document.getElementById('stats-modal').classList.add('show');
+        document.getElementById('stats-content').innerHTML = '読み込み中...';
+        
+        try {
+            const res = await fetch('/get_access_stats');
+            const data = await res.json();
+            
+            if (data.stats.length === 0) {
+                document.getElementById('stats-content').innerHTML = '<p style="text-align:center; color:#999;">データがありません</p>';
+                return;
+            }
+            
+            let html = '<table style="width:100%; border-collapse:collapse;">';
+            html += '<thead><tr style="background:#f5f5f5;"><th style="padding:10px; text-align:left;">順位</th><th style="padding:10px; text-align:left;">寺院名</th><th style="padding:10px; text-align:right;">閲覧回数</th></tr></thead>';
+            html += '<tbody>';
+            
+            data.stats.forEach((item, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}位`;
+                html += `<tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">${medal}</td>
+                    <td style="padding:10px; font-weight:600;">${item.name}</td>
+                    <td style="padding:10px; text-align:right;">${item.count}回</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            document.getElementById('stats-content').innerHTML = html;
+        } catch (e) {
+            document.getElementById('stats-content').innerHTML = '<p style="text-align:center; color:#d32f2f;">データの取得に失敗しました</p>';
+        }
+    }
+
+    // === コメント機能 ===
+    let currentTempleForComment = '';
+
+    async function openCommentModal(templeName) {
+        currentTempleForComment = templeName;
+        document.getElementById('comment-modal-title').textContent = `💬 ${templeName} のスタッフメモ`;
+        document.getElementById('comment-modal').classList.add('show');
+        document.getElementById('new-comment').value = '';
+        await loadComments(templeName);
+    }
+
+    async function loadComments(templeName) {
+        const container = document.getElementById('comments-list');
+        container.innerHTML = '読み込み中...';
+        
+        try {
+            const res = await fetch(`/get_comments/${encodeURIComponent(templeName)}`);
+            const data = await res.json();
+            
+            if (data.comments.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">まだメモがありません</p>';
+                return;
+            }
+            
+            let html = '';
+            data.comments.forEach(comment => {
+                html += `<div style="background:#f9f9f9; padding:12px; border-radius:8px; margin-bottom:10px; border-left:3px solid #1a237e;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span style="font-weight:600; color:#1a237e;">${comment.user_name}</span>
+                        <span style="font-size:0.85em; color:#666;">${comment.timestamp}</span>
+                    </div>
+                    <div style="color:#333; line-height:1.6;">${comment.comment}</div>
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<p style="text-align:center; color:#d32f2f;">読み込みに失敗しました</p>';
+        }
+    }
+
+    async function addComment() {
+        const commentText = document.getElementById('new-comment').value.trim();
+        
+        if (!commentText) {
+            alert('メモを入力してください');
+            return;
+        }
+        
+        try {
+            const res = await fetch('/add_comment', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    temple_name: currentTempleForComment,
+                    comment: commentText
+                })
+            });
+            
+            if (res.ok) {
+                document.getElementById('new-comment').value = '';
+                await loadComments(currentTempleForComment);
+                await loadLogs();
+            } else {
+                const data = await res.json();
+                alert('❌ エラー: ' + data.message);
+            }
+        } catch (e) {
+            alert('❌ 送信に失敗しました');
+        }
+    }
 </script>
 </body>
 </html>
