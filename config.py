@@ -36,5 +36,26 @@ class Config:
     MAX_ATTEMPTS = 5  # 最大ログイン試行回数
     SESSION_TIMEOUT = 1800  # セッションタイムアウト（秒）
     
-    # キャッシュ設定
+    # キャッシュ設定（メモリキャッシュ）
     CACHE_TIMEOUT = 300  # キャッシュ有効期限（秒）
+    
+    # Flask-Caching設定
+    CACHE_TYPE = os.environ.get("CACHE_TYPE", "SimpleCache")  # 本番: "RedisCache"
+    CACHE_REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    CACHE_DEFAULT_TIMEOUT = 300
+    
+    # Redis SSL/TLS設定（Upstash用）
+    CACHE_OPTIONS = {
+        'ssl_cert_reqs': None  # SSL証明書検証を無効化（Upstash対応）
+    } if os.environ.get("REDIS_URL", "").startswith("rediss://") else {}
+    
+    # Flask-Compress設定
+    COMPRESS_MIMETYPES = [
+        'text/html',
+        'text/css',
+        'text/xml',
+        'application/json',
+        'application/javascript'
+    ]
+    COMPRESS_LEVEL = 6
+    COMPRESS_MIN_SIZE = 500

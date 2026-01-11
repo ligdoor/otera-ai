@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_compress import Compress
+from flask_caching import Cache
 from config import Config
 from routes.auth_routes import auth_bp
 from routes.admin_routes import admin_bp
@@ -9,6 +11,13 @@ from routes.api_routes import api_bp
 # Flaskアプリケーション初期化
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Flask拡張機能の初期化
+compress = Compress(app)  # レスポンス圧縮
+cache = Cache(app)  # キャッシング
+
+# キャッシュインスタンスをエクスポート（他のモジュールから使用可能に）
+__all__ = ['app', 'cache']
 
 # Blueprintを登録
 app.register_blueprint(auth_bp)

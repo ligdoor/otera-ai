@@ -19,6 +19,11 @@ temple_bp = Blueprint('temple', __name__)
 otera_database = {}
 field_config = []
 
+# Flask-Cachingのインポート（循環インポート回避のため遅延インポート）
+def get_cache():
+    from main import cache
+    return cache
+
 def init_temple_data():
     """寺院データを初期化"""
     global otera_database, field_config
@@ -32,8 +37,13 @@ def reload_data():
     global otera_database, field_config
     
     try:
-        # キャッシュをクリア
+        # 独自キャッシュをクリア
         cache_manager.clear_cache()
+        
+        # Flask-Cachingのキャッシュもクリア
+        cache = get_cache()
+        cache.delete('all_temples_data')
+        cache.delete('temple_fields')
         
         otera_database = load_data_from_sheet(cache_manager)
         field_config = load_fields_config(cache_manager)
@@ -45,10 +55,17 @@ def reload_data():
 @temple_bp.route("/get_all_data")
 @login_required
 def get_all_data():
-    """全寺院データを取得（キャッシュ使用）"""
+    """全寺院データを取得（Flask-Cachingでキャッシュ）"""
+    cache = get_cache()
+    
+    # キャッシュから取得を試みる
+    @cache.cached(timeout=300, key_prefix='all_temples_data')
+    def fetch_data():
+        print("✅ データベースから取得（キャッシュなし）")
+        return load_data_from_sheet(cache_manager)
+    
     try:
-        # 最新データを取得（キャッシュがあれば使用）
-        data = load_data_from_sheet(cache_manager)
+        data = fetch_data()
         return jsonify(data)
     except Exception as e:
         print(f"データ取得エラー: {e}")
@@ -56,9 +73,16 @@ def get_all_data():
 
 @temple_bp.route("/get_fields")
 def get_fields():
-    """項目設定を取得"""
-    global field_config
-    return jsonify(field_config)
+    """項目設定を取得（Flask-Cachingでキャッシュ）"""
+    cache = get_cache()
+    
+    @cache.cached(timeout=300, key_prefix='temple_fields')
+    def fetch_fields():
+        print("✅ 項目設定を取得（キャッシュなし）")
+        global field_config
+        return field_config
+    
+    return jsonify(fetch_fields())
 
 @temple_bp.route("/update_temple", methods=["POST"])
 @login_required
@@ -92,6 +116,8 @@ def update_temple():
             
             # キャッシュクリア
             cache_manager.clear_cache('temples')
+            cache = get_cache()
+            cache.delete('all_temples_data')
             
             add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
             return jsonify({"status": "success"})
@@ -130,6 +156,8 @@ def add_temple():
         
         # キャッシュクリア
         cache_manager.clear_cache('temples')
+        cache = get_cache()
+        cache.delete('all_temples_data')
         
         add_log("追加", f"{name} を新規追加")
         return jsonify({"status": "success"})
@@ -154,6 +182,8 @@ def delete_temple():
             
             # キャッシュクリア
             cache_manager.clear_cache('temples')
+            cache = get_cache()
+            cache.delete('all_temples_data')
             
             add_log("削除", f"{name} を削除")
             return jsonify({"status": "success"})
