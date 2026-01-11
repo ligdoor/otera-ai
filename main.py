@@ -1,3 +1,6 @@
+import os
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import Flask
 from flask_compress import Compress
 from flask_caching import Cache
@@ -8,6 +11,19 @@ from routes.temple_routes import temple_bp, init_temple_data
 from routes.user_routes import user_bp
 from routes.api_routes import api_bp
 
+# Sentry初期化（本番環境のみ）
+if os.environ.get('SENTRY_DSN'):
+    sentry_sdk.init(
+        dsn=os.environ.get('SENTRY_DSN'),
+        integrations=[FlaskIntegration()],
+        traces_sample_rate=0.1,  # パフォーマンス監視（10%サンプリング）
+        profiles_sample_rate=0.1,  # プロファイリング
+        environment=os.environ.get('FLASK_ENV', 'production'),
+        # エラーフィルタリング（不要なエラーを除外）
+        before_send=lambda event, hint: event if event.get('level') != 'info' else None
+    )
+    print("✅ Sentry monitoring enabled")
+    
 # Flaskアプリケーション初期化
 app = Flask(__name__)
 app.config.from_object(Config)
