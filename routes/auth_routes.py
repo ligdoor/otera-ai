@@ -4,10 +4,12 @@ from services.auth import check_login_attempts, record_login_attempt, authentica
 from services.spreadsheet import add_log, get_spreadsheet_client
 from utils.decorators import login_required, update_session_activity, check_session_timeout
 from config import Config
+from main import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route("/admin", methods=["GET", "POST"])
+@limiter.limit("5 per minute")  # ログインは1分間に5回まで
 @auth_bp.route("/admin/", methods=["GET", "POST"])
 def admin():
     """管理画面ログイン"""
@@ -57,6 +59,7 @@ def logout():
     return redirect(url_for('auth.admin'))
 
 @auth_bp.route("/change_password", methods=["POST"])
+@limiter.limit("3 per hour")  # パスワード変更は1時間に3回まで
 @login_required
 def change_password():
     """パスワード変更"""

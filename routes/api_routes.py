@@ -3,6 +3,7 @@ from services.spreadsheet import get_spreadsheet_client
 from services.ai import generate_static_summary, generate_answer_with_ai
 from utils.helpers import get_jst_timestamp
 from config import Config
+from main import limiter
 
 api_bp = Blueprint('api', __name__)
 
@@ -70,6 +71,7 @@ def search_temples():
     return jsonify({"results": results[:20]})  # 最大20件
 
 @api_bp.route("/ask", methods=["POST"])
+@limiter.limit("30 per minute")  # AI質問は1分間に30回まで
 def ask():
     """AI質問応答"""
     otera_database, field_config = get_temple_data()
