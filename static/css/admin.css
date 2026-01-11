@@ -962,3 +962,20 @@ main {
         font-size: 0.7rem; 
     }
 }
+/* === Quill スマホ最適化 === */
+
+.quill-editor {
+  background: #fff;
+  min-height: 120px;
+  border-radius: 8px;
+}
+
+.ql-toolbar button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.ql-editor {
+  font-size: 16px;
+  line-height: 1.6;
+}
