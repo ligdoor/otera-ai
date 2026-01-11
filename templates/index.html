@@ -7,9 +7,10 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#000000">
 </head>
 <body>
-
 <header>
     <div class="header-content">
         <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
@@ -286,4 +287,11 @@
     }
 </script>
 </body>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/service-worker.js")
+    .then(() => console.log("ServiceWorker registered"))
+    .catch(err => console.error("SW error", err));
+}
+</script>
 </html>
