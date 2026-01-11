@@ -4,7 +4,7 @@ from services.auth import check_login_attempts, record_login_attempt, authentica
 from services.spreadsheet import add_log, get_spreadsheet_client
 from utils.decorators import login_required, update_session_activity, check_session_timeout
 from config import Config
-from extensions import limiter
+from app.flask_extensions import limiter
 
 auth_bp = Blueprint('auth', __name__)
 

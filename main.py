@@ -8,7 +8,7 @@ from routes.admin_routes import admin_bp
 from routes.temple_routes import temple_bp, init_temple_data
 from routes.user_routes import user_bp
 from routes.api_routes import api_bp
-from extensions import limiter
+from flask_extensions import limiter
 
 # Sentry初期化（オプショナル）
 try:
@@ -30,7 +30,6 @@ except ImportError:
 # Flaskアプリケーション初期化
 app = Flask(__name__)
 app.config.from_object(Config)
-
 limiter.init_app(app)
 
 # Flask拡張機能の初期化
