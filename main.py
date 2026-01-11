@@ -8,8 +8,7 @@ from routes.admin_routes import admin_bp
 from routes.temple_routes import temple_bp, init_temple_data
 from routes.user_routes import user_bp
 from routes.api_routes import api_bp
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from extensions import limiter
 
 # Sentry初期化（オプショナル）
 try:
@@ -32,14 +31,7 @@ except ImportError:
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Rate Limiter初期化
-limiter = Limiter(
-    app=app,
-    key_func=get_remote_address,
-    storage_uri=os.environ.get("REDIS_URL", "memory://"),  # Redisまたはメモリ
-    default_limits=["200 per day", "50 per hour"],  # デフォルト制限
-    headers_enabled=True  # レスポンスヘッダーに残回数を表示
-)
+limiter.init_app(app)
 
 # Flask拡張機能の初期化
 compress = Compress(app)  # レスポンス圧縮
