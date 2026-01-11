@@ -8,10 +8,10 @@ from flask_extensions import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route("/admin", methods=["GET", "POST"])
-@limiter.limit("5 per minute")  # ログインは1分間に5回まで
-@auth_bp.route("/admin/", methods=["GET", "POST"])
+@auth_bp.route("/admin", methods=["GET", "POST"], strict_slashes=False)
+@limiter.limit("5 per minute")
 def admin():
+    
     """管理画面ログイン"""
     if request.method == "POST":
         user_id = request.form.get("user_id")
