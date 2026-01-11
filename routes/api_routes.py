@@ -3,7 +3,7 @@ from services.spreadsheet import get_spreadsheet_client
 from services.ai import generate_static_summary, generate_answer_with_ai
 from utils.helpers import get_jst_timestamp
 from config import Config
-from extensions import limiter
+from app.flask_extensions import limiter
 
 api_bp = Blueprint('api', __name__)
 
