@@ -1,6 +1,6 @@
 {
   "name": "寺院情報管理システム",
-  "short_name": "Temple_Info",
+  "short_name": "寺院情報管理システム",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
