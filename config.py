@@ -23,6 +23,11 @@ class Config:
     CONFIG_SPREADSHEET_NAME = "otera_admin_config"
     GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     
+    # Supabase設定
+    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")  # Service Role Key
+    USE_SUPABASE = os.environ.get("USE_SUPABASE", "false").lower() == "true"  # Supabase使用フラグ
+    
     # 通知設定
     SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "")
     SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")

@@ -56,17 +56,23 @@ def health_check():
     """システムのヘルスチェック"""
     try:
         from routes.temple_routes import otera_database
-        from services.spreadsheet import get_spreadsheet_client
         from utils.helpers import get_jst_timestamp
+        from config import Config
         
         # データベース接続確認
-        client = get_spreadsheet_client()
+        if Config.USE_SUPABASE:
+            from services.supabase_db import get_supabase_client
+            client = get_supabase_client()
+        else:
+            from services.spreadsheet import get_spreadsheet_client
+            client = get_spreadsheet_client()
         
         # 寺院データ確認
         temple_count = len(otera_database)
         
         return jsonify({
             "status": "healthy",
+            "data_source": "Supabase" if Config.USE_SUPABASE else "Google Sheets",
             "temple_count": temple_count,
             "timestamp": get_jst_timestamp()
         }), 200

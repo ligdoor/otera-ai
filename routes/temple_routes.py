@@ -2,12 +2,17 @@ from flask import Blueprint, jsonify, request, send_file
 import csv
 import io
 from utils.decorators import login_required, role_required
-from services.spreadsheet import (
-    add_log, 
-    get_spreadsheet_client, 
-    get_data_sheet_and_headers,
+from services.data_source import (
+    add_log,
     load_data_from_sheet,
-    load_fields_config
+    load_fields_config,
+    get_data_sheet_and_headers
+)
+from services.temple_crud import (
+    update_temple_data,
+    add_temple_data,
+    delete_temple_data,
+    update_fields_data
 )
 from services.cache import cache_manager
 from utils.helpers import get_jst_now
@@ -89,6 +94,8 @@ def get_fields():
 @role_required('admin', 'editor')
 def update_temple():
     """寺院情報を更新"""
+    global otera_database
+    
     req = request.json
     original_name = req['original_name']
     new_data = req['data']
@@ -96,74 +103,44 @@ def update_temple():
     if not new_data.get('name'):
         return jsonify({"status": "error", "message": "寺院名は必須です"}), 400
     
-    try:
-        sheet, headers = get_data_sheet_and_headers()
-        current_headers = headers
-        for key in new_data.keys():
-            if key not in current_headers:
-                sheet.update_cell(1, len(current_headers) + 1, key)
-                current_headers.append(key)
-        headers = current_headers
-
-        cell = sheet.find(original_name, in_column=1)
-        if cell:
-            row_idx = cell.row
-            row_data = [new_data.get(h, "") for h in headers]
-            sheet.update(f"A{row_idx}", [row_data])
-            if original_name in otera_database:
-                del otera_database[original_name]
-            otera_database[new_data['name']] = new_data
-            
-            # キャッシュクリア
-            cache_manager.clear_cache('temples')
-            cache = get_cache()
-            cache.delete('all_temples_data')
-            
-            add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
-            return jsonify({"status": "success"})
-        else:
-            return jsonify({"status": "not_found"}), 404
-    except Exception as e:
-        add_log("編集エラー", f"エラー: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+    # CRUD操作実行
+    success, message = update_temple_data(original_name, new_data, otera_database)
+    
+    if success:
+        # Flask-Cachingのキャッシュもクリア
+        cache = get_cache()
+        cache.delete('all_temples_data')
+        
+        add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
+        return jsonify({"status": "success"})
+    else:
+        add_log("編集エラー", f"エラー: {message}")
+        return jsonify({"status": "error", "message": message}), 500
 
 @temple_bp.route("/add_temple", methods=["POST"])
 @login_required
 @role_required('admin', 'editor')
 def add_temple():
     """新規寺院を追加"""
+    global otera_database
+    
     req = request.json
     new_data = req['data']
     name = new_data.get('name')
     
-    if not name:
-        return jsonify({"status": "error", "message": "寺院名は必須です"}), 400
-    if name in otera_database:
-        return jsonify({"status": "error", "message": "その名前は既に存在します"}), 400
+    # CRUD操作実行
+    success, message = add_temple_data(new_data, otera_database)
     
-    try:
-        sheet, headers = get_data_sheet_and_headers()
-        current_headers = headers
-        for key in new_data.keys():
-            if key not in current_headers:
-                sheet.update_cell(1, len(current_headers) + 1, key)
-                current_headers.append(key)
-        headers = current_headers
-
-        row_data = [new_data.get(h, "") for h in headers]
-        sheet.append_row(row_data)
-        otera_database[name] = new_data
-        
-        # キャッシュクリア
-        cache_manager.clear_cache('temples')
+    if success:
+        # Flask-Cachingのキャッシュもクリア
         cache = get_cache()
         cache.delete('all_temples_data')
         
         add_log("追加", f"{name} を新規追加")
         return jsonify({"status": "success"})
-    except Exception as e:
-        add_log("追加エラー", f"エラー: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        add_log("追加エラー", f"エラー: {message}")
+        return jsonify({"status": "error", "message": message}), 400
 # routes/temple_routes.py (Part 2) - 続き
 
 @temple_bp.route("/delete_temple", methods=["POST"])
@@ -171,27 +148,23 @@ def add_temple():
 @role_required('admin', 'editor')
 def delete_temple():
     """寺院を削除"""
+    global otera_database
+    
     name = request.json.get('name')
-    try:
-        sheet, headers = get_data_sheet_and_headers()
-        cell = sheet.find(name, in_column=1)
-        if cell:
-            sheet.delete_rows(cell.row)
-            if name in otera_database:
-                del otera_database[name]
-            
-            # キャッシュクリア
-            cache_manager.clear_cache('temples')
-            cache = get_cache()
-            cache.delete('all_temples_data')
-            
-            add_log("削除", f"{name} を削除")
-            return jsonify({"status": "success"})
-        else:
-            return jsonify({"status": "not_found"}), 404
-    except Exception as e:
-        add_log("削除エラー", f"エラー: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+    
+    # CRUD操作実行
+    success, message = delete_temple_data(name, otera_database)
+    
+    if success:
+        # Flask-Cachingのキャッシュもクリア
+        cache = get_cache()
+        cache.delete('all_temples_data')
+        
+        add_log("削除", f"{name} を削除")
+        return jsonify({"status": "success"})
+    else:
+        add_log("削除エラー", f"エラー: {message}")
+        return jsonify({"status": "error", "message": message}), 404 if "見つかりません" in message else 500
 
 @temple_bp.route("/export_csv")
 @login_required
@@ -296,9 +269,16 @@ def import_csv():
 def get_access_stats():
     """閲覧回数統計"""
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('access_log')
-        records = sheet.get_all_records()
+        if Config.USE_SUPABASE:
+            # Supabase版
+            from services import supabase_db
+            records = supabase_db.get_access_logs(limit=1000)
+        else:
+            # Google Sheets版
+            from services.spreadsheet import get_spreadsheet_client
+            client = get_spreadsheet_client()
+            sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('access_log')
+            records = sheet.get_all_records()
         
         # 集計
         temple_counts = {}
@@ -321,12 +301,19 @@ def get_access_stats():
 def get_comments(temple_name):
     """特定寺院のコメント取得"""
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
-        records = sheet.get_all_records()
-        
-        comments = [r for r in records if r.get('temple_name') == temple_name]
-        comments.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        if Config.USE_SUPABASE:
+            # Supabase版
+            from services import supabase_db
+            comments = supabase_db.get_comments(temple_name)
+        else:
+            # Google Sheets版
+            from services.spreadsheet import get_spreadsheet_client
+            client = get_spreadsheet_client()
+            sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
+            records = sheet.get_all_records()
+            
+            comments = [r for r in records if r.get('temple_name') == temple_name]
+            comments.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         
         return jsonify({"comments": comments})
     except Exception as e:
@@ -347,13 +334,20 @@ def add_comment():
         return jsonify({"status": "error", "message": "必須項目が入力されていません"}), 400
     
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
-        
-        timestamp = get_jst_timestamp()
         user_name = session.get('user_name', '不明')
         
-        sheet.append_row([timestamp, temple_name, user_name, comment_text])
+        if Config.USE_SUPABASE:
+            # Supabase版
+            from services import supabase_db
+            supabase_db.add_comment(temple_name, user_name, comment_text)
+        else:
+            # Google Sheets版
+            from services.spreadsheet import get_spreadsheet_client
+            client = get_spreadsheet_client()
+            sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
+            
+            timestamp = get_jst_timestamp()
+            sheet.append_row([timestamp, temple_name, user_name, comment_text])
         
         add_log("コメント追加", f"{temple_name} にコメントを追加")
         
@@ -366,16 +360,35 @@ def add_comment():
 @login_required
 def delete_comment():
     """コメント削除"""
-    row_number = request.json.get('row_number')
-    
-    try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
-        sheet.delete_rows(row_number)
+    if Config.USE_SUPABASE:
+        # Supabase版では、コメントIDで削除
+        comment_id = request.json.get('comment_id')
+        if not comment_id:
+            return jsonify({"status": "error", "message": "コメントIDが必要です"}), 400
         
-        add_log("コメント削除", f"行{row_number}のコメントを削除")
+        try:
+            from services import supabase_db
+            client = supabase_db.get_supabase_client()
+            client.table('comments').delete().eq('id', comment_id).execute()
+            
+            add_log("コメント削除", f"コメントID {comment_id} を削除")
+            return jsonify({"status": "success"})
+        except Exception as e:
+            print(f"コメント削除エラー: {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+    else:
+        # Google Sheets版
+        row_number = request.json.get('row_number')
         
-        return jsonify({"status": "success"})
-    except Exception as e:
-        print(f"コメント削除エラー: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500    
+        try:
+            from services.spreadsheet import get_spreadsheet_client
+            client = get_spreadsheet_client()
+            sheet = client.open(Config.DATA_SPREADSHEET_NAME).worksheet('comments')
+            sheet.delete_rows(row_number)
+            
+            add_log("コメント削除", f"行{row_number}のコメントを削除")
+            
+            return jsonify({"status": "success"})
+        except Exception as e:
+            print(f"コメント削除エラー: {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500    
