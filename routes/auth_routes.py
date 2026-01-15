@@ -101,13 +101,6 @@ def change_password():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
-"""
-ログインボタン連打防止パッチ
-
-routes/auth_routes.py の render_login_page() 関数を
-このコードに置き換えてください（104行目付近）
-"""
-
 def render_login_page():
     """ログインページのHTMLを返す（連打防止機能付き）"""
     return f"""
@@ -156,23 +149,31 @@ def render_login_page():
         </div>
         
         <script>
-            // ★ ログインボタンの連打防止 ★
-            document.getElementById('login-form').addEventListener('submit', function(e) {{
+            // ★ ログインボタンの連打防止（修正版） ★
+            const loginForm = document.getElementById('login-form');
+            let isSubmitting = false;
+            
+            loginForm.addEventListener('submit', function(e) {{
+                // 既に送信中なら処理をキャンセル
+                if (isSubmitting) {{
+                    e.preventDefault();
+                    return false;
+                }}
+                
+                // 送信フラグを立てる
+                isSubmitting = true;
+                
                 const button = document.getElementById('login-button');
                 const spinner = document.getElementById('loading-spinner');
-                const userIdInput = document.getElementById('user-id-input');
-                const passwordInput = document.getElementById('password-input');
                 
-                // ボタンを無効化
+                // ボタンのみ無効化（入力欄は無効化しない！）
                 button.disabled = true;
                 button.textContent = '処理中...';
                 
-                // 入力欄も無効化
-                userIdInput.disabled = true;
-                passwordInput.disabled = true;
-                
                 // ローディング表示
                 spinner.classList.add('show');
+                
+                // フォームは通常通り送信される
             }});
         </script>
     </body>
