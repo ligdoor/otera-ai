@@ -4,7 +4,7 @@ from flask import request
 from config import Config
 from services.spreadsheet import get_spreadsheet_client, add_log
 from services.notification import notify_suspicious_login
-from utils.helpers import get_jst_now
+from utils.helpers import get_jst_now, get_jst_timestamp
 
 # ログイン試行管理
 login_attempts = {}
@@ -45,12 +45,15 @@ def authenticate_user(user_id, password):
         client = get_spreadsheet_client()
         sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
         records = sheet.get_all_records()
+        
         for user in records:
             if str(user.get('user_id')) == user_id:
                 stored_hash = user.get('password_hash', '')
+                authenticated = False
+                
                 if stored_hash.startswith('$2b$'):
                     if bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
-                        return user.get('name'), user.get('role', 'staff')
+                        authenticated = True
                 else:
                     # 旧形式のパスワード（平文）の場合はハッシュ化して更新
                     if str(user.get('password')) == password:
@@ -58,7 +61,21 @@ def authenticate_user(user_id, password):
                         cell = sheet.find(user_id, in_column=1)
                         if cell:
                             sheet.update_cell(cell.row, 2, hashed)
-                        return user.get('name'), user.get('role', 'staff')
+                        authenticated = True
+                
+                # ★ 認証成功時に最終ログイン時刻を更新 ★
+                if authenticated:
+                    cell = sheet.find(user_id, in_column=1)
+                    if cell:
+                        # 列6が last_login 列（user_id, password_hash, name, role, created_at, last_login）
+                        try:
+                            sheet.update_cell(cell.row, 6, get_jst_timestamp())
+                            print(f"✅ {user_id} の最終ログイン時刻を更新しました")
+                        except Exception as e:
+                            print(f"⚠️ 最終ログイン時刻の更新に失敗: {e}")
+                    
+                    return user.get('name'), user.get('role', 'staff')
+        
         return None, None
     except Exception as e:
         print(f"認証エラー: {e}")
