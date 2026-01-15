@@ -9,7 +9,7 @@ from flask_extensions import limiter
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route("/admin", methods=["GET", "POST"], strict_slashes=False)
-@limiter.limit("5 per minute")
+@limiter.limit("10 per minute")
 def admin():
     
     """管理画面ログイン"""
@@ -101,8 +101,15 @@ def change_password():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+"""
+ログインボタン連打防止パッチ
+
+routes/auth_routes.py の render_login_page() 関数を
+このコードに置き換えてください（104行目付近）
+"""
+
 def render_login_page():
-    """ログインページのHTMLを返す"""
+    """ログインページのHTMLを返す（連打防止機能付き）"""
     return f"""
     <html>
     <head>
@@ -117,18 +124,27 @@ def render_login_page():
             button {{ width: 100%; padding: 15px; margin-top: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }}
             button:hover {{ transform: translateY(-2px); }}
             button:active {{ transform: translateY(0); }}
+            button:disabled {{ opacity: 0.5; cursor: not-allowed; transform: none; }}
             .back-link {{ display: block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9rem; }}
             .security-note {{ margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; text-align: left; font-size: 0.85rem; color: #856404; }}
+            .loading-spinner {{ display: none; margin-top: 10px; }}
+            .loading-spinner.show {{ display: block; }}
+            .spinner {{ border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }}
+            @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
         </style>
     </head>
     <body>
         <div class="login-container">
             <div class="lock-icon">🔐</div>
-            <form method="post">
+            <form method="post" id="login-form">
                 <h2>セキュアログイン</h2>
-                <input type="text" name="user_id" placeholder="ログインID" required autocomplete="username">
-                <input type="password" name="password" placeholder="パスワード" required autocomplete="current-password">
-                <button type="submit">ログイン</button>
+                <input type="text" name="user_id" placeholder="ログインID" required autocomplete="username" id="user-id-input">
+                <input type="password" name="password" placeholder="パスワード" required autocomplete="current-password" id="password-input">
+                <button type="submit" id="login-button">ログイン</button>
+                <div class="loading-spinner" id="loading-spinner">
+                    <div class="spinner"></div>
+                    <p style="margin-top:10px; color:#666;">ログイン中...</p>
+                </div>
             </form>
             <div class="security-note">
                 <strong>⚠️ セキュリティ</strong><br>
@@ -138,6 +154,27 @@ def render_login_page():
             </div>
             <a href="/" class="back-link">← アプリへ戻る</a>
         </div>
+        
+        <script>
+            // ★ ログインボタンの連打防止 ★
+            document.getElementById('login-form').addEventListener('submit', function(e) {{
+                const button = document.getElementById('login-button');
+                const spinner = document.getElementById('loading-spinner');
+                const userIdInput = document.getElementById('user-id-input');
+                const passwordInput = document.getElementById('password-input');
+                
+                // ボタンを無効化
+                button.disabled = true;
+                button.textContent = '処理中...';
+                
+                // 入力欄も無効化
+                userIdInput.disabled = true;
+                passwordInput.disabled = true;
+                
+                // ローディング表示
+                spinner.classList.add('show');
+            }});
+        </script>
     </body>
     </html>
     """

@@ -238,14 +238,37 @@
     function hideLoading() {
         document.getElementById('loading-overlay').classList.remove('show');
     }
+    
+    // ★ 新規追加: ボタン無効化（連打防止） ★
+    function disableButtons() {
+        const buttons = document.querySelectorAll('.header-btn, .add-btn, .btn');
+        buttons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+    }
+    
+    function enableButtons() {
+        const buttons = document.querySelectorAll('.header-btn, .add-btn, .btn');
+        buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        });
+    }
 
     async function init() {
+        // ★ 改善1: 画面は表示されているが、ボタンを無効化（連打防止） ★
+        disableButtons();
         showLoading();
+        
         try {
+            // 項目設定を取得
             const res = await fetch('/get_fields');
             fieldConfig = await res.json();
             
-            // ★ ユーザー権限を取得してUIを制御 ★
+            // ユーザー権限を取得してUIを制御
             try {
                 const userRes = await fetch('/get_current_user');
                 const userData = await userRes.json();
@@ -265,16 +288,24 @@
                 console.log('権限チェックエラー:', e);
             }
             
-            await loadList();
-            await loadLogs();
+            // ★ 改善2: データとログを並列で取得（高速化） ★
+            await Promise.all([loadList(), loadLogs()]);
+            
         } catch (e) {
             console.error('初期化エラー:', e);
             alert('❌ データの読み込みに失敗しました。ページをリロードしてください。');
         } finally {
             hideLoading();
+            enableButtons(); // ★ ボタンを有効化 ★
         }
     }
-    init();
+    
+    // ★ 改善3: ページ読み込み完了後すぐに初期化 ★
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 
     async function loadList() {
         const list = document.getElementById('temple-list');
