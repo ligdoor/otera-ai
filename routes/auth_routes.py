@@ -54,11 +54,11 @@ def admin():
 
 @auth_bp.route("/logout")
 def logout():
-    """ログアウト"""
-    user_name = session.get('name', '不明')  # ★修正: user_name → name
+    """ログアウト - お寺のトップページにリダイレクト"""
+    user_name = session.get('name', '不明')
     add_log("ログアウト", f"{user_name} がログアウトしました")
     session.clear()
-    return redirect(url_for('auth.admin'))
+    return redirect('/')  # ★修正: お寺のトップページへ
 
 @auth_bp.route("/change_password", methods=["POST"])
 @limiter.limit("3 per hour")
