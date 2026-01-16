@@ -223,10 +223,8 @@ def add_log(user_name: str, user_id: str, action: str, details: str, ip_address:
     Google Sheets logs列: timestamp, user, user_id, action, details, ip_address
     Supabase logs列: timestamp, user, user_id, action, details, ip_address
     
-    ★重要: user_name列ではなくuser列を使用
-    
     Args:
-        user_name: ユーザー名（★これをuser列に格納）
+        user_name: ユーザー名（user列に格納）
         user_id: ユーザーID
         action: 操作種別
         details: 詳細情報
@@ -240,8 +238,8 @@ def add_log(user_name: str, user_id: str, action: str, details: str, ip_address:
     
     try:
         log_data = {
-            'timestamp': get_jst_timestamp(),  # ★追加: timestamp
-            'user': user_name,                  # ★修正: user_name → user
+            'timestamp': get_jst_timestamp(),
+            'user': user_name,  # ★修正: user_name → user
             'user_id': user_id,
             'action': action,
             'details': details,
@@ -277,21 +275,25 @@ def add_access_log(temple_name: str, question: str = "", user_name: str = "") ->
     """
     アクセスログを記録
     
+    Google Sheets access_log列: timestamp, temple_name, query
+    Supabase access_logs列: timestamp, temple_name, query
+    
     Args:
         temple_name: 寺院名
-        question: 質問内容
-        user_name: ユーザー名
+        question: 質問内容（query列に格納）
+        user_name: 使用しない（互換性のため残す）
     
     Returns:
         bool: 記録成功した場合True
     """
+    from utils.helpers import get_jst_timestamp
     client = get_supabase_client()
     
     try:
         log_data = {
+            'timestamp': get_jst_timestamp(),
             'temple_name': temple_name,
-            'question': question,
-            'user_name': user_name
+            'query': question  # ★修正: question → query列、user_name削除
         }
         client.table('access_logs').insert(log_data).execute()
         return True
@@ -329,6 +331,9 @@ def add_comment(temple_name: str, user_name: str, comment: str) -> bool:
     """
     コメントを追加
     
+    Google Sheets comments列: timestamp, temple_name, user_name, comment
+    Supabase comments列: timestamp, temple_name, user_name, comment
+    
     Args:
         temple_name: 寺院名
         user_name: ユーザー名
@@ -337,10 +342,12 @@ def add_comment(temple_name: str, user_name: str, comment: str) -> bool:
     Returns:
         bool: 追加成功した場合True
     """
+    from utils.helpers import get_jst_timestamp
     client = get_supabase_client()
     
     try:
         comment_data = {
+            'timestamp': get_jst_timestamp(),  # ★追加: timestamp
             'temple_name': temple_name,
             'user_name': user_name,
             'comment': comment
@@ -397,7 +404,7 @@ def get_all_users() -> List[Dict]:
         List[Dict]: ユーザーのリスト
     """
     client = get_supabase_client()
-    response = client.table('users').select('*').order('user_name').execute()
+    response = client.table('users').select('*').order('name').execute()  # ★修正: user_name → name
     return response.data
 
 
