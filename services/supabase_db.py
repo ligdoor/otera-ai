@@ -220,8 +220,13 @@ def add_log(user_name: str, user_id: str, action: str, details: str, ip_address:
     """
     操作ログを記録
     
+    Google Sheets logs列: timestamp, user, user_id, action, details, ip_address
+    Supabase logs列: timestamp, user, user_id, action, details, ip_address
+    
+    ★重要: user_name列ではなくuser列を使用
+    
     Args:
-        user_name: ユーザー名
+        user_name: ユーザー名（★これをuser列に格納）
         user_id: ユーザーID
         action: 操作種別
         details: 詳細情報
@@ -230,11 +235,13 @@ def add_log(user_name: str, user_id: str, action: str, details: str, ip_address:
     Returns:
         bool: 記録成功した場合True
     """
+    from utils.helpers import get_jst_timestamp
     client = get_supabase_client()
     
     try:
         log_data = {
-            'user_name': user_name,
+            'timestamp': get_jst_timestamp(),  # ★追加: timestamp
+            'user': user_name,                  # ★修正: user_name → user
             'user_id': user_id,
             'action': action,
             'details': details,

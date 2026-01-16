@@ -3,7 +3,7 @@
 credentials.json
 __pycache__/
 *.pyc
-
+backups/
 # テスト・デバッグ用ファイル
 check_models.py
 pass.py

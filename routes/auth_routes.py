@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 import bcrypt
-from services.auth import check_login_attempts, record_login_attempt, authenticate_user
-from services.spreadsheet import add_log, get_spreadsheet_client
+from services.auth import check_login_attempts, record_login_attempt, authenticate_user, add_log
 from utils.decorators import login_required, update_session_activity, check_session_timeout
 from config import Config
 from flask_extensions import limiter
@@ -11,11 +10,12 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route("/admin", methods=["GET", "POST"], strict_slashes=False)
 @limiter.limit("10 per minute")
 def admin():
-    
     """管理画面ログイン"""
     if request.method == "POST":
         user_id = request.form.get("user_id")
         password = request.form.get("password")
+        
+        print(f"📝 ログイン試行: user_id={user_id}")
         
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
@@ -28,15 +28,17 @@ def admin():
             record_login_attempt(user_id, True)
             session.clear()
             session['is_admin'] = True
-            session['user_name'] = user_name
+            session['name'] = user_name  # ★修正: user_name → name（Google Sheetsと統一）
             session['user_id'] = user_id
             session['role'] = role
             update_session_activity()
             add_log("ログイン成功", f"user_id: {user_id}", request.remote_addr)
+            print(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
             return redirect(url_for('auth.admin'))
         else:
             record_login_attempt(user_id, False)
             add_log("ログイン失敗", f"user_id: {user_id} - 認証エラー", request.remote_addr)
+            print(f"❌ ログイン失敗: {user_id}")
             return """<script>alert('IDまたはパスワードが違います'); window.location.href='/admin';</script>"""
     
     if session.get('is_admin'):
@@ -45,7 +47,7 @@ def admin():
             return redirect(url_for('auth.admin'))
         update_session_activity()
         # 管理画面を表示
-        return render_template("admin.html", user_name=session.get('user_name'))
+        return render_template("admin.html", user_name=session.get('name'))  # ★修正: user_name → name
     else:
         # ログインページを表示
         return render_login_page()
@@ -53,16 +55,16 @@ def admin():
 @auth_bp.route("/logout")
 def logout():
     """ログアウト"""
-    user_name = session.get('user_name', '不明')
+    user_name = session.get('name', '不明')  # ★修正: user_name → name
     add_log("ログアウト", f"{user_name} がログアウトしました")
     session.clear()
     return redirect(url_for('auth.admin'))
 
 @auth_bp.route("/change_password", methods=["POST"])
-@limiter.limit("3 per hour")  # パスワード変更は1時間に3回まで
+@limiter.limit("3 per hour")
 @login_required
 def change_password():
-    """パスワード変更"""
+    """パスワード変更（Supabase/Google Sheets両対応）"""
     current_pass = request.json['current_pass']
     new_pass = request.json['new_pass']
     user_id = session.get('user_id')
@@ -75,31 +77,67 @@ def change_password():
         return jsonify({"message": "パスワードには英字を含めてください"}), 400
     
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
-        cell = sheet.find(user_id, in_column=1)
-        
-        if cell:
-            row_idx = cell.row
-            stored_hash = sheet.cell(row_idx, 2).value
-            is_valid = False
-            if stored_hash.startswith('$2b$'):
-                is_valid = bcrypt.checkpw(current_pass.encode('utf-8'), stored_hash.encode('utf-8'))
-            else:
-                is_valid = (str(stored_hash) == current_pass)
-            
-            if is_valid:
-                new_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                sheet.update_cell(row_idx, 2, new_hash)
-                add_log("パスワード変更", "自身のパスワードを変更しました")
-                return jsonify({"status": "success"})
-            else:
-                add_log("パスワード変更失敗", "現在のパスワードが間違っています")
-                return jsonify({"message": "現在のパスワードが間違っています"}), 400
+        if Config.USE_SUPABASE:
+            return _change_password_supabase(user_id, current_pass, new_pass)
         else:
-            return jsonify({"message": "ユーザーが見つかりません"}), 404
+            return _change_password_sheets(user_id, current_pass, new_pass)
     except Exception as e:
+        print(f"❌ パスワード変更エラー: {e}")
         return jsonify({"message": str(e)}), 500
+
+def _change_password_supabase(user_id, current_pass, new_pass):
+    """Supabase版のパスワード変更"""
+    from services import supabase_db
+    
+    user = supabase_db.get_user_by_id(user_id)
+    
+    if not user:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
+    
+    stored_hash = user.get('password_hash', '')
+    is_valid = False
+    
+    if stored_hash.startswith('$2b$'):
+        is_valid = bcrypt.checkpw(current_pass.encode('utf-8'), stored_hash.encode('utf-8'))
+    else:
+        is_valid = (str(stored_hash) == current_pass)
+    
+    if is_valid:
+        new_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        supabase_db.update_user(user_id, {'password_hash': new_hash})
+        add_log("パスワード変更", "自身のパスワードを変更しました")
+        return jsonify({"status": "success"})
+    else:
+        add_log("パスワード変更失敗", "現在のパスワードが間違っています")
+        return jsonify({"message": "現在のパスワードが間違っています"}), 400
+
+def _change_password_sheets(user_id, current_pass, new_pass):
+    """Google Sheets版のパスワード変更"""
+    from services.spreadsheet import get_spreadsheet_client
+    
+    client = get_spreadsheet_client()
+    sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
+    cell = sheet.find(user_id, in_column=1)
+    
+    if cell:
+        row_idx = cell.row
+        stored_hash = sheet.cell(row_idx, 2).value
+        is_valid = False
+        if stored_hash.startswith('$2b$'):
+            is_valid = bcrypt.checkpw(current_pass.encode('utf-8'), stored_hash.encode('utf-8'))
+        else:
+            is_valid = (str(stored_hash) == current_pass)
+        
+        if is_valid:
+            new_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            sheet.update_cell(row_idx, 2, new_hash)
+            add_log("パスワード変更", "自身のパスワードを変更しました")
+            return jsonify({"status": "success"})
+        else:
+            add_log("パスワード変更失敗", "現在のパスワードが間違っています")
+            return jsonify({"message": "現在のパスワードが間違っています"}), 400
+    else:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
 
 def render_login_page():
     """ログインページのHTMLを返す（連打防止機能付き）"""
@@ -166,7 +204,7 @@ def render_login_page():
                 const button = document.getElementById('login-button');
                 const spinner = document.getElementById('loading-spinner');
                 
-                // ボタンのみ無効化（入力欄は無効化しない！）
+                // ★ ボタンのみ無効化（入力欄は無効化しない！） ★
                 button.disabled = true;
                 button.textContent = '処理中...';
                 
@@ -174,6 +212,7 @@ def render_login_page():
                 spinner.classList.add('show');
                 
                 // フォームは通常通り送信される
+                // 入力欄は無効化していないので、データは正常に送信される
             }});
         </script>
     </body>

@@ -1,11 +1,29 @@
+"""
+ユーザー管理ルート（Supabase/Google Sheets 両対応版）
+
+データソースを自動切り替えするユーザー管理
+"""
+
 from flask import Blueprint, render_template, jsonify, request, session
 import bcrypt
 from utils.decorators import login_required, role_required
-from services.spreadsheet import add_log, get_spreadsheet_client
 from utils.helpers import get_jst_timestamp
 from config import Config
 
 user_bp = Blueprint('user', __name__)
+
+def add_log(action, details):
+    """ログ記録（データソース自動切り替え）"""
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        from flask import request as flask_request
+        user_name = session.get('name', '不明')  # ★修正: user_name → name
+        user_id = session.get('user_id', '不明')
+        ip = flask_request.remote_addr
+        supabase_db.add_log(user_name, user_id, action, details, ip)
+    else:
+        from services.spreadsheet import add_log as sheets_add_log
+        sheets_add_log(action, details)
 
 @user_bp.route("/admin/users")
 @login_required
@@ -20,7 +38,7 @@ def get_current_user():
     """現在ログイン中のユーザー情報を取得"""
     return jsonify({
         "user_id": session.get('user_id'),
-        "user_name": session.get('user_name'),
+        "user_name": session.get('name'),  # ★修正: user_name → name（フロント側はuser_nameを期待）
         "role": session.get('role', 'viewer')
     })
 
@@ -30,24 +48,77 @@ def get_current_user():
 def get_users():
     """ユーザー一覧取得（管理者のみ）"""
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
-        records = sheet.get_all_records()
-        
-        # パスワードハッシュを除外
-        users = []
-        for user in records:
-            users.append({
-                'user_id': user.get('user_id'),
-                'name': user.get('name'),
-                'role': user.get('role', 'viewer'),
-                'created_at': user.get('created_at', ''),
-                'last_login': user.get('last_login', '')
-            })
-        
-        return jsonify({"users": users})
+        if Config.USE_SUPABASE:
+            return _get_users_supabase()
+        else:
+            return _get_users_sheets()
     except Exception as e:
+        print(f"❌ ユーザー一覧取得エラー: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+def _get_users_supabase():
+    """
+    Supabase版のユーザー一覧取得
+    
+    Supabaseのusersテーブル構造:
+    - user_id: TEXT
+    - name: TEXT  ★Google Sheetsと同じ
+    - password_hash: TEXT
+    - role: TEXT  ★Google Sheetsと同じ
+    - created_at: TEXT
+    - last_login: TEXT
+    """
+    from services import supabase_db
+    
+    all_users = supabase_db.get_all_users()
+    
+    # パスワードハッシュを除外してフロントエンドに返す
+    users = []
+    for user in all_users:
+        users.append({
+            'user_id': user.get('user_id'),
+            'name': user.get('name'),  # ★修正: user_name → name
+            'role': user.get('role', 'viewer'),  # ★修正: permission → role
+            'created_at': user.get('created_at', ''),
+            'last_login': user.get('last_login', '')
+        })
+    
+    print(f"✅ Supabaseからユーザー取得: {len(users)}件")
+    return jsonify({"users": users})
+
+def _get_users_sheets():
+    """
+    Google Sheets版のユーザー一覧取得
+    
+    Google Sheetsのusersシート構造:
+    列1: user_id
+    列2: password_hash
+    列3: name
+    列4: role
+    列5: created_at
+    列6: last_login
+    """
+    from services.spreadsheet import get_spreadsheet_client
+    
+    client = get_spreadsheet_client()
+    sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
+    records = sheet.get_all_records()
+    
+    # パスワードハッシュを除外してフロントエンドに返す
+    users = []
+    for user in records:
+        users.append({
+            'user_id': user.get('user_id'),
+            'name': user.get('name'),  # Google Sheetsでは name
+            'role': user.get('role', 'viewer'),  # role列
+            'created_at': user.get('created_at', ''),
+            'last_login': user.get('last_login', '')
+        })
+    
+    print(f"✅ Google Sheetsからユーザー取得: {len(users)}件")
+    return jsonify({"users": users})
 
 @user_bp.route("/add_user", methods=["POST"])
 @login_required
@@ -71,26 +142,69 @@ def add_user():
         return jsonify({"message": "パスワードは8文字以上必要です"}), 400
     
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
-        
-        # 重複チェック
-        records = sheet.get_all_records()
-        if any(str(u.get('user_id')) == user_id for u in records):
-            return jsonify({"message": "このユーザーIDは既に使用されています"}), 400
-        
-        # パスワードハッシュ化
-        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        
-        # 追加
-        timestamp = get_jst_timestamp()
-        sheet.append_row([user_id, hashed, name, role, timestamp, ''])
-        
-        add_log("ユーザー追加", f"{name}（{role}）を追加")
-        
-        return jsonify({"status": "success"})
+        if Config.USE_SUPABASE:
+            return _add_user_supabase(user_id, name, password, role)
+        else:
+            return _add_user_sheets(user_id, name, password, role)
     except Exception as e:
+        print(f"❌ ユーザー追加エラー: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"message": str(e)}), 500
+
+def _add_user_supabase(user_id, name, password, role):
+    """Supabase版のユーザー追加"""
+    from services import supabase_db
+    
+    # 重複チェック
+    existing_user = supabase_db.get_user_by_id(user_id)
+    if existing_user:
+        return jsonify({"message": "このユーザーIDは既に使用されています"}), 400
+    
+    # パスワードハッシュ化
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # ユーザーデータ作成（Google Sheetsと同じ列名）
+    timestamp = get_jst_timestamp()
+    user_data = {
+        'user_id': user_id,
+        'password_hash': hashed,
+        'name': name,  # ★修正: user_name → name
+        'role': role,  # ★修正: permission → role
+        'created_at': timestamp,
+        'last_login': ''
+    }
+    
+    supabase_db.create_user(user_data)
+    add_log("ユーザー追加", f"{name}（{role}）を追加")
+    
+    print(f"✅ Supabaseにユーザー追加: {user_id} ({name})")
+    return jsonify({"status": "success"})
+
+def _add_user_sheets(user_id, name, password, role):
+    """Google Sheets版のユーザー追加"""
+    from services.spreadsheet import get_spreadsheet_client
+    
+    client = get_spreadsheet_client()
+    sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
+    
+    # 重複チェック
+    records = sheet.get_all_records()
+    if any(str(u.get('user_id')) == user_id for u in records):
+        return jsonify({"message": "このユーザーIDは既に使用されています"}), 400
+    
+    # パスワードハッシュ化
+    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # 追加
+    timestamp = get_jst_timestamp()
+    # 列順: user_id, password_hash, name, role, created_at, last_login
+    sheet.append_row([user_id, hashed, name, role, timestamp, ''])
+    
+    add_log("ユーザー追加", f"{name}（{role}）を追加")
+    
+    print(f"✅ Google Sheetsにユーザー追加: {user_id} ({name})")
+    return jsonify({"status": "success"})
 
 @user_bp.route("/update_user_role", methods=["POST"])
 @login_required
@@ -109,18 +223,47 @@ def update_user_role():
         return jsonify({"message": "自分自身の権限は変更できません"}), 400
     
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
-        
-        cell = sheet.find(user_id, in_column=1)
-        if cell:
-            sheet.update_cell(cell.row, 4, new_role)  # role列を更新
-            add_log("権限変更", f"{user_id} の権限を {new_role} に変更")
-            return jsonify({"status": "success"})
+        if Config.USE_SUPABASE:
+            return _update_user_role_supabase(user_id, new_role)
         else:
-            return jsonify({"message": "ユーザーが見つかりません"}), 404
+            return _update_user_role_sheets(user_id, new_role)
     except Exception as e:
+        print(f"❌ 権限変更エラー: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"message": str(e)}), 500
+
+def _update_user_role_supabase(user_id, new_role):
+    """Supabase版の権限変更"""
+    from services import supabase_db
+    
+    user = supabase_db.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
+    
+    # ★修正: permission列ではなくrole列を更新
+    supabase_db.update_user(user_id, {'role': new_role})
+    add_log("権限変更", f"{user_id} の権限を {new_role} に変更")
+    
+    print(f"✅ Supabaseで権限変更: {user_id} → {new_role}")
+    return jsonify({"status": "success"})
+
+def _update_user_role_sheets(user_id, new_role):
+    """Google Sheets版の権限変更"""
+    from services.spreadsheet import get_spreadsheet_client
+    
+    client = get_spreadsheet_client()
+    sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
+    
+    cell = sheet.find(user_id, in_column=1)
+    if cell:
+        # 列4が role列
+        sheet.update_cell(cell.row, 4, new_role)
+        add_log("権限変更", f"{user_id} の権限を {new_role} に変更")
+        print(f"✅ Google Sheetsで権限変更: {user_id} → {new_role}")
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
 
 @user_bp.route("/delete_user", methods=["POST"])
 @login_required
@@ -134,16 +277,44 @@ def delete_user():
         return jsonify({"message": "自分自身は削除できません"}), 400
     
     try:
-        client = get_spreadsheet_client()
-        sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
-        
-        cell = sheet.find(user_id, in_column=1)
-        if cell:
-            user_name = sheet.cell(cell.row, 3).value
-            sheet.delete_rows(cell.row)
-            add_log("ユーザー削除", f"{user_name}（{user_id}）を削除")
-            return jsonify({"status": "success"})
+        if Config.USE_SUPABASE:
+            return _delete_user_supabase(user_id)
         else:
-            return jsonify({"message": "ユーザーが見つかりません"}), 404
+            return _delete_user_sheets(user_id)
     except Exception as e:
+        print(f"❌ ユーザー削除エラー: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"message": str(e)}), 500
+
+def _delete_user_supabase(user_id):
+    """Supabase版のユーザー削除"""
+    from services import supabase_db
+    
+    user = supabase_db.get_user_by_id(user_id)
+    if not user:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
+    
+    user_name = user.get('name')
+    supabase_db.delete_user(user_id)
+    add_log("ユーザー削除", f"{user_name}（{user_id}）を削除")
+    
+    print(f"✅ Supabaseでユーザー削除: {user_id} ({user_name})")
+    return jsonify({"status": "success"})
+
+def _delete_user_sheets(user_id):
+    """Google Sheets版のユーザー削除"""
+    from services.spreadsheet import get_spreadsheet_client
+    
+    client = get_spreadsheet_client()
+    sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
+    
+    cell = sheet.find(user_id, in_column=1)
+    if cell:
+        user_name = sheet.cell(cell.row, 3).value  # 列3が name列
+        sheet.delete_rows(cell.row)
+        add_log("ユーザー削除", f"{user_name}（{user_id}）を削除")
+        print(f"✅ Google Sheetsでユーザー削除: {user_id} ({user_name})")
+        return jsonify({"status": "success"})
+    else:
+        return jsonify({"message": "ユーザーが見つかりません"}), 404
