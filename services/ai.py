@@ -50,18 +50,42 @@ def generate_answer_with_ai(temple_info, user_question, field_config):
         label = field['label']
         val = temple_info.get(key, '記載なし')
         info_text += f"{label}: {val}\n"
+    
+    temple_name = temple_info.get('name', '')
 
+    # ★改善: 寺院名を明示した回答形式を指定
     prompt = f"""
     【役割】葬儀施行スタッフ専用の業務支援AI
     【参照データ】
+    寺院名: {temple_name}
     {info_text}
     ユーザーの質問: 「{user_question}」
-    【指示】質問に対する答えのみを簡潔に。挨拶不要。
+    
+    【回答形式】
+    必ず以下の形式で回答してください:
+    「{temple_name}の[項目名]は[内容]です」
+    
+    例:
+    - 質問「納棺の注意点は?」→ 「○○寺の納棺仕様は△△です」
+    - 質問「書き物は?」→ 「○○寺の書き物は△△です」
+    - 質問「住所は?」→ 「○○寺の住所は△△です」
+    
+    【特別な処理】
+    - 住所を回答する場合は、必ず以下のHTMLを含めてください:
+    <div style="margin-top:10px;">
+    <a href="https://www.google.com/maps/search/?api=1&query={temple_info.get('address','')}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline;">📍Googleマップを開く</a>
+    <button class="copy-btn" onclick="copyToClipboard('{temple_info.get('address','')}')">📋 コピー</button>
+    </div>
+    
+    【指示】
+    - 挨拶は不要
+    - 簡潔に答える
+    - 必ず寺院名を含める
     """
     
     try:
         if not Config.GEMINI_API_KEY:
-            return "AI機能は現在利用できません。"
+            return f"{temple_name}の情報: AI機能は現在利用できません。"
         
         response = client.models.generate_content(
             model='gemini-2.0-flash-exp',
@@ -74,4 +98,4 @@ def generate_answer_with_ai(temple_info, user_question, field_config):
         return response.text
     except Exception as e:
         print(f"AI生成エラー: {e}")
-        return f"エラー: AI応答の生成に失敗しました"
+        return f"{temple_name}の情報取得エラー: AI応答の生成に失敗しました"
