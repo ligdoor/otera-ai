@@ -471,28 +471,184 @@
     };
 
     // プレビューモーダル
-    function openPreviewModal(temple) {
-        const content = document.getElementById('preview-content');
-        let html = `<div class="preview-title">${temple.name} 情報</div>`;
+function openPreviewModal(temple) {
+    const content = document.getElementById('preview-content');
+    
+    // カテゴリ定義
+    const categories = {
+        basic: {
+            title: '🏯 基本情報',
+            fields: ['sect', 'address', 'transport'],
+            defaultOpen: true
+        },
+        tsuya: {
+            title: '🌙 通夜の流れ',
+            fields: ['tsuya_narimono', 'tsuya_ippan_shoko', 'tsuya_shinzoku_shoko', 'tsuya_dokyo_length', 'tsuya_notes'],
+            defaultOpen: false
+        },
+        sougi: {
+            title: '☀️ 葬儀の流れ',
+            fields: ['sougi_narimono', 'sougi_ippan_shoko', 'sougi_shinzoku_shoko', 'sougi_dokyo_length', 'sougi_notes'],
+            defaultOpen: false
+        },
+        items: {
+            title: '📝 お膳・書き物',
+            fields: ['ozen_type', 'kakimono_detail', 'shonananoka_timing'],
+            defaultOpen: false
+        },
+        other: {
+            title: '⚠️ その他・特記事項',
+            fields: ['nokanshiyo', 'kakimono', 'flow', 'caution', 'sonota_tokki'],
+            defaultOpen: false
+        }
+    };
+    
+    let html = `<div class="preview-title">${temple.name}</div>`;
+    
+    let categoryIndex = 0;
+    Object.keys(categories).forEach((catKey) => {
+        const category = categories[catKey];
+        const isOpen = category.defaultOpen;
+        const activeClass = isOpen ? 'active' : '';
         
-        fieldConfig.forEach(field => {
-            if (field.key === 'name') return;
-            const value = temple[field.key] || '記載なし';
-            const isTransport = field.key === 'transport';
-            
-            html += `
-                <div class="preview-field">
-                    <span class="preview-label">${field.label}:</span>
-                    <span class="preview-value ${isTransport ? 'preview-transport' : ''}">${value}</span>
-                </div>
-            `;
+        // このカテゴリに表示する項目があるかチェック
+        const fieldsToShow = [];
+        category.fields.forEach(fieldKey => {
+            const field = fieldConfig.find(f => f.key === fieldKey);
+            if (field) {
+                const value = temple[fieldKey];
+                fieldsToShow.push({
+                    key: fieldKey,
+                    label: field.label,
+                    value: value || ''
+                });
+            }
         });
         
-        content.innerHTML = html;
-        document.getElementById('preview-modal').classList.add('show');
-    }
+        if (fieldsToShow.length === 0) return; // 項目が1つもなければスキップ
+        
+        const accordionId = `accordion-preview-${categoryIndex}`;
+        const headerId = `header-preview-${categoryIndex}`;
+        categoryIndex++;
+        
+        html += `
+            <div class="accordion-section">
+                <div class="accordion-header ${activeClass}" id="${headerId}" onclick="toggleAccordionPreview('${headerId}', '${accordionId}')">
+                    <div class="accordion-title">
+                        <span class="accordion-icon">▶</span>
+                        <span>${category.title}</span>
+                    </div>
+                </div>
+                <div class="accordion-content ${activeClass}" id="${accordionId}" style="${isOpen ? 'max-height: none;' : ''}">
+                    <div class="accordion-body">
+        `;
+        
+        fieldsToShow.forEach(item => {
+            const displayValue = item.value && item.value.trim() !== '' ? item.value : '記載なし';
+            const isEmpty = !item.value || item.value.trim() === '';
+            const isImportant = item.key.includes('narimono') || item.key.includes('shoko') || item.key === 'transport';
+            
+            // 住所の場合はGoogleマップリンクを追加
+            if (item.key === 'address' && !isEmpty) {
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayValue)}`;
+                const addressEscaped = displayValue.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                html += `
+                    <div class="field-row">
+                        <div class="field-label-display">${item.label}</div>
+                        <div class="field-value-display">
+                            ${displayValue}
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboardAdmin('${addressEscaped}')">📋</button>
+                            <br>
+                            <a href="${mapUrl}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; margin-top:3px; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const emptyClass = isEmpty ? 'empty' : '';
+                const importantClass = (isImportant && !isEmpty) ? 'important' : '';
+                
+                html += `
+                    <div class="field-row">
+                        <div class="field-label-display">${item.label}</div>
+                        <div class="field-value-display ${emptyClass} ${importantClass}">
+                            ${displayValue}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    content.innerHTML = html;
+    document.getElementById('preview-modal').classList.add('show');
+}
 
-    // 編集フォーム
+// アコーディオンの開閉（プレビュー用）
+function toggleAccordionPreview(headerId, contentId) {
+    const header = document.getElementById(headerId);
+    const content = document.getElementById(contentId);
+    
+    if (!header || !content) {
+        console.error('要素が見つかりません:', headerId, contentId);
+        return;
+    }
+    
+    const isActive = header.classList.contains('active');
+    
+    if (isActive) {
+        // 閉じる
+        const currentHeight = content.scrollHeight;
+        content.style.maxHeight = currentHeight + 'px';
+        
+        // ブラウザに高さを認識させるための遅延
+        requestAnimationFrame(() => {
+            content.style.maxHeight = '0';
+            header.classList.remove('active');
+            content.classList.remove('active');
+        });
+    } else {
+        // 開く
+        header.classList.add('active');
+        content.classList.add('active');
+        
+        const scrollHeight = content.scrollHeight;
+        content.style.maxHeight = scrollHeight + 'px';
+        
+        // アニメーション完了後に auto に設定
+        setTimeout(() => {
+            if (content.classList.contains('active')) {
+                content.style.maxHeight = 'none';
+            }
+        }, 400);
+    }
+}
+// コピー機能（管理画面用）
+function copyToClipboardAdmin(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('📋 コピーしました: ' + text);
+        }).catch(err => {
+            alert('📋 コピーに失敗しました');
+        });
+    } else {
+        // フォールバック
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        alert('📋 コピーしました: ' + text);
+    }
+}
+
+// 編集フォーム
 let quillEditors = {};
 
 function renderForm(data = {}) {

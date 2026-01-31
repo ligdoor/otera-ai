@@ -283,6 +283,49 @@
         setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 100);
         return div.id;
     }
+
+function toggleAccordionFront(headerId, contentId) {
+    const header = document.getElementById(headerId);
+    const content = document.getElementById(contentId);
+    
+    if (!header || !content) {
+        // IDが見つからない場合は従来の方法で探す
+        const allHeaders = document.querySelectorAll('.accordion-header');
+        allHeaders.forEach(h => {
+            if (h.nextElementSibling && h.nextElementSibling.id === contentId) {
+                header = h;
+                content = h.nextElementSibling;
+            }
+        });
+    }
+    
+    if (!header || !content) return;
+    
+    const isActive = header.classList.contains('active');
+    
+    if (isActive) {
+        // 閉じる
+        content.style.maxHeight = content.scrollHeight + 'px';
+        setTimeout(() => {
+            content.style.maxHeight = '0';
+            header.classList.remove('active');
+            content.classList.remove('active');
+        }, 10);
+    } else {
+        // 開く
+        header.classList.add('active');
+        content.classList.add('active');
+        content.style.maxHeight = content.scrollHeight + 'px';
+        
+        // アニメーション後に auto に設定
+        setTimeout(() => {
+            if (content.classList.contains('active')) {
+                content.style.maxHeight = 'none';
+            }
+        }, 400);
+    }
+}
+
 </script>
 </body>
 <script>

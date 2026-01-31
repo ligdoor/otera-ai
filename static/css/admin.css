@@ -979,3 +979,172 @@ main {
   font-size: 16px;
   line-height: 1.6;
 }
+
+/* === アコーディオン（折りたたみ） === */
+.accordion-section {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.accordion-section:hover {
+    border-color: #bdbdbd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.accordion-header {
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.accordion-header:hover {
+    background: linear-gradient(135deg, #eeeeee 0%, #f5f5f5 100%);
+}
+
+.accordion-header.active {
+    background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+    border-bottom: 2px solid #1a237e;
+}
+
+.accordion-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #1a237e;
+    font-size: 1rem;
+}
+
+.accordion-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.accordion-header.active .accordion-icon {
+    transform: rotate(90deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: white;
+}
+
+.accordion-content.active {
+    max-height: none;
+    transition: max-height 0.4s ease-in;
+}
+
+.accordion-body {
+    padding: 8px 12px;
+    background: white;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 6px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f8f8f8;
+    align-items: start;
+}
+
+.field-row:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.field-label-display {
+    font-weight: 600;
+    color: #555;
+    font-size: 0.88rem;
+    line-height: 1.3;
+}
+
+.field-value-display {
+    color: #333;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+}
+
+.field-value-display.empty {
+    color: #999;
+    font-style: italic;
+    font-size: 0.85rem;
+}
+
+.field-value-display.important {
+    color: #c62828;
+    font-weight: 600;
+    padding: 1px 4px;
+    background: #ffebee;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.field-value-display .copy-btn {
+    margin-left: 4px;
+    padding: 1px 6px;
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
+
+/* プレビューモーダル */
+.preview-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #1a237e;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1a237e;
+}
+
+/* スマホ対応 */
+@media (max-width: 600px) {
+    .accordion-header {
+        padding: 10px 12px;
+    }
+    
+    .accordion-title {
+        font-size: 0.95rem;
+        gap: 6px;
+    }
+    
+    .accordion-icon {
+        font-size: 1.1rem;
+    }
+    
+    .accordion-body {
+        padding: 6px 10px;
+    }
+    
+    .field-row {
+        grid-template-columns: 1fr;
+        gap: 2px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
+    }
+    
+    .field-label-display {
+        font-size: 0.82rem;
+    }
+    
+    .field-value-display {
+        font-size: 0.88rem;
+    }
+}
