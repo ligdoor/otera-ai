@@ -92,40 +92,43 @@ def generate_static_summary(temple_info, field_config):
         for item in fields_to_show:
             display_value = item['value'] if item['value'].strip() else '記載なし'
             is_empty = not item['value'].strip()
-            is_long_text = len(display_value) > 30
-            
+    
             if item['key'] == 'address' and not is_empty:
                 # 住所の場合
                 address_escaped = item['value'].replace("'", "\\'").replace('"', '&quot;')
                 map_url = f"https://www.google.com/maps/search/?api=1&query={item['value']}"
-                
+        
                 html += f"""
-                <div style="margin-bottom:4px; padding:0; line-height:1.4;">
-                    <strong style="font-size:0.88rem; line-height:1.3;">{item['label']}:</strong>
+                <div style="margin-bottom:6px;">
+                    <strong style="font-size:0.88rem; line-height:1.3; display:block; margin-bottom:2px;">{item['label']}:</strong>
                     <span style="font-size:0.9rem; line-height:1.4;">{display_value}</span>
-                    <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('{address_escaped}')" style="margin-left:4px; padding:1px 6px; font-size:0.8rem;">📋</button>
+                    <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('{address_escaped}')" style="margin-left:4px; padding:2px 8px; font-size:0.8rem;">📋</button>
                     <br>
                     <a href="{map_url}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; margin-top:3px; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
                 </div>
                 """
             else:
-                # その他の項目
+                # その他の項目（★ <p>タグを処理）
                 if is_empty:
-                    value_html = f'<span class="important-text" style="color:#c62828; font-weight:600; background:#ffebee; padding:1px 4px; border-radius:3px; display:inline-block; font-size:0.9rem; line-height:1.4;">{display_value}</span>'
-                elif is_empty:
-                    value_html = f'<span class="empty-text" style="color:#999; font-style:italic; font-size:0.85rem; line-height:1.4;">{display_value}</span>'
-                elif is_long_text:
-                    value_html = f'<span class="long-text" style="display:block; margin-top:2px; line-height:1.5; font-size:0.9rem;">{display_value}</span>'
+                    formatted_value = display_value
                 else:
-                    value_html = f'<span style="font-size:0.9rem; line-height:1.4;">{display_value}</span>'
-                
+                    # Quillの<p>タグを<div>に変換してマージンを削除
+                    formatted_value = display_value.replace('<p>', '<div style="margin:0; padding:2px 0; line-height:1.5;">').replace('</p>', '</div>')
+                    # 空の<p><br></p>を削除
+                    formatted_value = formatted_value.replace('<div style="margin:0; padding:2px 0; line-height:1.5;"><br></div>', '<br>')
+        
+                if is_empty:
+                    value_html = f'<div style="color:#999; font-style:italic; font-size:0.85rem; line-height:1.5; padding:8px; background:#f9f9f9; border-radius:6px;">{formatted_value}</div>'
+                else:
+                    value_html = f'<div style="font-size:0.9rem; line-height:1.5; padding:8px; background:#f9f9f9; border-radius:6px;">{formatted_value}</div>'
+        
                 html += f"""
-                <div style="margin-bottom:4px; padding:0; line-height:1.4;">
-                    <strong style="font-size:0.88rem; line-height:1.3;">{item['label']}:</strong> {value_html}
+                <div style="margin-bottom:8px;">
+                    <strong style="font-size:0.88rem; line-height:1.3; display:block; margin-bottom:4px;">{item['label']}:</strong>
+                    {value_html}
                 </div>
                 """
-        
-        # アコーディオンを閉じる（★ ここが重要！）
+        # アコーディオンを閉じる
         html += """
                 </div>
             </div>
@@ -133,6 +136,7 @@ def generate_static_summary(temple_info, field_config):
         """
     
     return html
+
 def generate_answer_with_ai(temple_info, user_question, field_config):
     """AIを使用して質問に回答"""
     info_text = ""

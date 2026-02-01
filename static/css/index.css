@@ -526,13 +526,14 @@ color: #90caf9;
     transition: max-height 0.4s ease-in;
 }
 
+/* アコーディオンボディの余白調整 */
 .accordion-body {
-    padding: 8px 12px;
+    padding: 6px 10px;
     line-height: 1.4;
 }
 
 .accordion-body > div {
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     padding: 0;
 }
 
@@ -543,9 +544,8 @@ color: #90caf9;
 .accordion-body strong {
     color: #555;
     font-size: 0.88rem;
-    display: inline-block;
-    min-width: 90px;
-    vertical-align: top;
+    display: block;
+    margin-bottom: 2px;
     line-height: 1.3;
 }
 

@@ -317,73 +317,76 @@
             const userData = await userRes.json();
             const userRole = userData.role;
             const canEdit = (userRole === 'admin' || userRole === 'editor');
-            
+        
             const res = await fetch('/get_all_data');
-            if (!res.ok) throw new Error('データ取得失敗');
-            
+           if (!res.ok) throw new Error('データ取得失敗');
+        
             templeData = await res.json();
             list.innerHTML = ''; 
-            
+        
             const sortedKeys = Object.keys(templeData).sort();
-            
+        
             if (sortedKeys.length === 0) {
                 list.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">登録されている寺院がありません</div>';
-                return;
-            }
-            
-            sortedKeys.forEach(key => {
-                const t = templeData[key];
-                const div = document.createElement('div');
-                div.className = 'temple-item';
-                
-                const sectDisplay = t.sect ? `<span class="temple-sect">${t.sect}</span>` : '';
-                
-                // ★ 権限に応じてボタンを表示/非表示 ★
-                const editButtons = canEdit ? `
-                    <button class="btn btn-edit" onclick='openEditModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
-                        <span class="icon">✏️</span>
-                        <span>編集</span>
-                    </button>
-                    <button class="btn btn-delete" onclick="deleteTemple('${t.name.replace(/'/g, "\\'")}')">
-                        <span class="icon">🗑️</span>
-                    </button>
-                ` : '';
-                
-                div.innerHTML = `
-                    <div class="temple-header">
-                        <div class="temple-info">
-                            <div class="temple-name">${t.name}</div>
-                            ${sectDisplay}
-                        </div>
-                        <div class="temple-actions">
-                            <button class="btn btn-preview" onclick="openCommentModal('${t.name.replace(/'/g, "\\'")}')">
-                                <span class="icon">💬</span>
-                                <span>メモ</span>
-                            </button>
-                            <button class="btn btn-preview" onclick='openPreviewModal(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
-                                <span class="icon">👁️</span>
-                                <span>プレビュー</span>
-                            </button>
-                            ${editButtons}
-                        </div>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        } catch (e) {
-            console.error('データ読み込みエラー:', e);
-            list.innerHTML = `
-                <div style="text-align:center; padding:40px;">
-                    <p style="color:#d32f2f; font-size:1.1rem; margin-bottom:15px;">❌ データの読み込みに失敗しました</p>
-                    <button class="btn btn-edit" onclick="location.reload()" style="max-width:200px; margin:0 auto;">
-                        <span class="icon">🔄</span>
-                        <span>再読み込み</span>
-                    </button>
-                </div>
-            `;
-        }
-    }
+               return;
+           }
+        
+    sortedKeys.forEach(key => {
+       const t = templeData[key];
+        const div = document.createElement('div');
+        div.className = 'temple-item';
     
+        const sectDisplay = t.sect ? `<span class="temple-sect">${t.sect}</span>` : '';
+    
+        // ★ データをエスケープして保存
+        div.dataset.temple = JSON.stringify(t);
+        const nameEscaped = t.name.replace(/'/g, "\\'");
+    
+        // ★ 権限に応じてボタンを表示/非表示 ★
+        const editButtons = canEdit ? `
+            <button class="btn btn-edit" onclick="openEditModalFromData(this)">
+                <span class="icon">✏️</span>
+                <span>編集</span>
+            </button>
+            <button class="btn btn-delete" onclick="deleteTemple('${nameEscaped}')">
+                <span class="icon">🗑️</span>
+            </button>
+        ` : '';
+    
+        div.innerHTML = `
+            <div class="temple-header">
+                <div class="temple-info">
+                    <div class="temple-name">${t.name}</div>
+                    ${sectDisplay}
+                </div>
+                <div class="temple-actions">
+                    <button class="btn btn-preview" onclick="openCommentModal('${nameEscaped}')">
+                        <span class="icon">💬</span>
+                        <span>メモ</span>
+                    </button>
+                    <button class="btn btn-preview" onclick="openPreviewModalFromData(this)">
+                        <span class="icon">👁️</span>
+                        <span>プレビュー</span>
+                    </button>
+                    ${editButtons}
+                </div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    } catch (e) {
+        console.error('データ読み込みエラー:', e);
+        list.innerHTML = `
+            <div style="text-align:center; padding:40px;">
+                <p style="color:#d32f2f; font-size:1.1rem; margin-bottom:15px;">❌ データの読み込みに失敗しました</p>
+                <button class="btn btn-edit" onclick="location.reload()" style="max-width:200px; margin:0 auto;">
+                    <span class="icon">🔄</span>
+                    <span>再読み込み</span>
+                </button>
+            </div>
+        `;
+    }
+}    
     async function loadLogs() {
         try {
             const res = await fetch('/get_logs');
@@ -470,7 +473,8 @@
         }
     };
 
-    // プレビューモーダル
+// プレビューモーダル
+// プレビューモーダル
 function openPreviewModal(temple) {
     const content = document.getElementById('preview-content');
     
@@ -546,33 +550,29 @@ function openPreviewModal(temple) {
         fieldsToShow.forEach(item => {
             const displayValue = item.value && item.value.trim() !== '' ? item.value : '記載なし';
             const isEmpty = !item.value || item.value.trim() === '';
-            const isImportant = item.key.includes('narimono') || item.key.includes('shoko') || item.key === 'transport';
             
             // 住所の場合はGoogleマップリンクを追加
             if (item.key === 'address' && !isEmpty) {
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayValue)}`;
                 const addressEscaped = displayValue.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                 html += `
-                    <div class="field-row">
-                        <div class="field-label-display">${item.label}</div>
-                        <div class="field-value-display">
+                    <div style="margin-bottom:6px;">
+                        <div style="font-weight:600; color:#555; font-size:0.88rem; margin-bottom:2px;">${item.label}:</div>
+                        <div style="font-size:0.9rem; line-height:1.5;">
                             ${displayValue}
-                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboardAdmin('${addressEscaped}')">📋</button>
-                            <br>
-                            <a href="${mapUrl}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; margin-top:3px; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
+                            <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboardAdmin('${addressEscaped}')" style="margin-left:4px; padding:2px 8px; font-size:0.8rem;">📋</button>
                         </div>
+                        <a href="${mapUrl}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; margin-top:4px; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
                     </div>
                 `;
             } else {
-                const emptyClass = isEmpty ? 'empty' : '';
-                const importantClass = (isImportant && !isEmpty) ? 'important' : '';
+                // その他の項目
+                const valueStyle = isEmpty ? 'color:#999; font-style:italic; font-size:0.85rem;' : 'font-size:0.9rem; line-height:1.5;';
                 
                 html += `
-                    <div class="field-row">
-                        <div class="field-label-display">${item.label}</div>
-                        <div class="field-value-display ${emptyClass} ${importantClass}">
-                            ${displayValue}
-                        </div>
+                    <div style="margin-bottom:6px;">
+                        <div style="font-weight:600; color:#555; font-size:0.88rem; margin-bottom:2px;">${item.label}:</div>
+                        <div style="${valueStyle}">${displayValue}</div>
                     </div>
                 `;
             }
@@ -587,6 +587,20 @@ function openPreviewModal(temple) {
     
     content.innerHTML = html;
     document.getElementById('preview-modal').classList.add('show');
+}
+
+// データ属性からプレビューモーダルを開く
+function openPreviewModalFromData(button) {
+    const templeItem = button.closest('.temple-item');
+    const templeData = JSON.parse(templeItem.dataset.temple);
+    openPreviewModal(templeData);
+}
+
+// データ属性から編集モーダルを開く
+function openEditModalFromData(button) {
+    const templeItem = button.closest('.temple-item');
+    const templeData = JSON.parse(templeItem.dataset.temple);
+    openEditModal(templeData);
 }
 
 // アコーディオンの開閉（プレビュー用）

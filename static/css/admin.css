@@ -554,6 +554,19 @@ main {
     font-weight: bold;
 }
 
+/* プレビューモーダルの余白調整 */
+.preview-content .accordion-body {
+    padding: 8px 12px;
+}
+
+.preview-content .accordion-body > div {
+    margin-bottom: 6px;
+}
+
+.preview-content .accordion-body > div:last-child {
+    margin-bottom: 0;
+}
+
 /* === インフォボックス === */
 .info-box {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
