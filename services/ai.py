@@ -183,7 +183,7 @@ def generate_answer_with_ai(temple_info, user_question, field_config):
             return f"{temple_name}の情報: AI機能は現在利用できません。"
         
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0.7,
