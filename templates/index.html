@@ -64,6 +64,12 @@
             </div>
             <div class="text-input-wrapper">
                 <input type="text" id="free-input" placeholder="確認事項を入力" onkeypress="if(event.key === 'Enter') sendFreeChat()">
+                <button id="voiceBtn" onclick="startVoiceInput()" 
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            color: white; border: none; border-radius: 8px; 
+                            padding: 8px 12px; font-size: 18px; cursor: pointer; 
+                            margin: 0 4px; transition: transform 0.2s;"
+                        title="音声入力">🎤</button>
                 <button class="send-btn" onclick="sendFreeChat()">📤 確認</button>
             </div>
         </div>
@@ -330,6 +336,86 @@ function toggleAccordionFront(headerId, contentId) {
             }
         }, 400);
     }
+}
+
+// 音声入力機能
+let recognition = null;
+
+function startVoiceInput() {
+    // ブラウザが音声認識をサポートしているか確認
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('このブラウザは音声入力に対応していません。Chrome、Edge、Safariをご利用ください。');
+        return;
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'ja-JP';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    
+    const voiceBtn = document.getElementById('voiceBtn');
+    const freeInput = document.getElementById('free-input');
+    
+    // 録音開始
+    voiceBtn.textContent = '🔴';
+    voiceBtn.style.transform = 'scale(1.1)';
+    freeInput.placeholder = '🎤 音声入力中...';
+    
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        freeInput.value = transcript;
+        
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.transform = 'scale(1)';
+        freeInput.placeholder = '確認事項を入力';
+    };
+    
+    recognition.onerror = function(event) {
+        console.error('音声認識エラー:', event.error);
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.transform = 'scale(1)';
+        freeInput.placeholder = '確認事項を入力';
+        
+        if (event.error === 'no-speech') {
+            alert('音声が認識できませんでした。もう一度お試しください。');
+        } else if (event.error === 'not-allowed') {
+            alert('マイクへのアクセスが許可されていません。ブラウザの設定を確認してください。');
+        } else {
+            alert('音声認識エラーが発生しました: ' + event.error);
+        }
+    };
+    
+    recognition.onend = function() {
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.transform = 'scale(1)';
+        freeInput.placeholder = '確認事項を入力';
+    };
+    
+    recognition.start();
+}
+
+// 音声入力テキストに最も近い寺院名を検索
+function findClosestTemple(voiceText) {
+    const normalized = voiceText.replace(/寺|じ$/g, '');
+    
+    // 完全一致を優先
+    let match = allTemples.find(name => name === voiceText);
+    if (match) return match;
+    
+    // 部分一致（前方一致）
+    match = allTemples.find(name => name.startsWith(normalized));
+    if (match) return match;
+    
+    // 部分一致（含む）
+    match = allTemples.find(name => name.includes(normalized));
+    if (match) return match;
+    
+    // ひらがな変換して検索
+    const kanaText = voiceText.replace(/じ$/g, '寺');
+    match = allTemples.find(name => name.includes(kanaText));
+    
+    return match || null;
 }
 
 </script>
