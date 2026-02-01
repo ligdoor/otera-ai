@@ -160,21 +160,40 @@ def update_temple():
     success, message = update_temple_data(original_name, new_data, otera_database)
     
     if success:
-        # ★ キャッシュクリアを修正
+        # キャッシュクリアを修正
         try:
             cache = get_cache()
-            cache.clear()  # delete ではなく clear を使う
+            cache.clear()
         except:
-            pass  # キャッシュエラーは無視
+            pass
         
-        # services.cache も クリア
         from services.cache import cache_manager
         cache_manager.clear_cache()
         
-        add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
+        # ★ 修正: add_log の呼び出しを supabase_db に変更
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='編集',
+                details=f"{original_name} の情報を更新 → {new_data['name']}"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
+        
         return jsonify({"status": "success"})
     else:
-        add_log("編集エラー", f"エラー: {message}")
+        # ★ 修正: エラーログも同様に
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='編集エラー',
+                details=f"エラー: {message}"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("編集エラー", f"エラー: {message}")
+        
         return jsonify({"status": "error", "message": message}), 500
 
 @temple_bp.route("/add_temple", methods=["POST"])
@@ -192,7 +211,7 @@ def add_temple():
     success, message = add_temple_data(new_data, otera_database)
     
     if success:
-        # ★ キャッシュクリアを修正
+        # キャッシュクリア
         try:
             cache = get_cache()
             cache.clear()
@@ -202,10 +221,30 @@ def add_temple():
         from services.cache import cache_manager
         cache_manager.clear_cache()
         
-        add_log("追加", f"{name} を新規追加")
+        # ★ 修正: add_log の呼び出しを supabase_db に変更
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='追加',
+                details=f"{name} を新規追加"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("追加", f"{name} を新規追加")
+        
         return jsonify({"status": "success"})
     else:
-        add_log("追加エラー", f"エラー: {message}")
+        # ★ 修正: エラーログも同様に
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='追加エラー',
+                details=f"エラー: {message}"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("追加エラー", f"エラー: {message}")
+        
         return jsonify({"status": "error", "message": message}), 400
 
 @temple_bp.route("/delete_temple", methods=["POST"])
@@ -221,7 +260,7 @@ def delete_temple():
     success, message = delete_temple_data(name, otera_database)
     
     if success:
-        # ★ キャッシュクリアを修正
+        # キャッシュクリア
         try:
             cache = get_cache()
             cache.clear()
@@ -231,11 +270,32 @@ def delete_temple():
         from services.cache import cache_manager
         cache_manager.clear_cache()
         
-        add_log("削除", f"{name} を削除")
+        # ★ 修正: add_log の呼び出しを supabase_db に変更
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='削除',
+                details=f"{name} を削除"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("削除", f"{name} を削除")
+        
         return jsonify({"status": "success"})
     else:
-        add_log("削除エラー", f"エラー: {message}")
+        # ★ 修正: エラーログも同様に
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            supabase_db.add_log(
+                action='削除エラー',
+                details=f"エラー: {message}"
+            )
+        else:
+            from services.data_source import add_log
+            add_log("削除エラー", f"エラー: {message}")
+        
         return jsonify({"status": "error", "message": message}), 404 if "見つかりません" in message else 500
+
 # ============================================
 # CSV入出力ルート
 # ============================================

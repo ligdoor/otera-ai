@@ -216,16 +216,13 @@ def update_fields_config(fields: List[Dict]) -> bool:
 # ログ操作
 # ============================================
 
-def add_log(user_name: str, user_id: str, action: str, details: str, ip_address: str = "") -> bool:
+def add_log(user_name: str = None, user_id: str = None, action: str = '', details: str = '', ip_address: str = '') -> bool:
     """
     操作ログを記録
     
-    Google Sheets logs列: timestamp, user, user_id, action, details, ip_address
-    Supabase logs列: timestamp, user, user_id, action, details, ip_address
-    
     Args:
-        user_name: ユーザー名（user列に格納）
-        user_id: ユーザーID
+        user_name: ユーザー名（省略時はセッションから取得）
+        user_id: ユーザーID（省略時はセッションから取得）
         action: 操作種別
         details: 詳細情報
         ip_address: IPアドレス
@@ -234,23 +231,31 @@ def add_log(user_name: str, user_id: str, action: str, details: str, ip_address:
         bool: 記録成功した場合True
     """
     from utils.helpers import get_jst_timestamp
+    from flask import session
+    
+    # セッションから自動取得（引数が無い場合）
+    if not user_name:
+        user_name = session.get('user_name', '不明')
+    if not user_id:
+        user_id = session.get('user_id', 'unknown')
+    
     client = get_supabase_client()
     
     try:
         log_data = {
             'timestamp': get_jst_timestamp(),
-            'user': user_name,  # ★修正: user_name → user
+            'user': user_name,
             'user_id': user_id,
             'action': action,
             'details': details,
             'ip_address': ip_address
         }
         client.table('logs').insert(log_data).execute()
+        print(f"✅ ログ記録: {user_name} ({user_id}) - {action}")
         return True
     except Exception as e:
-        print(f"ログ記録エラー: {e}")
+        print(f"❌ ログ記録エラー: {e}")
         return False
-
 
 def get_recent_logs(limit: int = 100) -> List[Dict]:
     """

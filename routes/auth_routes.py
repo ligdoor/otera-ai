@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 import bcrypt
-from services.auth import check_login_attempts, record_login_attempt, authenticate_user, add_log
+from services.auth import check_login_attempts, record_login_attempt, authenticate_user
 from utils.decorators import login_required, update_session_activity, check_session_timeout
 from config import Config
 from flask_extensions import limiter
@@ -19,7 +19,16 @@ def admin():
         
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
-            add_log("ログイン失敗", f"user_id: {user_id} - {error_msg}", request.remote_addr)
+            # ★ 修正: supabase_db.add_log を使用
+            if Config.USE_SUPABASE:
+                from services import supabase_db
+                supabase_db.add_log(
+                    user_name='不明',
+                    user_id=user_id,
+                    action='ログイン失敗',
+                    details=error_msg,
+                    ip_address=request.remote_addr or ''
+                )
             return f"""<script>alert('{error_msg}'); window.location.href='/admin';</script>"""
         
         user_name, role = authenticate_user(user_id, password)
@@ -28,16 +37,52 @@ def admin():
             record_login_attempt(user_id, True)
             session.clear()
             session['is_admin'] = True
-            session['name'] = user_name  # ★修正: user_name → name（Google Sheetsと統一）
+            session['user_name'] = user_name  # ★ 修正: name → user_name に統一
             session['user_id'] = user_id
             session['role'] = role
             update_session_activity()
-            add_log("ログイン成功", f"user_id: {user_id}", request.remote_addr)
+            
+            # ★ 修正: supabase_db.add_log を使用、メッセージも改善
+            if Config.USE_SUPABASE:
+                from services import supabase_db
+                
+                # 権限の日本語表示
+                role_display = {
+                    'admin': '管理者',
+                    'editor': '編集者',
+                    'viewer': '閲覧者'
+                }.get(role, role)
+                
+                supabase_db.add_log(
+                    user_name=user_name,
+                    user_id=user_id,
+                    action='ログイン',
+                    details=f"ログイン成功 ({role_display})",
+                    ip_address=request.remote_addr or ''
+                )
+                
+                # 最終ログイン時刻を更新
+                print(f"✅ {user_name} の最終ログイン時刻を更新しました（Supabase）")
+                supabase_db.update_user(user_id, {
+                    'last_login': supabase_db.get_jst_timestamp()
+                })
+            
             print(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
             return redirect(url_for('auth.admin'))
         else:
             record_login_attempt(user_id, False)
-            add_log("ログイン失敗", f"user_id: {user_id} - 認証エラー", request.remote_addr)
+            
+            # ★ 修正: supabase_db.add_log を使用
+            if Config.USE_SUPABASE:
+                from services import supabase_db
+                supabase_db.add_log(
+                    user_name='不明',
+                    user_id=user_id,
+                    action='ログイン失敗',
+                    details='認証エラー',
+                    ip_address=request.remote_addr or ''
+                )
+            
             print(f"❌ ログイン失敗: {user_id}")
             return """<script>alert('IDまたはパスワードが違います'); window.location.href='/admin';</script>"""
     
@@ -47,7 +92,7 @@ def admin():
             return redirect(url_for('auth.admin'))
         update_session_activity()
         # 管理画面を表示
-        return render_template("admin.html", user_name=session.get('name'))  # ★修正: user_name → name
+        return render_template("admin.html", user_name=session.get('user_name'))  # ★ 修正
     else:
         # ログインページを表示
         return render_login_page()
@@ -55,10 +100,22 @@ def admin():
 @auth_bp.route("/logout")
 def logout():
     """ログアウト - お寺のトップページにリダイレクト"""
-    user_name = session.get('name', '不明')
-    add_log("ログアウト", f"{user_name} がログアウトしました")
+    user_name = session.get('user_name', '不明')
+    user_id = session.get('user_id', 'unknown')
+    
+    # ★ 修正: supabase_db.add_log を使用
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        supabase_db.add_log(
+            user_name=user_name,
+            user_id=user_id,
+            action='ログアウト',
+            details='ログアウトしました',
+            ip_address=request.remote_addr or ''
+        )
+    
     session.clear()
-    return redirect('/')  # ★修正: お寺のトップページへ
+    return redirect('/')
 
 @auth_bp.route("/change_password", methods=["POST"])
 @limiter.limit("3 per hour")
@@ -105,15 +162,27 @@ def _change_password_supabase(user_id, current_pass, new_pass):
     if is_valid:
         new_hash = bcrypt.hashpw(new_pass.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         supabase_db.update_user(user_id, {'password_hash': new_hash})
-        add_log("パスワード変更", "自身のパスワードを変更しました")
+        
+        # ★ 修正: ログ記録を改善
+        supabase_db.add_log(
+            action='パスワード変更',
+            details='自身のパスワードを変更しました'
+        )
+        
         return jsonify({"status": "success"})
     else:
-        add_log("パスワード変更失敗", "現在のパスワードが間違っています")
+        # ★ 修正: ログ記録を改善
+        supabase_db.add_log(
+            action='パスワード変更失敗',
+            details='現在のパスワードが間違っています'
+        )
+        
         return jsonify({"message": "現在のパスワードが間違っています"}), 400
 
 def _change_password_sheets(user_id, current_pass, new_pass):
     """Google Sheets版のパスワード変更"""
     from services.spreadsheet import get_spreadsheet_client
+    from services.data_source import add_log
     
     client = get_spreadsheet_client()
     sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
@@ -187,32 +256,23 @@ def render_login_page():
         </div>
         
         <script>
-            // ★ ログインボタンの連打防止（修正版） ★
             const loginForm = document.getElementById('login-form');
             let isSubmitting = false;
             
             loginForm.addEventListener('submit', function(e) {{
-                // 既に送信中なら処理をキャンセル
                 if (isSubmitting) {{
                     e.preventDefault();
                     return false;
                 }}
                 
-                // 送信フラグを立てる
                 isSubmitting = true;
                 
                 const button = document.getElementById('login-button');
                 const spinner = document.getElementById('loading-spinner');
                 
-                // ★ ボタンのみ無効化（入力欄は無効化しない！） ★
                 button.disabled = true;
                 button.textContent = '処理中...';
-                
-                // ローディング表示
                 spinner.classList.add('show');
-                
-                // フォームは通常通り送信される
-                // 入力欄は無効化していないので、データは正常に送信される
             }});
         </script>
     </body>
