@@ -19,7 +19,6 @@ def admin():
         
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
-            # ★ 修正: supabase_db.add_log を使用
             if Config.USE_SUPABASE:
                 from services import supabase_db
                 supabase_db.add_log(
@@ -37,16 +36,14 @@ def admin():
             record_login_attempt(user_id, True)
             session.clear()
             session['is_admin'] = True
-            session['user_name'] = user_name  # ★ 修正: name → user_name に統一
+            session['user_name'] = user_name
             session['user_id'] = user_id
             session['role'] = role
             update_session_activity()
             
-            # ★ 修正: supabase_db.add_log を使用、メッセージも改善
             if Config.USE_SUPABASE:
                 from services import supabase_db
                 
-                # 権限の日本語表示
                 role_display = {
                     'admin': '管理者',
                     'editor': '編集者',
@@ -61,18 +58,18 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
                 
-                # 最終ログイン時刻を更新
                 print(f"✅ {user_name} の最終ログイン時刻を更新しました（Supabase）")
                 supabase_db.update_user(user_id, {
                     'last_login': supabase_db.get_jst_timestamp()
                 })
             
             print(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
-            return redirect(url_for('auth.admin'))
+            
+            # ★ 修正: メイン画面にリダイレクト
+            return redirect('/')
         else:
             record_login_attempt(user_id, False)
             
-            # ★ 修正: supabase_db.add_log を使用
             if Config.USE_SUPABASE:
                 from services import supabase_db
                 supabase_db.add_log(
@@ -91,19 +88,18 @@ def admin():
             session.clear()
             return redirect(url_for('auth.admin'))
         update_session_activity()
-        # 管理画面を表示
-        return render_template("admin.html", user_name=session.get('user_name'))  # ★ 修正
+        # ★ 修正: 管理画面を表示（すでにログイン済みの場合）
+        return render_template("admin.html", user_name=session.get('user_name'))
     else:
         # ログインページを表示
         return render_login_page()
-
+    
 @auth_bp.route("/logout")
 def logout():
-    """ログアウト - お寺のトップページにリダイレクト"""
+    """ログアウト - ログイン画面にリダイレクト"""
     user_name = session.get('user_name', '不明')
     user_id = session.get('user_id', 'unknown')
     
-    # ★ 修正: supabase_db.add_log を使用
     if Config.USE_SUPABASE:
         from services import supabase_db
         supabase_db.add_log(
@@ -115,7 +111,7 @@ def logout():
         )
     
     session.clear()
-    return redirect('/')
+    return redirect('/admin')  # ★ 修正: / → /admin に変更
 
 @auth_bp.route("/change_password", methods=["POST"])
 @limiter.limit("3 per hour")

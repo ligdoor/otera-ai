@@ -21,17 +21,17 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('is_admin'):
-            # HTML画面へのアクセスの場合はログインページにリダイレクト
-            if request.path.startswith('/admin'):
-                return redirect(url_for('auth.admin'))
             # API呼び出しの場合はJSONエラーを返す
-            return jsonify({"message": "認証が必要です"}), 401
+            if request.path.startswith('/api/'):
+                return jsonify({"message": "認証が必要です"}), 401
+            # HTML画面へのアクセスの場合はログインページにリダイレクト
+            return redirect(url_for('auth.admin'))
         
         if not check_session_timeout():
             session.clear()
-            if request.path.startswith('/admin'):
-                return redirect(url_for('auth.admin'))
-            return jsonify({"message": "セッションがタイムアウトしました"}), 401
+            if request.path.startswith('/api/'):
+                return jsonify({"message": "セッションがタイムアウトしました"}), 401
+            return redirect(url_for('auth.admin'))
         
         update_session_activity()
         return f(*args, **kwargs)

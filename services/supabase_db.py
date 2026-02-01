@@ -443,3 +443,38 @@ def delete_user(user_id: str) -> bool:
     response = client.table('users').delete().eq('user_id', user_id).execute()
     return len(response.data) > 0
 
+# ========================================
+# お気に入り機能
+# ========================================
+
+def get_user_favorites(user_id):
+    """ユーザーのお気に入りリストを取得"""
+    try:
+        response = get_supabase_client().table('favorites').select('temple_name').eq('user_id', user_id).execute()
+        return [item['temple_name'] for item in response.data]
+    except Exception as e:
+        print(f"❌ お気に入り取得エラー: {e}")
+        return []
+
+def add_favorite(user_id, temple_name):
+    """お気に入りに追加"""
+    try:
+        get_supabase_client().table('favorites').insert({
+            'user_id': user_id,
+            'temple_name': temple_name
+        }).execute()
+        print(f"⭐ お気に入り追加: {temple_name} (ユーザー: {user_id})")
+        return True
+    except Exception as e:
+        print(f"❌ お気に入り追加エラー: {e}")
+        return False
+
+def remove_favorite(user_id, temple_name):
+    """お気に入りから削除"""
+    try:
+        get_supabase_client().table('favorites').delete().eq('user_id', user_id).eq('temple_name', temple_name).execute()
+        print(f"☆ お気に入り削除: {temple_name} (ユーザー: {user_id})")
+        return True
+    except Exception as e:
+        print(f"❌ お気に入り削除エラー: {e}")
+        return False

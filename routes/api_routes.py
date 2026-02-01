@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
+from utils.decorators import login_required
+from config import Config
 from services.data_manager import data_manager
 
 api_bp = Blueprint('api_routes', __name__)
@@ -57,3 +59,58 @@ def search_by_sect():
     ]
     
     return jsonify({"results": sorted(results, key=lambda x: x["name"])})
+
+# ========================================
+# お気に入り機能API
+# ========================================
+
+@api_bp.route('/api/favorites', methods=['GET'])
+@login_required
+def get_favorites():
+    """ユーザーのお気に入りリストを取得"""
+    user_id = session.get('user_id')
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        favorites = supabase_db.get_user_favorites(user_id)
+        return jsonify({'favorites': favorites})
+    else:
+        # ローカルストレージのみ（フォールバック）
+        return jsonify({'favorites': []})
+
+@api_bp.route('/api/favorites/toggle', methods=['POST'])
+@login_required
+def toggle_favorite():
+    """お気に入りの追加/削除を切り替え"""
+    data = request.json
+    temple_name = data.get('temple_name')
+    user_id = session.get('user_id')
+    
+    if not temple_name:
+        return jsonify({'error': '寺院名が指定されていません'}), 400
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        
+        # 現在のお気に入りリストを取得
+        favorites = supabase_db.get_user_favorites(user_id)
+        
+        if temple_name in favorites:
+            # 削除
+            success = supabase_db.remove_favorite(user_id, temple_name)
+            action = 'removed'
+        else:
+            # 追加
+            success = supabase_db.add_favorite(user_id, temple_name)
+            action = 'added'
+        
+        if success:
+            return jsonify({
+                'status': 'success',
+                'action': action,
+                'temple_name': temple_name
+            })
+        else:
+            return jsonify({'error': 'お気に入り操作に失敗しました'}), 500
+    else:
+        return jsonify({'error': 'Supabaseが有効になっていません'}), 500

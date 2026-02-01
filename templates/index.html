@@ -13,7 +13,11 @@
     <div class="header-content">
         <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
         <h1>🏯 寺院情報データベース</h1>
-        <a href="/admin" class="header-btn">⚙️</a>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: white; font-size: 14px;">👤 {{ user_name }}</span>
+            <a href="/admin" class="header-btn">⚙️</a>
+            <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')">🚪</a>
+        </div>
     </div>
 </header>
 
@@ -83,7 +87,25 @@
     const quickQaArea = document.getElementById('quick-qa-area');
     
     let currentTempleName = "";
-    let favorites = JSON.parse(localStorage.getItem('temple_favorites') || '[]');
+    let favorites = [];
+
+    // ページ読み込み時にサーバーからお気に入りを取得
+    async function loadFavorites() {
+        try {
+            const res = await fetch('/api/favorites');
+            if (res.status === 401) {
+                // 未認証の場合はログインページにリダイレクト
+                window.location.href = '/admin';
+                return;
+            }
+            const data = await res.json();
+            favorites = data.favorites || [];
+            updateTempleSelect();
+        } catch (e) {
+            console.error('お気に入り取得エラー:', e);
+            favorites = [];
+        }
+    }    
     let currentTab = 'all';
     let allTemples = [];
 
@@ -94,6 +116,7 @@
     if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
 
     window.onload = async function() {
+        await loadFavorites(); 
         try {
             const tRes = await fetch('/get_temple_names');
             const tData = await tRes.json();
@@ -130,17 +153,37 @@
         });
     }
 
-    function toggleFavorite(name, event) {
+    async function toggleFavorite(name, event) {
         event.stopPropagation();
         event.preventDefault();
-        const index = favorites.indexOf(name);
-        if (index > -1) favorites.splice(index, 1);
-        else favorites.push(name);
-        localStorage.setItem('temple_favorites', JSON.stringify(favorites));
-        updateTempleSelect();
         
-        // ボタンの表示を即座に更新
-        event.target.textContent = favorites.includes(name) ? '⭐' : '☆';
+        try {
+            const res = await fetch('/api/favorites/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ temple_name: name })
+            });
+            
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                // お気に入りリストを更新
+                if (data.action === 'added') {
+                    favorites.push(name);
+                } else {
+                    const index = favorites.indexOf(name);
+                    if (index > -1) favorites.splice(index, 1);
+                }
+                
+                updateTempleSelect();
+                event.target.textContent = favorites.includes(name) ? '⭐' : '☆';
+            } else {
+                alert('お気に入りの更新に失敗しました');
+            }
+        } catch (e) {
+            console.error('お気に入り更新エラー:', e);
+            alert('お気に入りの更新に失敗しました');
+        }
     }
 
     function hideMenu() {

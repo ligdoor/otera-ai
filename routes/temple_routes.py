@@ -39,10 +39,13 @@ def init_temple_data():
 # フロント画面ルート
 # ============================================
 
-@temple_bp.route("/")
+@temple_bp.route('/')
+@login_required
 def index():
-    """フロント画面（トップページ）"""
-    return render_template("index.html")
+    """メイン画面（ログイン必須）"""
+    from flask import session
+    user_name = session.get('user_name', 'ゲスト')
+    return render_template('index.html', user_name=user_name)
 
 @temple_bp.route("/ask", methods=["POST"])
 def ask():
