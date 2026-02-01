@@ -92,7 +92,6 @@ def generate_static_summary(temple_info, field_config):
         for item in fields_to_show:
             display_value = item['value'] if item['value'].strip() else '記載なし'
             is_empty = not item['value'].strip()
-            is_important = 'narimono' in item['key'] or 'shoko' in item['key'] or item['key'] == 'transport'
             is_long_text = len(display_value) > 30
             
             if item['key'] == 'address' and not is_empty:
@@ -111,7 +110,7 @@ def generate_static_summary(temple_info, field_config):
                 """
             else:
                 # その他の項目
-                if is_important and not is_empty:
+                if is_empty:
                     value_html = f'<span class="important-text" style="color:#c62828; font-weight:600; background:#ffebee; padding:1px 4px; border-radius:3px; display:inline-block; font-size:0.9rem; line-height:1.4;">{display_value}</span>'
                 elif is_empty:
                     value_html = f'<span class="empty-text" style="color:#999; font-style:italic; font-size:0.85rem; line-height:1.4;">{display_value}</span>'
