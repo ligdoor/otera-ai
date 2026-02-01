@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, render_template, session
 import csv
 import io
 from utils.decorators import login_required, role_required
@@ -15,7 +15,7 @@ from services.temple_crud import (
     update_fields_data
 )
 from services.cache import cache_manager
-from utils.helpers import get_jst_now
+from utils.helpers import get_jst_now, get_jst_timestamp
 from config import Config
 
 temple_bp = Blueprint('temple', __name__)
@@ -34,6 +34,55 @@ def init_temple_data():
     global otera_database, field_config
     otera_database = load_data_from_sheet(cache_manager)
     field_config = load_fields_config(cache_manager)
+
+# ============================================
+# フロント画面ルート
+# ============================================
+
+@temple_bp.route("/")
+def index():
+    """フロント画面（トップページ）"""
+    return render_template("index.html")
+
+@temple_bp.route("/ask", methods=["POST"])
+def ask():
+    """AI質問応答"""
+    from services.ai import generate_answer_with_ai, generate_static_summary
+    
+    question = request.json.get("question", "")
+    mode = request.json.get("mode", "qa")
+    
+    # 寺院名を抽出
+    temple_name = None
+    for name in otera_database.keys():
+        if name in question:
+            temple_name = name
+            break
+    
+    if not temple_name:
+        return jsonify({"answer": "⚠️ 寺院名が見つかりませんでした。正確な寺院名を入力してください。"})
+    
+    temple_info = otera_database.get(temple_name)
+    
+    if not temple_info:
+        return jsonify({"answer": f"❌ {temple_name} の情報が見つかりませんでした。"})
+    
+    # アクセスログを記録
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        supabase_db.add_access_log(temple_name, question)
+    
+    # モードに応じて回答生成
+    if mode == "summary":
+        answer = generate_static_summary(temple_info, field_config)
+    else:
+        answer = generate_answer_with_ai(temple_info, question, field_config)
+    
+    return jsonify({"answer": answer})
+
+# ============================================
+# データ管理ルート
+# ============================================
 
 @temple_bp.route("/reload_data", methods=["POST"])
 @login_required
@@ -89,6 +138,10 @@ def get_fields():
     
     return jsonify(fetch_fields())
 
+# ============================================
+# CRUD操作ルート
+# ============================================
+
 @temple_bp.route("/update_temple", methods=["POST"])
 @login_required
 @role_required('admin', 'editor')
@@ -107,9 +160,16 @@ def update_temple():
     success, message = update_temple_data(original_name, new_data, otera_database)
     
     if success:
-        # Flask-Cachingのキャッシュもクリア
-        cache = get_cache()
-        cache.delete('all_temples_data')
+        # ★ キャッシュクリアを修正
+        try:
+            cache = get_cache()
+            cache.clear()  # delete ではなく clear を使う
+        except:
+            pass  # キャッシュエラーは無視
+        
+        # services.cache も クリア
+        from services.cache import cache_manager
+        cache_manager.clear_cache()
         
         add_log("編集", f"{original_name} の情報を更新 → {new_data['name']}")
         return jsonify({"status": "success"})
@@ -132,16 +192,21 @@ def add_temple():
     success, message = add_temple_data(new_data, otera_database)
     
     if success:
-        # Flask-Cachingのキャッシュもクリア
-        cache = get_cache()
-        cache.delete('all_temples_data')
+        # ★ キャッシュクリアを修正
+        try:
+            cache = get_cache()
+            cache.clear()
+        except:
+            pass
+        
+        from services.cache import cache_manager
+        cache_manager.clear_cache()
         
         add_log("追加", f"{name} を新規追加")
         return jsonify({"status": "success"})
     else:
         add_log("追加エラー", f"エラー: {message}")
         return jsonify({"status": "error", "message": message}), 400
-# routes/temple_routes.py (Part 2) - 続き
 
 @temple_bp.route("/delete_temple", methods=["POST"])
 @login_required
@@ -156,15 +221,24 @@ def delete_temple():
     success, message = delete_temple_data(name, otera_database)
     
     if success:
-        # Flask-Cachingのキャッシュもクリア
-        cache = get_cache()
-        cache.delete('all_temples_data')
+        # ★ キャッシュクリアを修正
+        try:
+            cache = get_cache()
+            cache.clear()
+        except:
+            pass
+        
+        from services.cache import cache_manager
+        cache_manager.clear_cache()
         
         add_log("削除", f"{name} を削除")
         return jsonify({"status": "success"})
     else:
         add_log("削除エラー", f"エラー: {message}")
         return jsonify({"status": "error", "message": message}), 404 if "見つかりません" in message else 500
+# ============================================
+# CSV入出力ルート
+# ============================================
 
 @temple_bp.route("/export_csv")
 @login_required
@@ -264,6 +338,10 @@ def import_csv():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ============================================
+# 統計・コメント機能
+# ============================================
+
 @temple_bp.route("/get_access_stats")
 @login_required
 def get_access_stats():
@@ -324,9 +402,6 @@ def get_comments(temple_name):
 @login_required
 def add_comment():
     """コメント追加"""
-    from flask import session
-    from utils.helpers import get_jst_timestamp
-    
     temple_name = request.json.get('temple_name')
     comment_text = request.json.get('comment')
     
@@ -391,4 +466,4 @@ def delete_comment():
             return jsonify({"status": "success"})
         except Exception as e:
             print(f"コメント削除エラー: {e}")
-            return jsonify({"status": "error", "message": str(e)}), 500    
+            return jsonify({"status": "error", "message": str(e)}), 500

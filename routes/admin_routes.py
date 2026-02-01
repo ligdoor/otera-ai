@@ -2,7 +2,6 @@ from flask import Blueprint, render_template, jsonify, request, session, make_re
 from utils.decorators import login_required, role_required
 from services.data_source import add_log
 from services.temple_crud import update_fields_data
-from services.cache import cache_manager
 from config import Config
 import csv
 import io
@@ -43,6 +42,7 @@ def get_logs():
 def update_fields():
     """項目設定を更新"""
     new_fields = request.json['fields']
+    
     success, message = update_fields_data(new_fields)
     
     if success:
@@ -60,7 +60,7 @@ def get_fields():
 # ★ CSVインポート機能 ★
 @admin_bp.route('/import_csv', methods=['POST'])
 @login_required
-@role_required(['admin', 'editor'])
+@role_required('admin', 'editor')  # ★ 修正: リストではなく引数として渡す
 def import_csv():
     """CSVインポート機能（Supabase専用）"""
     if not Config.USE_SUPABASE:
@@ -88,6 +88,11 @@ def import_csv():
         # 項目設定を取得
         from routes.temple_routes import field_config
         from services import supabase_db
+        from services.data_manager import data_manager
+        
+        # ユーザー情報を取得
+        user_name = session.get('user_name', 'unknown')
+        user_id = session.get('user_id', 'unknown')
         
         for row_num, row in enumerate(csv_reader, start=2):
             try:
@@ -103,19 +108,35 @@ def import_csv():
                     value = row.get(key, '')
                     temple_data[key] = value if value else ''
                 
-                # 既存データをチェック（既存の関数を使用）
-                existing = supabase_db.get_temple_by_name(temple_name)
+                # 既存データをチェック
+                existing = data_manager.get_temple_by_name(temple_name)
                 
                 if existing:
-                    # 更新（既存の関数を使用）
-                    supabase_db.update_temple(temple_name, temple_data)
+                    # 更新
+                    data_manager.update_temple(temple_name, temple_data)
                     updated += 1
-                    add_log("更新", f"{temple_name}をCSVから更新")
+                    
+                    # ログ記録
+                    supabase_db.add_log(
+                        user_name=user_name,
+                        user_id=user_id,
+                        action='更新',
+                        details=f"{temple_name}をCSVから更新",
+                        ip_address=request.remote_addr or ''
+                    )
                 else:
-                    # 新規追加（既存の関数を使用）
-                    supabase_db.create_temple(temple_data)
+                    # 新規追加
+                    data_manager.create_temple(temple_data)
                     imported += 1
-                    add_log("追加", f"{temple_name}をCSVから追加")
+                    
+                    # ログ記録
+                    supabase_db.add_log(
+                        user_name=user_name,
+                        user_id=user_id,
+                        action='追加',
+                        details=f"{temple_name}をCSVから追加",
+                        ip_address=request.remote_addr or ''
+                    )
                 
             except Exception as e:
                 errors.append(f"行{row_num}: {str(e)}")
@@ -125,7 +146,11 @@ def import_csv():
                 continue
         
         # キャッシュをクリア
-        cache_manager.clear_all()
+        data_manager.clear_cache()
+        
+        # グローバルキャッシュもクリア
+        from services.cache import cache_manager
+        cache_manager.clear_cache()
         
         return jsonify({
             'success': True,
@@ -147,12 +172,9 @@ def export_csv():
     """CSVエクスポート機能"""
     try:
         from routes.temple_routes import field_config
+        from services.data_manager import data_manager
         
-        if Config.USE_SUPABASE:
-            from services import supabase_db
-            all_temples = supabase_db.get_all_temples()
-        else:
-            return jsonify({'success': False, 'message': 'この機能はSupabase使用時のみ利用可能です'}), 400
+        all_temples = data_manager.get_all_temples()
         
         # CSVを生成
         output = io.StringIO()

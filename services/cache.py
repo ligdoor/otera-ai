@@ -12,6 +12,8 @@ class CacheManager:
     
     def is_cache_valid(self, cache_key):
         """キャッシュが有効か確認"""
+        if cache_key not in self.cache_data:
+            return False
         if self.cache_data[cache_key]['data'] is None:
             return False
         elapsed = datetime.datetime.now().timestamp() - self.cache_data[cache_key]['timestamp']
@@ -32,7 +34,7 @@ class CacheManager:
         except Exception as e:
             print(f"❌ データ取得失敗: {cache_key} - {e}")
             # キャッシュがあれば古いデータでも返す
-            if self.cache_data[cache_key]['data'] is not None:
+            if cache_key in self.cache_data and self.cache_data[cache_key]['data'] is not None:
                 print(f"⚠️ 古いキャッシュを返却: {cache_key}")
                 return self.cache_data[cache_key]['data']
             raise e
@@ -40,12 +42,20 @@ class CacheManager:
     def clear_cache(self, cache_key=None):
         """キャッシュをクリア"""
         if cache_key:
-            self.cache_data[cache_key]['data'] = None
-            self.cache_data[cache_key]['timestamp'] = 0
+            if cache_key in self.cache_data:
+                self.cache_data[cache_key]['data'] = None
+                self.cache_data[cache_key]['timestamp'] = 0
         else:
             for key in self.cache_data:
                 self.cache_data[key]['data'] = None
                 self.cache_data[key]['timestamp'] = 0
+    
+    def clear_all(self):
+        """全キャッシュをクリア（別名）"""
+        self.clear_cache()
 
 # グローバルインスタンス
 cache_manager = CacheManager()
+
+# エクスポート
+__all__ = ['CacheManager', 'cache_manager']
