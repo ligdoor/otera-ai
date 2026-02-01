@@ -213,9 +213,7 @@
         const name = select.value;
         if (!name) return;
         
-        // ユーザーメッセージを先に表示
-        addMessage(name, 'user');
-        
+        // ユーザーメッセージを先に表示        
         currentTempleName = name; 
         quickQaArea.style.display = "flex";
         select.value = ""; 
@@ -325,13 +323,33 @@
         const div = document.createElement('div');
         div.className = `message ${sender}-message`;
         div.id = `msg-${Date.now()}-${Math.random()}`;
-        const p = document.createElement('p');
-        p.innerHTML = text.replace(/\n/g, '<br>');
-        div.appendChild(p);
+        
+        // ★ 修正: HTMLタグが含まれている場合はそのまま、そうでない場合のみ改行を<br>に変換
+        if (text.includes('<div') || text.includes('<button')) {
+            div.innerHTML = text;  // HTMLをそのまま挿入
+        } else {
+            div.innerHTML = text.replace(/\n/g, '<br>');  // プレーンテキストの改行を<br>に変換
+        }
+        
         chatWindow.appendChild(div);
+        
+        // お気に入りボタンの状態を更新
+        if (sender === 'ai') {
+            setTimeout(() => {
+                const detailButtons = div.querySelectorAll('.favorite-btn-detail');
+                detailButtons.forEach(btn => {
+                    const templeName = btn.dataset.temple;
+                    if (favorites.includes(templeName)) {
+                        btn.textContent = '⭐';
+                        btn.style.borderColor = '#ffc107';
+                    }
+                });
+            }, 100);
+        }
+        
         setTimeout(() => { window.scrollTo(0, document.body.scrollHeight); }, 100);
         return div.id;
-    }
+    }    
 
 function toggleAccordionFront(headerId, contentId) {
     const header = document.getElementById(headerId);
@@ -459,6 +477,61 @@ function findClosestTemple(voiceText) {
     match = allTemples.find(name => name.includes(kanaText));
     
     return match || null;
+}
+
+// 寺院詳細画面のお気に入りボタン用
+async function toggleFavoriteDetail(name) {
+    try {
+        const res = await fetch('/api/favorites/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ temple_name: name })
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            // お気に入りリストを更新
+            if (data.action === 'added') {
+                favorites.push(name);
+            } else {
+                const index = favorites.indexOf(name);
+                if (index > -1) favorites.splice(index, 1);
+            }
+            
+            // ボタンの表示を更新
+            updateFavoriteButtons(name);
+            updateTempleSelect();
+        } else {
+            alert('お気に入りの更新に失敗しました');
+        }
+    } catch (e) {
+        console.error('お気に入り更新エラー:', e);
+        alert('お気に入りの更新に失敗しました');
+    }
+}
+
+// すべてのお気に入りボタンの表示を更新
+function updateFavoriteButtons(templeName) {
+    const isFavorite = favorites.includes(templeName);
+    
+    // 寺院詳細のボタン
+    const detailButtons = document.querySelectorAll('.favorite-btn-detail');
+    detailButtons.forEach(btn => {
+        if (btn.dataset.temple === templeName) {
+            btn.textContent = isFavorite ? '⭐' : '☆';
+            btn.style.borderColor = isFavorite ? '#ffc107' : '#ddd';
+        }
+    });
+    
+    // 宗派別リストのボタン
+    const listButtons = document.querySelectorAll('.favorite-btn');
+    listButtons.forEach(btn => {
+        const card = btn.closest('.temple-card');
+        if (card && card.textContent.includes(templeName)) {
+            btn.textContent = isFavorite ? '⭐' : '☆';
+        }
+    });
 }
 
 </script>

@@ -16,16 +16,17 @@ def generate_static_summary(temple_info, field_config):
     temple_name_escaped = temple_name.replace("'", "\\'")
     
     html = f"""
-    <div style="font-size:1.1em; font-weight:bold; color:#1a237e; margin-bottom:10px;">{temple_name} 情報</div>
-    <div style="margin-bottom:15px;">
-        <script>
-        if (typeof addFavoriteButton !== 'undefined') {{
-            document.write(addFavoriteButton('{temple_name_escaped}'));
-        }}
-        </script>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
+        <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {temple_name} 情報</div>
+        <button class='favorite-btn-detail' onclick='toggleFavoriteDetail("{temple_name_escaped}")' 
+                data-temple='{temple_name}' 
+                style='background:none; border:2px solid #ddd; border-radius:50%; 
+                    width:40px; height:40px; font-size:20px; cursor:pointer; 
+                    transition:all 0.2s;'>
+            ☆
+        </button>
     </div>
-    """
-    
+    """    
     # カテゴリ定義
     categories = {
         'basic': {
