@@ -114,3 +114,58 @@ def toggle_favorite():
             return jsonify({'error': 'お気に入り操作に失敗しました'}), 500
     else:
         return jsonify({'error': 'Supabaseが有効になっていません'}), 500
+    
+# ========================================
+# 通知機能API
+# ========================================
+
+@api_bp.route('/api/notifications', methods=['GET'])
+@login_required
+def get_notifications():
+    """ユーザーの通知一覧を取得"""
+    user_id = session.get('user_id')
+    unread_only = request.args.get('unread_only', 'false').lower() == 'true'
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        notifications = supabase_db.get_user_notifications(user_id, unread_only)
+        unread_count = supabase_db.get_unread_count(user_id)
+        
+        return jsonify({
+            'notifications': notifications,
+            'unread_count': unread_count
+        })
+    else:
+        return jsonify({'notifications': [], 'unread_count': 0})
+
+@api_bp.route('/api/notifications/<int:notification_id>/read', methods=['POST'])
+@login_required
+def mark_read(notification_id):
+    """通知を既読にする"""
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        success = supabase_db.mark_notification_read(notification_id)
+        
+        if success:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'error': '既読処理に失敗しました'}), 500
+    else:
+        return jsonify({'error': 'Supabaseが有効になっていません'}), 500
+
+@api_bp.route('/api/notifications/read-all', methods=['POST'])
+@login_required
+def mark_all_read():
+    """すべての通知を既読にする"""
+    user_id = session.get('user_id')
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        success = supabase_db.mark_all_notifications_read(user_id)
+        
+        if success:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'error': '一括既読処理に失敗しました'}), 500
+    else:
+        return jsonify({'error': 'Supabaseが有効になっていません'}), 500    

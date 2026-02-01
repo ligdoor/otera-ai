@@ -478,3 +478,81 @@ def remove_favorite(user_id, temple_name):
     except Exception as e:
         print(f"❌ お気に入り削除エラー: {e}")
         return False
+    
+# ========================================
+# 通知機能
+# ========================================
+
+def get_user_notifications(user_id, unread_only=False):
+    """ユーザーの通知を取得"""
+    try:
+        query = get_supabase_client().table('notifications').select('*')
+        
+        # 自分宛 or 全体通知
+        query = query.or_(f'user_id.eq.{user_id},user_id.is.null')
+        
+        if unread_only:
+            query = query.eq('is_read', False)
+        
+        response = query.order('created_at', desc=True).limit(50).execute()
+        return response.data
+    except Exception as e:
+        print(f"❌ 通知取得エラー: {e}")
+        return []
+
+def get_unread_count(user_id):
+    """未読通知数を取得"""
+    try:
+        query = get_supabase_client().table('notifications').select('id', count='exact')
+        query = query.or_(f'user_id.eq.{user_id},user_id.is.null')
+        query = query.eq('is_read', False)
+        response = query.execute()
+        return response.count
+    except Exception as e:
+        print(f"❌ 未読数取得エラー: {e}")
+        return 0
+
+def mark_notification_read(notification_id):
+    """通知を既読にする"""
+    try:
+        get_supabase_client().table('notifications').update({
+            'is_read': True
+        }).eq('id', notification_id).execute()
+        return True
+    except Exception as e:
+        print(f"❌ 通知既読エラー: {e}")
+        return False
+
+def mark_all_notifications_read(user_id):
+    """すべての通知を既読にする"""
+    try:
+        # 自分宛の通知
+        get_supabase_client().table('notifications').update({
+            'is_read': True
+        }).eq('user_id', user_id).execute()
+        
+        # 全体通知
+        get_supabase_client().table('notifications').update({
+            'is_read': True
+        }).is_('user_id', 'null').execute()
+        
+        return True
+    except Exception as e:
+        print(f"❌ 一括既読エラー: {e}")
+        return False
+
+def create_notification(title, message, user_id=None, notification_type='info', related_temple=None):
+    """通知を作成（管理者用）"""
+    try:
+        get_supabase_client().table('notifications').insert({
+            'user_id': user_id,
+            'title': title,
+            'message': message,
+            'type': notification_type,
+            'related_temple': related_temple
+        }).execute()
+        print(f"✅ 通知作成: {title}")
+        return True
+    except Exception as e:
+        print(f"❌ 通知作成エラー: {e}")
+        return False
