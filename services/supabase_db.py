@@ -211,31 +211,16 @@ def update_fields_config(fields: List[Dict]) -> bool:
         print(f"項目設定の更新エラー: {e}")
         return False
 
-
 # ============================================
 # ログ操作
 # ============================================
 
 def add_log(user_name: str = None, user_id: str = None, action: str = '', details: str = '', ip_address: str = '') -> bool:
-    """
-    操作ログを記録
-    
-    Args:
-        user_name: ユーザー名（省略時はセッションから取得）
-        user_id: ユーザーID（省略時はセッションから取得）
-        action: 操作種別
-        details: 詳細情報
-        ip_address: IPアドレス
-    
-    Returns:
-        bool: 記録成功した場合True
-    """
     from utils.helpers import get_jst_timestamp
     from flask import session
     
-    # セッションから自動取得（引数が無い場合）
     if not user_name:
-        user_name = session.get('user_name', '不明')
+        user_name = session.get('user_name') or session.get('name', '不明')
     if not user_id:
         user_id = session.get('user_id', 'unknown')
     
@@ -256,7 +241,7 @@ def add_log(user_name: str = None, user_id: str = None, action: str = '', detail
     except Exception as e:
         print(f"❌ ログ記録エラー: {e}")
         return False
-
+            
 def get_recent_logs(limit: int = 100) -> List[Dict]:
     """
     最近のログを取得
