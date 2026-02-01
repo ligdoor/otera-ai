@@ -305,19 +305,25 @@ function toggleAccordionFront(headerId, contentId) {
     
     if (isActive) {
         // 閉じる
-        content.style.maxHeight = content.scrollHeight + 'px';
-        setTimeout(() => {
+        const currentHeight = content.scrollHeight;
+        content.style.maxHeight = currentHeight + 'px';
+        
+        // ブラウザに高さを認識させるための遅延
+        requestAnimationFrame(() => {
             content.style.maxHeight = '0';
             header.classList.remove('active');
             content.classList.remove('active');
-        }, 10);
+        });
     } else {
         // 開く
         header.classList.add('active');
         content.classList.add('active');
-        content.style.maxHeight = content.scrollHeight + 'px';
         
-        // アニメーション後に auto に設定
+        // ★ 重要: scrollHeightを取得して設定
+        const scrollHeight = content.scrollHeight;
+        content.style.maxHeight = scrollHeight + 'px';
+        
+        // アニメーション完了後に auto に設定
         setTimeout(() => {
             if (content.classList.contains('active')) {
                 content.style.maxHeight = 'none';

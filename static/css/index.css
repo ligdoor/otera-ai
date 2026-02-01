@@ -461,6 +461,7 @@ body.dark-mode .fav-tab.active {
 background: #3c3c3c;
 color: #90caf9;
 }
+
 /* === アコーディオン（折りたたみ） === */
 .accordion-section {
     background: white;
@@ -522,13 +523,13 @@ color: #90caf9;
 }
 
 .accordion-content.active {
-    max-height: none; /* 自動で高さが調整される */
+    max-height: none;
     transition: max-height 0.4s ease-in;
 }
 
 /* アコーディオンボディの余白調整 */
 .accordion-body {
-    padding: 6px 10px;
+    padding: 6px 10px !important;
     line-height: 1.4;
 }
 
