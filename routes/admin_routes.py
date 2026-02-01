@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, session, make_response
 from utils.decorators import login_required, role_required
 from services.data_source import add_log
 from services.temple_crud import update_fields_data
 from services.cache import cache_manager
 from config import Config
+import csv
+import io
 
 admin_bp = Blueprint('admin_routes', __name__)
 
@@ -18,18 +20,15 @@ def admin_fields():
 def get_logs():
     """ログ一覧を取得"""
     if Config.USE_SUPABASE:
-        # Supabase版
         from services import supabase_db
         try:
             logs = supabase_db.get_recent_logs(limit=50)
-            # タイムスタンプでソート（新しい順）
             logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
             return jsonify(logs)
         except Exception as e:
             print(f"ログ取得エラー: {e}")
             return jsonify([])
     else:
-        # Google Sheets版
         from services.spreadsheet import get_spreadsheet_client
         try:
             client = get_spreadsheet_client()
@@ -44,8 +43,6 @@ def get_logs():
 def update_fields():
     """項目設定を更新"""
     new_fields = request.json['fields']
-    
-    # CRUD操作実行
     success, message = update_fields_data(new_fields)
     
     if success:
@@ -59,3 +56,130 @@ def get_fields():
     """項目設定を取得"""
     from routes.temple_routes import field_config
     return jsonify(field_config)
+
+# ★ CSVインポート機能 ★
+@admin_bp.route('/import_csv', methods=['POST'])
+@login_required
+@role_required(['admin', 'editor'])
+def import_csv():
+    """CSVインポート機能（Supabase専用）"""
+    if not Config.USE_SUPABASE:
+        return jsonify({'success': False, 'message': 'この機能はSupabase使用時のみ利用可能です'}), 400
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'ファイルが選択されていません'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'ファイルが選択されていません'}), 400
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({'success': False, 'message': 'CSVファイルを選択してください'}), 400
+    
+    try:
+        # CSVをメモリで読み込み
+        stream = io.StringIO(file.stream.read().decode('utf-8-sig'), newline=None)
+        csv_reader = csv.DictReader(stream)
+        
+        imported = 0
+        updated = 0
+        errors = []
+        
+        # 項目設定を取得
+        from routes.temple_routes import field_config
+        from services import supabase_db
+        
+        for row_num, row in enumerate(csv_reader, start=2):
+            try:
+                temple_name = row.get('name', '').strip()
+                if not temple_name:
+                    errors.append(f"行{row_num}: 寺院名が空です")
+                    continue
+                
+                # データを整形
+                temple_data = {}
+                for field in field_config:
+                    key = field['key']
+                    value = row.get(key, '')
+                    temple_data[key] = value if value else ''
+                
+                # 既存データをチェック（既存の関数を使用）
+                existing = supabase_db.get_temple_by_name(temple_name)
+                
+                if existing:
+                    # 更新（既存の関数を使用）
+                    supabase_db.update_temple(temple_name, temple_data)
+                    updated += 1
+                    add_log("更新", f"{temple_name}をCSVから更新")
+                else:
+                    # 新規追加（既存の関数を使用）
+                    supabase_db.create_temple(temple_data)
+                    imported += 1
+                    add_log("追加", f"{temple_name}をCSVから追加")
+                
+            except Exception as e:
+                errors.append(f"行{row_num}: {str(e)}")
+                print(f"行{row_num}のインポートエラー: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+        
+        # キャッシュをクリア
+        cache_manager.clear_all()
+        
+        return jsonify({
+            'success': True,
+            'imported': imported,
+            'updated': updated,
+            'errors': errors
+        })
+        
+    except Exception as e:
+        print(f"CSVインポートエラー: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'インポート処理中にエラーが発生しました: {str(e)}'}), 500
+
+# ★ CSVエクスポート機能 ★
+@admin_bp.route('/export_csv')
+@login_required
+def export_csv():
+    """CSVエクスポート機能"""
+    try:
+        from routes.temple_routes import field_config
+        
+        if Config.USE_SUPABASE:
+            from services import supabase_db
+            all_temples = supabase_db.get_all_temples()
+        else:
+            return jsonify({'success': False, 'message': 'この機能はSupabase使用時のみ利用可能です'}), 400
+        
+        # CSVを生成
+        output = io.StringIO()
+        
+        # ヘッダー行（項目のキー）
+        fieldnames = [field['key'] for field in field_config]
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        # データ行（辞書をリストに変換）
+        temple_list = list(all_temples.values()) if isinstance(all_temples, dict) else all_temples
+        
+        for temple in temple_list:
+            row = {}
+            for key in fieldnames:
+                row[key] = temple.get(key, '')
+            writer.writerow(row)
+        
+        # レスポンスを作成
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'
+        response.headers['Content-Disposition'] = 'attachment; filename=temples_export.csv'
+        
+        return response
+        
+    except Exception as e:
+        print(f"CSVエクスポートエラー: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
