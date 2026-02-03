@@ -10,14 +10,47 @@ if Config.GEMINI_API_KEY:
 def generate_static_summary(temple_info, field_config):
     """寺院情報の静的サマリーを生成（アコーディオン対応）"""
     import time
+    import re
 
     def get(key):
-        return temple_info.get(key) or ''
+        value = temple_info.get(key) or ''
+        return value
+    
+    def clean_html_selectively(text):
+        """
+        HTMLを選択的にクリーンアップ
+        - 装飾タグ（太字、色など）は残す
+        - インラインスタイルの背景色は削除
+        - 不要なタグは削除
+        """
+        if not text:
+            return ''
+        
+        # 1. 背景色のみ削除（文字色は残す）
+        # background-color と background を削除
+        text = re.sub(r'background-color\s*:\s*[^;]+;?', '', text)
+        text = re.sub(r'background\s*:\s*[^;]+;?', '', text)
+        
+        # 2. <p>タグを<div>に変換（余白を制御しやすくするため）
+        text = re.sub(r'<p([^>]*)>', r'<div\1>', text)
+        text = re.sub(r'</p>', '</div>', text)
+        
+        # 3. 空のスタイル属性を削除
+        text = re.sub(r'\s+style\s*=\s*["\'][\s;]*["\']', '', text)
+        
+        # 4. 連続する改行を整理
+        text = re.sub(r'(<br[^>]*>\s*){2,}', '<br>', text)
+        
+        # 5. 前後の空白を削除
+        text = text.strip()
+        
+        return text
     
     temple_name = get('name')
     temple_name_escaped = temple_name.replace("'", "\\'")
     timestamp = int(time.time() * 1000)
     
+    # ヘッダー部分
     html = f"""
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
         <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {temple_name} 情報</div>
@@ -30,6 +63,7 @@ def generate_static_summary(temple_info, field_config):
         </button>
     </div>
     """    
+    
     # カテゴリ定義
     categories = {
         'basic': {
@@ -62,17 +96,20 @@ def generate_static_summary(temple_info, field_config):
     cat_index = 0
     for cat_key, cat_data in categories.items():
         # このカテゴリに表示する項目を収集
-        fields_to_show = []
+        fieldsToShow = []
         for field in field_config:
             if field['key'] in cat_data['fields']:
-                value = get(field['key'])
-                fields_to_show.append({
+                value = temple_info.get(field['key'], '')
+                # ★ 装飾を残してクリーンアップ
+                clean_value = clean_html_selectively(value)
+                fieldsToShow.append({
                     'key': field['key'],
                     'label': field['label'],
-                    'value': value
+                    'value': clean_value
                 })
         
-        if len(fields_to_show) == 0:
+        # 表示する項目がない場合はスキップ
+        if len(fieldsToShow) == 0:
             continue
         
         is_open = cat_data['default_open']
@@ -80,7 +117,7 @@ def generate_static_summary(temple_info, field_config):
         accordion_id = f"acc-{cat_key}-{cat_index}-{timestamp}"
         cat_index += 1
         
-        # アコーディオンヘッダー
+        # アコーディオンセクション
         html += f"""
         <div class="accordion-section">
             <div class="accordion-header {active_class}" id="header-{accordion_id}" onclick="toggleAccordionFront('header-{accordion_id}', '{accordion_id}')">
@@ -90,49 +127,43 @@ def generate_static_summary(temple_info, field_config):
                 </div>
             </div>
             <div class="accordion-content {active_class}" id="{accordion_id}"{' style="max-height: none;"' if is_open else ''}>
-                <div style="padding:4px 8px;">
+                <div class="accordion-body">
         """
         
         # 各項目を表示
-        for idx, item in enumerate(fields_to_show):
+        for idx, item in enumerate(fieldsToShow):
             display_value = item['value'] if item['value'].strip() else '記載なし'
             is_empty = not item['value'].strip()
-            is_last = (idx == len(fields_to_show) - 1)
+            is_last = (idx == len(fieldsToShow) - 1)
             
             if item['key'] == 'address' and not is_empty:
-                # 住所の場合
+                # 住所の場合：地図リンクとコピーボタンを追加
                 address_escaped = item['value'].replace("'", "\\'").replace('"', '&quot;')
-                map_url = f"https://www.google.com/maps/search/?api=1&query={item['value']}"
+                # HTMLタグを除去したプレーンテキストを取得（コピー用）
+                address_plain = re.sub(r'<[^>]+>', '', item['value'])
+                address_plain_escaped = address_plain.replace("'", "\\'").replace('"', '&quot;')
+                map_url = f"https://www.google.com/maps/search/?api=1&query={address_plain}"
                 
                 html += f"""
-                <div style="margin-bottom:{'0' if is_last else '2px'};">
-                    <div style="font-size:0.88rem; font-weight:600; color:#555; margin-bottom:2px;">{item['label']}:</div>
-                    <span style="font-size:0.9rem;">{display_value}</span>
-                    <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('{address_escaped}')" style="margin-left:4px; padding:2px 6px; font-size:0.8rem;">📋</button>
-                    <br>
-                    <a href="{map_url}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; margin-top:2px; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
+                <div class="field-item" style="margin-bottom:{'10px' if not is_last else '0'}; padding-bottom:{'10px' if not is_last else '0'}; border-bottom:{'1px solid #e0e0e0' if not is_last else 'none'};">
+                    <div class="field-label-display" style="margin-bottom:4px;">{item['label']}:</div>
+                    <div class="field-value-display" style="margin-bottom:6px;">{display_value}
+                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('{address_plain_escaped}')">📋</button>
+                    </div>
+                    <a href="{map_url}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
                 </div>
                 """
             else:
-                # その他の項目
-                if is_empty:
-                    formatted_value = display_value
-                else:
-                    formatted_value = display_value.replace('<p>', '<div style="margin:0; padding:0;">').replace('</p>', '</div>')
-                    formatted_value = formatted_value.replace('<div style="margin:0; padding:0;"><br></div>', '<br>')
-                
-                if is_empty:
-                    value_html = f'<div style="color:#999; font-style:italic; font-size:0.85rem; padding:3px 6px; background:#f9f9f9; border-radius:4px;">{formatted_value}</div>'
-                else:
-                    value_html = f'<div style="font-size:0.9rem; padding:3px 6px; background:#f9f9f9; border-radius:4px;">{formatted_value}</div>'
+                # その他の項目：HTMLタグを残して表示
+                value_class = 'field-value-display empty' if is_empty else 'field-value-display'
                 
                 html += f"""
-                <div style="margin-bottom:{'0' if is_last else '2px'};">
-                    <div style="font-size:0.88rem; font-weight:600; color:#555; margin-bottom:2px;">{item['label']}:</div>
-                    {value_html}
+                <div class="field-item" style="margin-bottom:{'10px' if not is_last else '0'}; padding-bottom:{'10px' if not is_last else '0'}; border-bottom:{'1px solid #e0e0e0' if not is_last else 'none'};">
+                    <div class="field-label-display" style="margin-bottom:4px;">{item['label']}:</div>
+                    <div class="{value_class}">{display_value}</div>
                 </div>
                 """
-                
+        
         # アコーディオンを閉じる
         html += """
                 </div>
@@ -141,6 +172,7 @@ def generate_static_summary(temple_info, field_config):
         """
     
     return html
+
 def generate_answer_with_ai(temple_info, user_question, field_config):
     """AIを使用して質問に回答"""
     info_text = ""

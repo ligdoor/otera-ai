@@ -460,76 +460,159 @@ transform: scale(1.05);
 }
 /* === ダークモード === */
 body.dark-mode {
-background-color: #121212;
-color: #e0e0e0;
-}
-body.dark-mode header {
-background: linear-gradient(135deg, #000 0%, #1a237e 100%);
-}
-body.dark-mode .control-area {
-background-color: #1e1e1e;
-border-top-color: #333;
-}
-body.dark-mode .ai-message p {
-background-color: #2c2c2c;
-border-color: #444;
-color: #e0e0e0;
-}
-body.dark-mode .user-message p {
-background: linear-gradient(135deg, #4527a0 0%, #512da8 100%);
-}
-body.dark-mode select,
-body.dark-mode input[type="text"] {
-background-color: #2c2c2c;
-color: #fff;
-border-color: #444;
-}
-body.dark-mode .label-text {
-color: #aaa;
-}
-body.dark-mode .custom-select-wrapper::after {
-color: #fff;
-}
-body.dark-mode .temple-card {
-background-color: #2c2c2c;
-border-color: #444;
-}
-body.dark-mode .card-name {
-color: #90caf9;
-}
-body.dark-mode .card-addr {
-color: #ccc;
-}
-body.dark-mode .ai-message a {
-color: #82b1ff;
-border-color: #82b1ff;
-}
-body.dark-mode .copy-btn {
-background-color: #444;
-color: #fff;
-border-color: #666;
-}
-body.dark-mode .qa-chip {
-background-color: #1e3a5f;
-color: #90caf9;
-border-color: #2c5282;
-}
-body.dark-mode .clear-chat-btn {
-background: rgba(46,46,46,0.9);
-color: #aaa;
-border-color: #444;
-}
-body.dark-mode .favorites-toggle {
-background: #2c2c2c;
-}
-body.dark-mode .fav-tab {
-color: #aaa;
-}
-body.dark-mode .fav-tab.active {
-background: #3c3c3c;
-color: #90caf9;
+    background-color: #121212;  /* 背景：ほぼ黒 */
+    color: #e0e0e0;  /* テキスト：明るいグレー */
 }
 
+body.dark-mode header {
+    background: linear-gradient(135deg, #000 0%, #1a237e 100%);  /* ヘッダー：黒から濃い青のグラデーション */
+}
+
+body.dark-mode .control-area {
+    background-color: #1e1e1e;  /* コントロールエリア：濃いグレー */
+    border-top-color: #333;  /* 上部ボーダー：グレー */
+}
+
+/* ★ ここが問題の箇所 - AIメッセージの背景色 */
+body.dark-mode .ai-message p {
+    background-color: #2c2c2c;  /* 背景：濃いグレー */
+    border-color: #444;  /* ボーダー：グレー */
+    color: #e0e0e0;  /* テキスト色：明るいグレー */
+}
+
+/* ★★★ 追加が必要な部分 ★★★ */
+/* Quillエディタで入力された内容の色を強制的に継承 */
+body.dark-mode .ai-message p *,
+body.dark-mode .ai-message div * {
+    color: inherit !important;  /* 親要素の色を継承 */
+    background-color: transparent !important;  /* 背景を透明に */
+}
+
+/* アコーディオン内のテキスト（これが最重要） */
+body.dark-mode .accordion-body {
+    background: #2c2c2c !important;  /* 背景色 */
+    color: #e0e0e0 !important;  /* テキスト色 */
+}
+
+body.dark-mode .accordion-body *,
+body.dark-mode .accordion-body div,
+body.dark-mode .accordion-body p,
+body.dark-mode .accordion-body span {
+    color: #e0e0e0 !important;  /* すべての子要素の色を明るいグレーに */
+    background-color: transparent !important;  /* 背景を透明に */
+}
+
+/* ラベル（項目名）の色 */
+body.dark-mode .accordion-body strong,
+body.dark-mode .field-label-display {
+    color: #bdbdbd !important;  /* ラベルは少し暗めのグレー */
+}
+
+/* 値（データ）の色 */
+body.dark-mode .field-value-display {
+    color: #e0e0e0 !important;  /* データは明るいグレー */
+}
+
+/* 空の値 */
+body.dark-mode .field-value-display.empty {
+    color: #999 !important;  /* 「記載なし」は暗めのグレー */
+    font-style: italic;
+}
+/* ★★★ ここまでが追加部分 ★★★ */
+
+body.dark-mode .user-message p {
+    background: linear-gradient(135deg, #4527a0 0%, #512da8 100%);  /* ユーザーメッセージ：紫のグラデーション */
+}
+
+body.dark-mode select,
+body.dark-mode input[type="text"] {
+    background-color: #2c2c2c;  /* 入力欄背景：濃いグレー */
+    color: #fff;  /* 入力テキスト：白 */
+    border-color: #444;  /* ボーダー：グレー */
+}
+
+body.dark-mode .label-text {
+    color: #aaa;  /* ラベルテキスト：明るめのグレー */
+}
+
+body.dark-mode .custom-select-wrapper::after {
+    color: #fff;  /* セレクトボックスの矢印：白 */
+}
+
+body.dark-mode .temple-card {
+    background-color: #2c2c2c;  /* 寺院カード背景：濃いグレー */
+    border-color: #444;  /* ボーダー：グレー */
+}
+
+body.dark-mode .card-name {
+    color: #90caf9;  /* 寺院名：明るい青 */
+}
+
+body.dark-mode .card-addr {
+    color: #ccc;  /* 住所：明るいグレー */
+}
+
+body.dark-mode .ai-message a {
+    color: #82b1ff;  /* リンク：明るい青 */
+    border-color: #82b1ff;  /* リンク下線：明るい青 */
+}
+
+body.dark-mode .copy-btn {
+    background-color: #444;  /* コピーボタン背景：グレー */
+    color: #fff;  /* テキスト：白 */
+    border-color: #666;  /* ボーダー：明るめのグレー */
+}
+
+body.dark-mode .qa-chip {
+    background-color: #1e3a5f;  /* クイックQ&Aチップ背景：濃い青 */
+    color: #90caf9;  /* テキスト：明るい青 */
+    border-color: #2c5282;  /* ボーダー：青 */
+}
+
+body.dark-mode .clear-chat-btn {
+    background: rgba(46,46,46,0.9);  /* クリアボタン背景：半透明の濃いグレー */
+    color: #aaa;  /* テキスト：グレー */
+    border-color: #444;  /* ボーダー：グレー */
+}
+
+body.dark-mode .favorites-toggle {
+    background: #2c2c2c;  /* お気に入りタブ背景：濃いグレー */
+}
+
+body.dark-mode .fav-tab {
+    color: #aaa;  /* タブテキスト：グレー */
+}
+
+body.dark-mode .fav-tab.active {
+    background: #3c3c3c;  /* アクティブタブ背景：少し明るいグレー */
+    color: #90caf9;  /* アクティブタブテキスト：明るい青 */
+}
+
+/* ★★★ アコーディオンのダークモード対応（追加） ★★★ */
+body.dark-mode .accordion-section {
+    background-color: #2c2c2c;  /* 背景：濃いグレー */
+    border-color: #444;  /* ボーダー：グレー */
+}
+
+body.dark-mode .accordion-header {
+    background: linear-gradient(135deg, #2c2c2c 0%, #3c3c3c 100%);  /* ヘッダー背景：グラデーション */
+}
+
+body.dark-mode .accordion-header.active {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);  /* アクティブヘッダー：青のグラデーション */
+    border-bottom-color: #82b1ff;  /* 下線：明るい青 */
+}
+
+body.dark-mode .accordion-title {
+    color: #90caf9;  /* タイトル：明るい青 */
+}
+
+/* ★★★ 重要項目のハイライト（追加） ★★★ */
+body.dark-mode .field-value-display.important,
+body.dark-mode .important-text {
+    color: #ff8a80 !important;  /* 重要テキスト：明るい赤 */
+    background: rgba(198, 40, 40, 0.2) !important;  /* 背景：半透明の赤 */
+}
 /* === アコーディオン（折りたたみ） === */
 .accordion-section {
     background: white;
@@ -849,4 +932,101 @@ body.dark-mode .accordion-body strong {
     text-align: center;
     padding: 40px;
     color: #999;
+}
+/* === 項目の区切り線とスペース === */
+.field-item {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.field-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.field-label-display {
+    font-weight: 600 !important;
+    color: #555 !important;
+    font-size: 0.88rem !important;
+    margin-bottom: 4px !important;
+}
+
+.field-value-display {
+    color: #333 !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+    margin-bottom: 0 !important;
+}
+
+/* ★ Quillエディタの装飾を残す */
+.field-value-display strong,
+.field-value-display b {
+    font-weight: bold !important;
+}
+
+.field-value-display em,
+.field-value-display i {
+    font-style: italic !important;
+}
+
+.field-value-display u {
+    text-decoration: underline !important;
+}
+
+/* 背景色は削除済みなので、透明を強制 */
+.field-value-display * {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+.field-value-display.empty {
+    color: #999 !important;
+    font-style: italic !important;
+    font-size: 0.85rem !important;
+}
+
+/* リストの装飾 */
+.field-value-display ul,
+.field-value-display ol {
+    margin: 8px 0 8px 20px !important;
+    padding: 0 !important;
+}
+
+.field-value-display li {
+    margin: 4px 0 !important;
+}
+
+/* === ダークモード対応 === */
+body.dark-mode .field-item {
+    border-bottom-color: #444;
+}
+
+body.dark-mode .field-label-display {
+    color: #bdbdbd !important;
+}
+
+body.dark-mode .field-value-display {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .field-value-display.empty {
+    color: #999 !important;
+}
+
+/* ダークモードでも装飾は維持 */
+body.dark-mode .field-value-display strong,
+body.dark-mode .field-value-display b {
+    font-weight: bold !important;
+    color: #fff !important;
+}
+
+body.dark-mode .field-value-display em,
+body.dark-mode .field-value-display i {
+    font-style: italic !important;
+}
+
+body.dark-mode .field-value-display u {
+    text-decoration: underline !important;
 }

@@ -1323,3 +1323,25 @@ main {
         min-width: auto;
     }
 }
+
+/* プレビューモーダルのダークモード対応 */
+body.dark-mode .preview-content * {
+    color: #e0e0e0 !important;
+    background-color: transparent !important;
+}
+
+body.dark-mode .preview-content a {
+    color: #82b1ff !important;
+}
+
+body.dark-mode .field-label-display {
+    color: #bdbdbd !important;
+}
+
+body.dark-mode .field-value-display {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .field-value-display.empty {
+    color: #999 !important;
+}
