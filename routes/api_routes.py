@@ -168,4 +168,115 @@ def mark_all_read():
         else:
             return jsonify({'error': '一括既読処理に失敗しました'}), 500
     else:
-        return jsonify({'error': 'Supabaseが有効になっていません'}), 500    
+        return jsonify({'error': 'Supabaseが有効になっていません'}), 500
+    
+# ========================================
+# ユーザー設定API
+# ========================================
+
+@api_bp.route('/api/user-settings', methods=['GET'])
+@login_required
+def get_user_settings():
+    """ユーザー設定を取得"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'ユーザーIDが見つかりません'}), 401
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        
+        try:
+            client = supabase_db.get_supabase_client()
+            
+            # user_idからusersテーブルのid（bigint）を取得
+            user_result = client.table('users').select('id').eq('user_id', user_id).single().execute()
+            
+            if not user_result.data:
+                return jsonify({'error': 'ユーザーが見つかりません'}), 404
+            
+            db_user_id = user_result.data['id']
+            
+            # user_settingsから設定を取得
+            result = client.table('user_settings').select('*').eq('user_id', db_user_id).execute()
+            
+            if result.data and len(result.data) > 0:
+                settings = result.data[0]
+                return jsonify({
+                    'font_size': settings.get('font_size', 'normal'),
+                    'theme': settings.get('theme', 'light')
+                })
+            else:
+                # データが存在しない場合はデフォルト値を返す
+                return jsonify({
+                    'font_size': 'normal',
+                    'theme': 'light'
+                }), 404
+                
+        except Exception as e:
+            print(f"❌ 設定取得エラー: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': '設定の取得に失敗しました'}), 500
+    else:
+        # Google Sheets版は未対応
+        return jsonify({'error': 'この機能はSupabase使用時のみ利用可能です'}), 400
+
+
+@api_bp.route('/api/user-settings', methods=['POST'])
+@login_required
+def save_user_settings():
+    """ユーザー設定を保存"""
+    user_id = session.get('user_id')
+    
+    if not user_id:
+        return jsonify({'error': 'ユーザーIDが見つかりません'}), 401
+    
+    data = request.json
+    font_size = data.get('font_size', 'normal')
+    theme = data.get('theme', 'light')
+    
+    # バリデーション
+    if font_size not in ['small', 'normal', 'large']:
+        return jsonify({'error': '無効なフォントサイズです'}), 400
+    
+    if theme not in ['light', 'dark']:
+        return jsonify({'error': '無効なテーマです'}), 400
+    
+    if Config.USE_SUPABASE:
+        from services import supabase_db
+        
+        try:
+            client = supabase_db.get_supabase_client()
+            
+            # user_idからusersテーブルのid（bigint）を取得
+            user_result = client.table('users').select('id').eq('user_id', user_id).single().execute()
+            
+            if not user_result.data:
+                return jsonify({'error': 'ユーザーが見つかりません'}), 404
+            
+            db_user_id = user_result.data['id']
+            
+            # upsert（存在すれば更新、なければ挿入）
+            result = client.table('user_settings').upsert({
+                'user_id': db_user_id,
+                'font_size': font_size,
+                'theme': theme
+            }, on_conflict='user_id').execute()
+            
+            print(f"✅ 設定保存成功: user_id={user_id}, font_size={font_size}, theme={theme}")
+            
+            return jsonify({
+                'status': 'success',
+                'font_size': font_size,
+                'theme': theme
+            })
+            
+        except Exception as e:
+            print(f"❌ 設定保存エラー: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': '設定の保存に失敗しました'}), 500
+    else:
+        # Google Sheets版は未対応
+        return jsonify({'error': 'この機能はSupabase使用時のみ利用可能です'}), 400
