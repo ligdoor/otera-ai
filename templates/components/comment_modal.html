@@ -1,0 +1,27 @@
+<!-- コメントモーダル -->
+<div id="comment-modal" class="modal">
+    <div class="modal-content" style="max-width:700px;">
+        <div class="modal-header">
+            <h2 id="comment-modal-title">💬 スタッフメモ</h2>
+            <button class="modal-close" onclick="closeModal('comment-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="comments-list" style="max-height:300px; overflow-y:auto; margin-bottom:20px;">
+                <!-- コメント一覧 -->
+            </div>
+            <div class="form-group">
+                <label class="form-label">新しいメモを追加</label>
+                <textarea id="new-comment" class="form-textarea" placeholder="駐車場の位置、注意事項など..." rows="3"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel" onclick="closeModal('comment-modal')">
+                閉じる
+            </button>
+            <button class="btn btn-save" onclick="addComment()">
+                <span class="icon">💬</span>
+                メモを追加
+            </button>
+        </div>
+    </div>
+</div>

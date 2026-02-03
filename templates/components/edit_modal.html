@@ -1,0 +1,25 @@
+<!-- 編集モーダル -->
+<div id="edit-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">編集</h2>
+            <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+        </div>
+        <form id="edit-form">
+            <div class="modal-body">
+                <input type="hidden" id="mode" value="edit">
+                <input type="hidden" id="original-name">
+                <div id="dynamic-form-fields"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('edit-modal')">
+                    キャンセル
+                </button>
+                <button type="submit" class="btn btn-save">
+                    <span class="icon">💾</span>
+                    保存する
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,60 @@
+<header>
+    <div class="header-content">
+        <div class="header-title">
+            <h1>🏯 管理画面</h1>
+        </div>
+        <div class="header-btns">
+            <!-- システム管理メニュー -->
+            <div class="dropdown">
+                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('system-menu')">
+                    <span class="icon">⚙️</span>
+                    <span>システム管理</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="system-menu">
+                    <button class="dropdown-item" onclick="openLogModal(); closeAllDropdowns();">
+                        <span class="icon">📋</span>
+                        <span>ログ表示</span>
+                    </button>
+                    <a href="/admin/users" class="dropdown-item" id="user-management-link-dropdown" style="display:none;">
+                        <span class="icon">👥</span>
+                        <span>ユーザー管理</span>
+                    </a>
+                    <a href="/admin/fields" class="dropdown-item">
+                        <span class="icon">⚙️</span>
+                        <span>項目設定</span>
+                    </a>
+                    <button class="dropdown-item warning" onclick="reloadData(); closeAllDropdowns();">
+                        <span class="icon">🔄</span>
+                        <span>データ更新</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ユーザーメニュー -->
+            <div class="dropdown">
+                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('user-menu')">
+                    <span class="icon">👤</span>
+                    <span>{{ user_name }}さん</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="user-menu">
+                    <button class="dropdown-item" onclick="openPassModal(); closeAllDropdowns();">
+                        <span class="icon">🔑</span>
+                        <span>パスワード変更</span>
+                    </button>
+                    <a href="/logout" class="dropdown-item danger">
+                        <span class="icon">🚪</span>
+                        <span>ログアウト</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- アプリへ戻る -->
+            <a href="/" class="header-btn">
+                <span class="icon">🏠</span>
+                <span>アプリへ</span>
+            </a>
+        </div>
+    </div>
+</header>
