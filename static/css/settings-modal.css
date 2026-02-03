@@ -1,0 +1,383 @@
+/* ==========================================
+設定モーダル & 行間調整 CSS
+static/css/settings-modal.css
+========================================== */
+
+/* ==========================================
+モーダル基本スタイル
+========================================== */
+
+.settings-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ==========================================
+モーダルコンテンツ
+========================================== */
+
+.settings-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ダークモード対応 */
+body.dark-mode .settings-modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+/* ==========================================
+モーダルヘッダー
+========================================== */
+
+.settings-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+body.dark-mode .settings-modal-header {
+    border-bottom-color: #444;
+}
+
+.settings-modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+body.dark-mode .settings-modal-header h2 {
+    color: #e0e0e0;
+}
+
+.settings-modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    transition: color 0.2s;
+}
+
+.settings-modal-close:hover {
+    color: #333;
+}
+
+body.dark-mode .settings-modal-close {
+    color: #999;
+}
+
+body.dark-mode .settings-modal-close:hover {
+    color: #e0e0e0;
+}
+
+/* ==========================================
+モーダルボディ
+========================================== */
+
+.settings-modal-body {
+    padding: 24px;
+}
+
+/* ==========================================
+設定グループ
+========================================== */
+
+.setting-group {
+    margin-bottom: 28px;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+body.dark-mode .setting-label {
+    color: #e0e0e0;
+}
+
+/* ==========================================
+設定オプション（ラジオボタン）
+========================================== */
+
+.setting-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.setting-option {
+    flex: 1;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: white;
+}
+
+body.dark-mode .setting-option {
+    background-color: #3d3d3d;
+    border-color: #555;
+}
+
+.setting-option:hover {
+    border-color: #ff6b35;
+    background-color: #fff5f2;
+}
+
+body.dark-mode .setting-option:hover {
+    border-color: #ff6b35;
+    background-color: #4d3d3d;
+}
+
+.setting-option input[type="radio"] {
+    display: none;
+}
+
+.setting-option input[type="radio"]:checked + span {
+    font-weight: 600;
+}
+
+.setting-option:has(input[type="radio"]:checked) {
+    border-color: #ff6b35;
+    background-color: #fff5f2;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+}
+
+body.dark-mode .setting-option:has(input[type="radio"]:checked) {
+    background-color: #4d3d3d;
+}
+
+.setting-option span {
+    font-size: 15px;
+    color: #333;
+}
+
+body.dark-mode .setting-option span {
+    color: #e0e0e0;
+}
+
+/* ==========================================
+プレビューエリア
+========================================== */
+
+.setting-preview {
+    padding: 20px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    min-height: 120px;
+}
+
+body.dark-mode .setting-preview {
+    background-color: #3d3d3d;
+    border-color: #555;
+}
+
+.preview-text {
+    margin: 0;
+    color: #333;
+    /* フォントサイズと行間はJSで動的に変更 */
+}
+
+body.dark-mode .preview-text {
+    color: #e0e0e0;
+}
+
+/* ==========================================
+モーダルフッター
+========================================== */
+
+.settings-modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid #e0e0e0;
+    justify-content: flex-end;
+}
+
+body.dark-mode .settings-modal-footer {
+    border-top-color: #444;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #ff6b35;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #e55a2b;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+body.dark-mode .btn-secondary {
+    background-color: #555;
+    color: #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background-color: #d0d0d0;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background-color: #666;
+}
+
+/* ==========================================
+行間調整クラス（body要素に適用）
+========================================== */
+
+body.line-narrow {
+    line-height: 1.4;
+}
+
+body.line-normal {
+    line-height: 1.6;
+}
+
+body.line-wide {
+    line-height: 1.9;
+}
+
+/* 特定の要素には個別に行間を設定 */
+body.line-narrow p,
+body.line-narrow .content-text,
+body.line-narrow .description {
+    line-height: 1.4;
+}
+
+body.line-normal p,
+body.line-normal .content-text,
+body.line-normal .description {
+    line-height: 1.6;
+}
+
+body.line-wide p,
+body.line-wide .content-text,
+body.line-wide .description {
+    line-height: 1.9;
+}
+
+/* ==========================================
+レスポンシブ対応
+========================================== */
+
+@media (max-width: 768px) {
+    .settings-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .settings-modal-header {
+        padding: 16px 20px;
+    }
+
+    .settings-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .settings-modal-body {
+        padding: 20px;
+    }
+
+    .setting-options {
+        flex-direction: column;
+    }
+
+    .setting-option {
+        min-width: auto;
+    }
+
+    .settings-modal-footer {
+        padding: 16px 20px;
+        flex-direction: column-reverse;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+/* ==========================================
+設定ボタンのスタイル（ヘッダー用）
+========================================== */
+
+#settings-btn {
+    /* 既存の .header-btn スタイルを継承 */
+    font-size: 20px;
+}
+
+#settings-btn:hover {
+    transform: rotate(45deg);
+}

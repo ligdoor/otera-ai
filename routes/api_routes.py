@@ -173,6 +173,9 @@ def mark_all_read():
 # ========================================
 # ユーザー設定API
 # ========================================
+# ========================================
+# GET /api/user-settings
+# ========================================
 
 @api_bp.route('/api/user-settings', methods=['GET'])
 @login_required
@@ -204,13 +207,15 @@ def get_user_settings():
                 settings = result.data[0]
                 return jsonify({
                     'font_size': settings.get('font_size', 'normal'),
-                    'theme': settings.get('theme', 'light')
+                    'theme': settings.get('theme', 'light'),
+                    'line_height': settings.get('line_height', 'normal')  # ← 追加
                 })
             else:
                 # データが存在しない場合はデフォルト値を返す
                 return jsonify({
                     'font_size': 'normal',
-                    'theme': 'light'
+                    'theme': 'light',
+                    'line_height': 'normal'  # ← 追加
                 }), 404
                 
         except Exception as e:
@@ -222,6 +227,10 @@ def get_user_settings():
         # Google Sheets版は未対応
         return jsonify({'error': 'この機能はSupabase使用時のみ利用可能です'}), 400
 
+
+# ========================================
+# POST /api/user-settings
+# ========================================
 
 @api_bp.route('/api/user-settings', methods=['POST'])
 @login_required
@@ -235,6 +244,7 @@ def save_user_settings():
     data = request.json
     font_size = data.get('font_size', 'normal')
     theme = data.get('theme', 'light')
+    line_height = data.get('line_height', 'normal')  # ← 追加
     
     # バリデーション
     if font_size not in ['small', 'normal', 'large']:
@@ -242,6 +252,9 @@ def save_user_settings():
     
     if theme not in ['light', 'dark']:
         return jsonify({'error': '無効なテーマです'}), 400
+    
+    if line_height not in ['narrow', 'normal', 'wide']:  # ← 追加
+        return jsonify({'error': '無効な行間です'}), 400
     
     if Config.USE_SUPABASE:
         from services import supabase_db
@@ -261,15 +274,17 @@ def save_user_settings():
             result = client.table('user_settings').upsert({
                 'user_id': db_user_id,
                 'font_size': font_size,
-                'theme': theme
+                'theme': theme,
+                'line_height': line_height  # ← 追加
             }, on_conflict='user_id').execute()
             
-            print(f"✅ 設定保存成功: user_id={user_id}, font_size={font_size}, theme={theme}")
+            print(f"✅ 設定保存成功: user_id={user_id}, font_size={font_size}, theme={theme}, line_height={line_height}")
             
             return jsonify({
                 'status': 'success',
                 'font_size': font_size,
-                'theme': theme
+                'theme': theme,
+                'line_height': line_height  # ← 追加
             })
             
         except Exception as e:

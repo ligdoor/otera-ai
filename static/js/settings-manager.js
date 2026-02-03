@@ -23,6 +23,7 @@ class SettingsManager {
         this.currentFontSize = 'normal';
         this.currentTheme = 'light';
         this.initialized = false;
+        this.currentLineHeight = 'normal';
     }
     
     /**
@@ -87,6 +88,7 @@ class SettingsManager {
                     
                     this.applyFontSize(this.currentFontSize);
                     this.applyTheme(this.currentTheme);
+                    this.applyLineHeight(this.currentLineHeight);
                     
                     // localStorageにも保存（オフライン時用）
                     localStorage.setItem('fontSize', this.currentFontSize);
@@ -118,10 +120,12 @@ class SettingsManager {
     loadFromLocalStorage() {
         this.currentFontSize = localStorage.getItem('fontSize') || 'normal';
         this.currentTheme = localStorage.getItem('theme') || 'light';
+        this.currentLineHeight = localStorage.getItem('lineHeight') || 'normal';
         
         this.applyFontSize(this.currentFontSize);
         this.applyTheme(this.currentTheme);
-        
+        this.applyLineHeight(this.currentLineHeight);
+
         console.log('[SettingsManager] localStorageから読み込み:', {
             fontSize: this.currentFontSize,
             theme: this.currentTheme
@@ -144,10 +148,48 @@ class SettingsManager {
         
         // ログイン中はサーバーにも保存（バックグラウンド）
         if (this.isLoggedIn) {
-            await this.saveToServer(size, this.currentTheme);
+            await this.saveToServer(size, this.currentTheme, this.currentLineHeight);
         }
     }
     
+    /**
+     * 行間を保存
+     */
+    async saveLineHeight(lineHeight) {
+        console.log('[SettingsManager] 行間保存:', lineHeight);
+        
+        this.currentLineHeight = lineHeight;
+        
+        // 即座にUIに反映
+        this.applyLineHeight(lineHeight);
+        
+        // localStorage に保存
+        localStorage.setItem('lineHeight', lineHeight);
+        
+        // ログイン中はサーバーにも保存
+        if (this.isLoggedIn) {
+            await this.saveToServer(this.currentFontSize, this.currentTheme, lineHeight);
+        }
+    }
+
+    /**
+     * 行間を適用
+     */
+    applyLineHeight(lineHeight) {
+        // クラスを削除
+        document.body.classList.remove('line-narrow', 'line-wide');
+        
+        // 新しいクラスを追加
+        if (lineHeight === 'narrow') {
+            document.body.classList.add('line-narrow');
+        } else if (lineHeight === 'wide') {
+            document.body.classList.add('line-wide');
+        }
+        // normal の場合はクラスなし（デフォルト）
+        
+        console.log('[SettingsManager] 行間適用:', lineHeight);
+    }
+
     /**
      * テーマを保存
      */
@@ -164,21 +206,22 @@ class SettingsManager {
         
         // ログイン中はサーバーにも保存
         if (this.isLoggedIn) {
-            await this.saveToServer(this.currentFontSize, theme);
+            await this.saveToServer(this.currentFontSize, theme, this.currentLineHeight);
         }
     }
     
     /**
      * サーバーに保存
      */
-    async saveToServer(fontSize, theme) {
+    async saveToServer(fontSize, theme, lineHeight) {
         try {
             const res = await fetch('/api/user-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     font_size: fontSize,
-                    theme: theme
+                    theme: theme,
+                    line_height: lineHeight
                 })
             });
             
@@ -276,6 +319,7 @@ class SettingsManager {
         return {
             fontSize: this.currentFontSize,
             theme: this.currentTheme,
+            lineHeight: this.currentLineHeight,
             isLoggedIn: this.isLoggedIn
         };
     }
