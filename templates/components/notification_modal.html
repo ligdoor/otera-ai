@@ -1,0 +1,15 @@
+<!-- 通知モーダル -->
+<div id="notification-modal" class="notification-modal" onclick="closeNotifications(event)">
+    <div class="notification-content" onclick="event.stopPropagation()">
+        <div class="notification-header">
+            <h2>🔔 通知</h2>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="markAllRead()" class="mark-read-btn">すべて既読</button>
+                <button onclick="closeNotifications()" class="close-btn">✕</button>
+            </div>
+        </div>
+        <div id="notification-list" class="notification-list">
+            <div style="text-align: center; padding: 40px; color: #999;">読み込み中...</div>
+        </div>
+    </div>
+</div>

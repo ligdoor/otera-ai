@@ -1,0 +1,34 @@
+<header>
+    <div class="header-content">
+        <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
+        <h1>🏯 寺院情報<br class="mobile-break">データベース</h1>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            <span style="color: white; font-size: 14px;" class="user-name-display">👤 {{ user_name }}</span>
+            <button class="header-btn notification-btn" onclick="openNotifications()" style="position: relative;">
+                🔔
+                <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
+            </button>
+            <a href="/admin" class="header-btn">⚙️</a>
+            <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')">🚪</a>
+        </div>
+    </div>
+</header>
+
+<!-- クリアボタン -->
+<button class="clear-chat-btn" onclick="clearAllChat()">🗑️ クリア</button>
+
+<style>
+.mobile-break {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .mobile-break {
+        display: inline;
+    }
+    
+    .user-name-display {
+        display: none !important;
+    }
+}
+</style>

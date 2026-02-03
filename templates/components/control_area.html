@@ -1,0 +1,59 @@
+<div class="control-area" id="control-area">
+    <div class="close-handle" onclick="hideMenu()"></div>
+    
+    <div class="control-group">
+        <!-- お気に入りタブ -->
+        <div class="favorites-toggle">
+            <button class="fav-tab active" onclick="switchTab('all')">🏯 すべて</button>
+            <button class="fav-tab" onclick="switchTab('favorites')">⭐ お気に入り</button>
+        </div>
+        <!-- 寺院選択 -->
+        <div>
+            <label class="label-text">🔍 寺院検索（詳細表示）</label>
+            <div class="custom-select-wrapper">
+                <select id="temple-select" onchange="onTempleSelect()">
+                    <option value="">寺院を選択...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 宗派選択（上に移動） -->
+        <div>
+            <label class="label-text">📿 宗派別リスト</label>
+            <div class="custom-select-wrapper">
+                <select id="sect-select" onchange="onSectSelect()">
+                    <option value="">宗派を選択...</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- 項目確認 -->
+        <div>
+            <label class="label-text">💬 項目確認</label>
+            
+            <!-- クイックQ&A -->
+            <div id="quick-qa-area" style="display: none; gap: 8px; margin-bottom: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 5px;">
+                <div class="qa-chip" onclick="askQuick('納棺の注意点は？')">⚰️ 納棺仕様</div>
+                <div class="qa-chip" onclick="askQuick('書き物の指定は？')">🖊️ 書き物</div>
+                <div class="qa-chip" onclick="askQuick('式の流れは？')">📜 式の流れ</div>
+                <div class="qa-chip" onclick="askQuick('搬送時の持ち物は？')">🚗 搬送持ち物</div>
+                <div class="qa-chip" onclick="askQuick('注意事項は？')">⚠️ 注意事項</div>
+            </div>
+            
+            <!-- 確認事項入力 -->
+            <div class="text-input-wrapper">
+                <input type="text" id="free-input" placeholder="確認事項を入力" onkeypress="if(event.key === 'Enter') sendFreeChat()">
+                <button id="voiceBtn" onclick="startVoiceInput()" 
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                            color: white; border: none; border-radius: 8px; 
+                            padding: 8px 12px; font-size: 18px; cursor: pointer; 
+                            margin: 0 4px; transition: transform 0.2s;"
+                        title="音声入力">🎤</button>
+                <button class="send-btn" onclick="sendFreeChat()">📤 確認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- メニュー表示ボタン -->
+<button id="show-menu-btn" onclick="showMenu()">🔍</button>
