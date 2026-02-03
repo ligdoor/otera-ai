@@ -13,33 +13,59 @@
 <header>
     <div class="header-content">
         <div class="header-title">
-            <h1>管理画面</h1>
-            <span class="user-badge">{{ user_name }}さん</span>
+            <h1>🏯 管理画面</h1>
         </div>
         <div class="header-btns">
-            <button class="header-btn" onclick="openPassModal()">
-                <span class="icon">🔑</span>
-                <span>パスワード変更</span>
-            </button>
-            <a href="/admin/users" class="header-btn" id="user-management-link" style="display:none;">
-                <span class="icon">👥</span>
-                <span>ユーザー管理</span>
-            </a>
-            <a href="/admin/fields" class="header-btn">
-                <span class="icon">⚙️</span>
-                <span>項目設定</span>
-            </a>
-            <button class="header-btn warning" onclick="reloadData()">
-                <span class="icon">🔄</span>
-                <span>データ更新</span>
-            </button>
+            <!-- システム管理メニュー -->
+            <div class="dropdown">
+                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('system-menu')">
+                    <span class="icon">⚙️</span>
+                    <span>システム管理</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="system-menu">
+                    <button class="dropdown-item" onclick="openLogModal(); closeAllDropdowns();">
+                        <span class="icon">📋</span>
+                        <span>ログ表示</span>
+                    </button>
+                    <a href="/admin/users" class="dropdown-item" id="user-management-link-dropdown" style="display:none;">
+                        <span class="icon">👥</span>
+                        <span>ユーザー管理</span>
+                    </a>
+                    <a href="/admin/fields" class="dropdown-item">
+                        <span class="icon">⚙️</span>
+                        <span>項目設定</span>
+                    </a>
+                    <button class="dropdown-item warning" onclick="reloadData(); closeAllDropdowns();">
+                        <span class="icon">🔄</span>
+                        <span>データ更新</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ユーザーメニュー -->
+            <div class="dropdown">
+                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('user-menu')">
+                    <span class="icon">👤</span>
+                    <span>{{ user_name }}さん</span>
+                    <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="user-menu">
+                    <button class="dropdown-item" onclick="openPassModal(); closeAllDropdowns();">
+                        <span class="icon">🔑</span>
+                        <span>パスワード変更</span>
+                    </button>
+                    <a href="/logout" class="dropdown-item danger">
+                        <span class="icon">🚪</span>
+                        <span>ログアウト</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- アプリへ戻る -->
             <a href="/" class="header-btn">
                 <span class="icon">🏠</span>
                 <span>アプリへ</span>
-            </a>
-            <a href="/logout" class="header-btn danger">
-                <span class="icon">🚪</span>
-                <span>ログアウト</span>
             </a>
         </div>
     </div>
@@ -70,22 +96,6 @@
 
     <div id="temple-list" class="temple-list"></div>
 
-    <div class="log-area">
-        <h3>📋 最近の操作ログ</h3>
-        <div class="log-container">
-            <table class="log-table">
-                <thead>
-                    <tr>
-                        <th>日時</th>
-                        <th>担当</th>
-                        <th>操作</th>
-                        <th>詳細</th>
-                    </tr>
-                </thead>
-                <tbody id="log-list"></tbody>
-            </table>
-        </div>
-    </div>
 </main>
 
 <!-- ローディングオーバーレイ -->
@@ -274,11 +284,13 @@
                 const userData = await userRes.json();
                 const userRole = userData.role;
                 
-                // 管理者のみユーザー管理リンクを表示
-                if (userRole === 'admin') {
-                    document.getElementById('user-management-link').style.display = 'flex';
+            // 管理者のみユーザー管理リンクを表示
+            if (userRole === 'admin') {
+                const userMgmtLink = document.getElementById('user-management-link-dropdown');
+                if (userMgmtLink) {
+                    userMgmtLink.style.display = 'flex';
                 }
-                
+            }                
                 // 管理者・編集者のみ編集機能を表示
                 if (userRole === 'admin' || userRole === 'editor') {
                     document.getElementById('add-temple-btn').style.display = 'flex';
@@ -289,7 +301,7 @@
             }
             
             // ★ 改善2: データとログを並列で取得（高速化） ★
-            await Promise.all([loadList(), loadLogs()]);
+            await loadList();
             
         } catch (e) {
             console.error('初期化エラー:', e);
@@ -386,40 +398,46 @@
             </div>
         `;
     }
-}    
-    async function loadLogs() {
-        try {
-            const res = await fetch('/get_logs');
-            const logs = await res.json();
-            const tbody = document.getElementById('log-list');
-            tbody.innerHTML = '';
-            
-            if (logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">ログがありません</td></tr>';
-                return;
-            }
-            
-            logs.forEach(log => {
-                const tr = document.createElement('tr');
-                
-                // 操作タイプに応じたバッジ
-                let badgeClass = 'update';
-                if (log.action === '編集') badgeClass = 'edit';
-                else if (log.action === '追加') badgeClass = 'add';
-                else if (log.action === '削除') badgeClass = 'delete';
-                
-                tr.innerHTML = `
-                    <td>${log.timestamp}</td>
-                    <td>${log.user}</td>
-                    <td><span class="log-badge ${badgeClass}">${log.action}</span></td>
-                    <td>${log.details}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (e) {
-            console.error('ログ読み込みエラー:', e);
+}
+
+    // ドロップダウンメニュー制御
+    function toggleDropdown(menuId) {
+        const menu = document.getElementById(menuId);
+        const dropdown = menu.parentElement;
+        const isActive = dropdown.classList.contains('active');
+        
+        // 他のメニューを閉じる
+        closeAllDropdowns();
+        
+        // このメニューをトグル
+        if (!isActive) {
+            dropdown.classList.add('active');
+            menu.classList.add('show');
         }
     }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            dropdown.classList.remove('active');
+        });
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+
+    // メニュー外をクリックしたら閉じる
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            closeAllDropdowns();
+        }
+    });
+
+    // ESCキーでメニューを閉じる
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAllDropdowns();
+        }
+    });
 
     async function reloadData() {
         if (!confirm("スプレッドシートから最新データを読み込みますか？")) return;
@@ -473,7 +491,6 @@
         }
     };
 
-// プレビューモーダル
 // プレビューモーダル
 function openPreviewModal(temple) {
     const content = document.getElementById('preview-content');
@@ -975,5 +992,10 @@ function renderForm(data = {}) {
         }
     }
 </script>
+<!-- ログモーダルをインポート -->
+{% include 'components/log_modal.html' %}
+
+<!-- ログモーダルのJavaScript -->
+<script src="{{ url_for('static', filename='js/log_modal.js') }}"></script>
 </body>
 </html>
