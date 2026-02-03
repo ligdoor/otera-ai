@@ -9,11 +9,14 @@ if Config.GEMINI_API_KEY:
 
 def generate_static_summary(temple_info, field_config):
     """寺院情報の静的サマリーを生成（アコーディオン対応）"""
+    import time
+
     def get(key):
         return temple_info.get(key) or ''
     
     temple_name = get('name')
     temple_name_escaped = temple_name.replace("'", "\\'")
+    timestamp = int(time.time() * 1000)
     
     html = f"""
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
@@ -74,7 +77,7 @@ def generate_static_summary(temple_info, field_config):
         
         is_open = cat_data['default_open']
         active_class = 'active' if is_open else ''
-        accordion_id = f"acc-{cat_key}-{cat_index}"
+        accordion_id = f"acc-{cat_key}-{cat_index}-{timestamp}"
         cat_index += 1
         
         # アコーディオンヘッダー

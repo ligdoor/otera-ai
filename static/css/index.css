@@ -15,54 +15,124 @@ body {
     transition: background-color 0.3s;
 }
 
-/* === ヘッダー === */
-header { 
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
-    color: white; 
-    padding: 12px 15px; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
-    position: sticky; 
-    top: 0; 
-    z-index: 500;
+/* ヘッダー */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
 }
 
 .header-content {
-    max-width: 800px; 
-    margin: 0 auto;
-    display: flex; 
-    justify-content: space-between; 
+    display: flex;
+    justify-content: space-between;
     align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 10px;
 }
 
-h1 { 
-    margin: 0; 
-    font-size: 1.2rem; 
-    font-weight: bold; 
-    flex: 1; 
-    text-align: center; 
+.header-content h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .header-btn {
-    background: none; 
-    border: none; 
-    font-size: 1.3rem;
-    cursor: pointer; 
-    color: white; 
-    padding: 4px 8px;
-    transition: transform 0.2s;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.3s;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-.header-btn:hover { 
-    transform: scale(1.1); 
+.header-btn:hover {
+    background: rgba(255,255,255,0.3);
 }
 
-/* === チャットウィンドウ === */
-#chat-window { 
-    max-width: 800px; 
-    margin: 0 auto; 
-    padding: 15px; 
-    min-height: 60vh; 
+/* スマホ対応 */
+@media (max-width: 600px) {
+    header {
+        padding: 8px 10px;
+    }
+    
+    .header-content h1 {
+        font-size: 0.9rem;
+        line-height: 1.2;
+        white-space: normal;
+        word-break: keep-all;
+        overflow: visible;
+    }
+    
+    .header-btn {
+        padding: 6px 8px;
+        font-size: 1rem;
+        min-width: 36px;
+        min-height: 36px;
+    }
+    
+    .header-content > div {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    
+    .header-content > div span {
+        display: none; /* ユーザー名を非表示 */
+    }
+    
+    /* クリアボタンの位置調整 */
+    .clear-chat-btn {
+        top: 80px;
+        right: 8px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
+
+/* 極小画面（iPhone SE など）対応 */
+@media (max-width: 375px) {
+    .header-content h1 {
+        font-size: 0.8rem;
+    }
+    
+    .header-btn {
+        padding: 4px 6px;
+        font-size: 0.9rem;
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+
+#chat-window {
+    padding: 80px 15px 15px 15px;  /* ★ 上部パディングを追加 */
+    max-width: 900px;
+    margin: 0 auto;
+    min-height: calc(100vh - 80px);
+}
+
+/* スマホ対応 */
+@media (max-width: 600px) {
+    #chat-window {
+        padding: 90px 10px 15px 10px;  /* ★ スマホではさらに余白を追加 */
+    }
 }
 
 .message { 
@@ -370,25 +440,23 @@ transform: scale(1.05);
 }
 /* === クリアボタン === */
 .clear-chat-btn {
-position: fixed;
-top: 70px;
-right: 15px;
-background: rgba(255,255,255,0.9);
-color: #666;
-border: 2px solid #e0e0e0;
-padding: 8px 12px;
-border-radius: 20px;
-cursor: pointer;
-font-size: 0.85rem;
-font-weight: 600;
-z-index: 400;
-transition: all 0.2s;
-box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: fixed;
+    top: 70px;  /* ★ ヘッダーの下に配置 */
+    right: 10px;
+    z-index: 100;  /* ★ z-indexを追加 */
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
 }
+
 .clear-chat-btn:hover {
-background: white;
-border-color: #d32f2f;
-color: #d32f2f;
+    transform: scale(1.05);
 }
 /* === ダークモード === */
 body.dark-mode {
