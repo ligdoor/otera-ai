@@ -10,10 +10,27 @@ from config import Config
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 import pytz
+import time
+from functools import wraps
 
 # グローバルクライアント
 _supabase_client: Optional[Client] = None
 
+def retry_on_failure(max_retries=3, delay=1):
+    """失敗時のリトライデコレーター"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise
+                    print(f"⚠️ リトライ {attempt + 1}/{max_retries}: {e}")
+                    time.sleep(delay * (attempt + 1))
+        return wrapper
+    return decorator
 
 def get_supabase_client() -> Client:
     """

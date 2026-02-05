@@ -14,6 +14,22 @@
 {% include 'components/admin_header.html' %}
 
 <main>
+
+    <!-- メンテナンスモード切り替え（管理者のみ表示） -->
+    <div id="maintenance-section" class="maintenance-section" style="display:none; margin-bottom:20px;">
+        <div class="maintenance-control">
+            <div class="maintenance-info">
+                <span class="icon">🔧</span>
+                <span class="maintenance-label">メンテナンスモード</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="maintenanceToggle">
+                <span class="slider"></span>
+            </label>
+            <span id="maintenanceStatus" class="status-text">読み込み中...</span>
+        </div>
+    </div>
+
     <!-- CSV機能とアクセス統計 -->
     <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
         <button class="btn btn-edit" onclick="exportCSV()" style="flex:1; min-width:200px;">
@@ -58,5 +74,6 @@
 <script src="{{ url_for('static', filename='js/admin/csv.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin/dropdown.js') }}"></script>
 <script src="{{ url_for('static', filename='js/log_modal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin/maintenance.js') }}"></script>
 </body>
 </html>

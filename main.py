@@ -1,5 +1,8 @@
+# main.py - 修正版
+
 import os
-from flask import Flask, jsonify
+import sys
+from flask import Flask, jsonify, render_template, request
 from flask_compress import Compress
 from flask_caching import Cache
 from config import Config
@@ -9,6 +12,29 @@ from routes.temple_routes import temple_bp, init_temple_data
 from routes.user_routes import user_bp
 from routes.api_routes import api_bp
 from flask_extensions import limiter
+from utils.env_checker import check_required_env
+# ★ 追加: メンテナンスモードのインポート
+from maintenance import MaintenanceMode
+
+print("\n" + "="*60)
+print("🔍 環境変数チェック開始")
+print("="*60)
+
+if not check_required_env():
+    print("\n" + "="*60)
+    print("❌ 起動失敗: 必須の環境変数が不足しています")
+    print("="*60)
+    print("\n【対処方法】")
+    print("1. .env ファイルを確認してください")
+    print("2. 不足している環境変数を設定してください")
+    print("3. 設定例:")
+    print("   SECRET_KEY=your-secret-key-here")
+    print("   SUPABASE_URL=https://xxxxx.supabase.co")
+    print("   SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1...")
+    print("\n環境変数を設定してから再度起動してください\n")
+    sys.exit(1)
+
+print("✅ 環境変数チェック完了\n")
 
 # Sentry初期化（オプショナル）
 try:
@@ -33,13 +59,42 @@ app.config.from_object(Config)
 limiter.init_app(app)
 
 # Flask拡張機能の初期化
-compress = Compress(app)  # レスポンス圧縮
-cache = Cache(app)  # キャッシング
+compress = Compress(app)
+cache = Cache(app)
 
-# キャッシュインスタンスをエクスポート（他のモジュールから使用可能に）
+# キャッシュインスタンスをエクスポート
 __all__ = ['app', 'cache']
 
-# Blueprintを登録
+# ============================================================
+# ★★★ メンテナンスモードのチェック（ここに追加） ★★★
+# ============================================================
+@app.before_request
+def check_maintenance():
+    """
+    メンテナンスモードのチェック
+    全てのリクエストの前に実行される
+    """
+    # 除外するパス（これらはメンテナンス中でもアクセス可能）
+    excluded_paths = [
+        '/admin',           # 管理画面
+        '/static/',         # 静的ファイル（CSS/JS）
+        '/health',          # ヘルスチェック
+        '/logout'           # ログアウト
+    ]
+    
+    # 除外パスの場合はスキップ
+    for path in excluded_paths:
+        if request.path.startswith(path):
+            return None
+    
+    # メンテナンスモードが有効な場合
+    if MaintenanceMode.is_enabled():
+        return render_template('maintenance.html', 
+                             message=MaintenanceMode.get_message())
+
+# ============================================================
+# Blueprint登録（メンテナンスチェックの後に配置）
+# ============================================================
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(temple_bp)

@@ -55,6 +55,12 @@ async function init() {
                 if (userMgmtLink) {
                     userMgmtLink.style.display = 'flex';
                 }
+                
+                // ★★★ メンテナンスセクションを表示（管理者のみ） ★★★
+                const maintenanceSection = document.getElementById('maintenance-section');
+                if (maintenanceSection) {
+                    maintenanceSection.style.display = 'block';
+                }
             }
             
             // 管理者・編集者のみ編集機能を表示

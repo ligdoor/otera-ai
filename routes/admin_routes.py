@@ -3,11 +3,56 @@ from utils.decorators import login_required, role_required
 from services.data_source import add_log
 from services.temple_crud import update_fields_data
 from config import Config
+from maintenance import MaintenanceMode
 import csv
 import io
 
 admin_bp = Blueprint('admin_routes', __name__)
 
+# ============================================================
+# メンテナンスモード管理API
+# ============================================================
+
+@admin_bp.route('/api/maintenance/status', methods=['GET'])
+def get_maintenance_status():
+    """現在のメンテナンスモード状態を取得"""
+    if 'user_id' not in session:
+        return jsonify({'error': '未ログイン'}), 401
+    
+    try:
+        is_maintenance = MaintenanceMode.is_enabled()
+        return jsonify({'maintenance_mode': is_maintenance})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@admin_bp.route('/api/maintenance/toggle', methods=['POST'])
+def toggle_maintenance():
+    """メンテナンスモードをオン/オフ"""
+    if 'user_id' not in session:
+        return jsonify({'error': '未ログイン'}), 401
+    
+    user_id = session['user_id']
+    
+    if Config.USE_SUPABASE:
+        from services.supabase_db import get_supabase_client
+        supabase = get_supabase_client()
+        
+        user_result = supabase.table('users').select('role').eq('id', user_id).single().execute()
+        
+        if user_result.data.get('role') != 'admin':
+            return jsonify({'error': '管理者権限が必要です'}), 403
+    else:
+        return jsonify({'error': 'この機能はSupabaseモードでのみ利用可能です'}), 400
+    
+    result = MaintenanceMode.toggle(user_id)
+    
+    if result['success']:
+        return jsonify(result)
+    else:
+        return jsonify(result), 500
+
+    
 @admin_bp.route("/admin/fields")
 @login_required
 def admin_fields():
@@ -57,12 +102,15 @@ def get_fields():
     from routes.temple_routes import field_config
     return jsonify(field_config)
 
-# ★ CSVインポート機能 ★
 @admin_bp.route('/import_csv', methods=['POST'])
 @login_required
-@role_required('admin', 'editor')  # ★ 修正: リストではなく引数として渡す
+@role_required('admin', 'editor')
 def import_csv():
-    """CSVインポート機能（Supabase専用）"""
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    
+    if request.content_length > MAX_FILE_SIZE:
+        return jsonify({'error': 'ファイルサイズが大きすぎます（10MB以下）'}), 413
+    
     if not Config.USE_SUPABASE:
         return jsonify({'success': False, 'message': 'この機能はSupabase使用時のみ利用可能です'}), 400
     
@@ -77,7 +125,6 @@ def import_csv():
         return jsonify({'success': False, 'message': 'CSVファイルを選択してください'}), 400
     
     try:
-        # CSVをメモリで読み込み
         stream = io.StringIO(file.stream.read().decode('utf-8-sig'), newline=None)
         csv_reader = csv.DictReader(stream)
         
@@ -85,12 +132,10 @@ def import_csv():
         updated = 0
         errors = []
         
-        # 項目設定を取得
         from routes.temple_routes import field_config
         from services import supabase_db
         from services.data_manager import data_manager
         
-        # ユーザー情報を取得
         user_name = session.get('user_name', 'unknown')
         user_id = session.get('user_id', 'unknown')
         
@@ -101,22 +146,18 @@ def import_csv():
                     errors.append(f"行{row_num}: 寺院名が空です")
                     continue
                 
-                # データを整形
                 temple_data = {}
                 for field in field_config:
                     key = field['key']
                     value = row.get(key, '')
                     temple_data[key] = value if value else ''
                 
-                # 既存データをチェック
                 existing = data_manager.get_temple_by_name(temple_name)
                 
                 if existing:
-                    # 更新
                     data_manager.update_temple(temple_name, temple_data)
                     updated += 1
                     
-                    # ログ記録
                     supabase_db.add_log(
                         user_name=user_name,
                         user_id=user_id,
@@ -125,11 +166,9 @@ def import_csv():
                         ip_address=request.remote_addr or ''
                     )
                 else:
-                    # 新規追加
                     data_manager.create_temple(temple_data)
                     imported += 1
                     
-                    # ログ記録
                     supabase_db.add_log(
                         user_name=user_name,
                         user_id=user_id,
@@ -145,10 +184,8 @@ def import_csv():
                 traceback.print_exc()
                 continue
         
-        # キャッシュをクリア
         data_manager.clear_cache()
         
-        # グローバルキャッシュもクリア
         from services.cache import cache_manager
         cache_manager.clear_cache()
         
@@ -165,26 +202,21 @@ def import_csv():
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'インポート処理中にエラーが発生しました: {str(e)}'}), 500
 
-# ★ CSVエクスポート機能 ★
 @admin_bp.route('/export_csv')
 @login_required
 def export_csv():
-    """CSVエクスポート機能"""
     try:
         from routes.temple_routes import field_config
         from services.data_manager import data_manager
         
         all_temples = data_manager.get_all_temples()
         
-        # CSVを生成
         output = io.StringIO()
         
-        # ヘッダー行（項目のキー）
         fieldnames = [field['key'] for field in field_config]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         
-        # データ行（辞書をリストに変換）
         temple_list = list(all_temples.values()) if isinstance(all_temples, dict) else all_temples
         
         for temple in temple_list:
@@ -193,7 +225,6 @@ def export_csv():
                 row[key] = temple.get(key, '')
             writer.writerow(row)
         
-        # レスポンスを作成
         response = make_response(output.getvalue())
         response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'
         response.headers['Content-Disposition'] = 'attachment; filename=temples_export.csv'
