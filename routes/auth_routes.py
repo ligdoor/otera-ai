@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, render_template_string
 import bcrypt
 from services.auth import check_login_attempts, record_login_attempt, authenticate_user
 from utils.decorators import login_required, update_session_activity, check_session_timeout
@@ -206,33 +206,118 @@ def _change_password_sheets(user_id, current_pass, new_pass):
 
 def render_login_page():
     """ログインページのHTMLを返す（連打防止機能付き）"""
-    return f"""
+    template = """
+    <!DOCTYPE html>
     <html>
     <head>
+        <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+        <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
         <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-        <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-192.png') }}">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="寺院情報管理システム">
         <meta name="theme-color" content="#4A90E2">
+        <title>寺院情報管理システム - ログイン</title>
         <style>
-            body {{ font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }}
-            .login-container {{ background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 90%; max-width: 400px; text-align: center; }}
-            h2 {{ color: #1a237e; margin-top: 0; margin-bottom: 30px; font-size: 1.8rem; }}
-            .lock-icon {{ font-size: 3rem; margin-bottom: 20px; }}
-            input {{ width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; box-sizing: border-box; transition: border-color 0.3s; }}
-            input:focus {{ outline: none; border-color: #667eea; }}
-            button {{ width: 100%; padding: 15px; margin-top: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }}
-            button:hover {{ transform: translateY(-2px); }}
-            button:active {{ transform: translateY(0); }}
-            button:disabled {{ opacity: 0.5; cursor: not-allowed; transform: none; }}
-            .back-link {{ display: block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9rem; }}
-            .security-note {{ margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; text-align: left; font-size: 0.85rem; color: #856404; }}
-            .loading-spinner {{ display: none; margin-top: 10px; }}
-            .loading-spinner.show {{ display: block; }}
-            .spinner {{ border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }}
-            @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+            {% raw %}
+            body { 
+                font-family: -apple-system, sans-serif; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            }
+            .login-container { 
+                background: white; 
+                padding: 40px 30px; 
+                border-radius: 16px; 
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+                width: 90%; 
+                max-width: 400px; 
+                text-align: center; 
+            }
+            h2 { 
+                color: #1a237e; 
+                margin-top: 0; 
+                margin-bottom: 30px; 
+                font-size: 1.8rem; 
+            }
+            .lock-icon { 
+                font-size: 3rem; 
+                margin-bottom: 20px; 
+            }
+            input { 
+                width: 100%; 
+                padding: 15px; 
+                margin: 10px 0; 
+                border: 2px solid #ddd; 
+                border-radius: 8px; 
+                font-size: 18px; 
+                box-sizing: border-box; 
+                transition: border-color 0.3s; 
+            }
+            input:focus { 
+                outline: none; 
+                border-color: #667eea; 
+            }
+            button { 
+                width: 100%; 
+                padding: 15px; 
+                margin-top: 20px; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                color: white; 
+                border: none; 
+                border-radius: 8px; 
+                font-size: 18px; 
+                font-weight: bold; 
+                cursor: pointer; 
+                transition: transform 0.2s; 
+            }
+            button:hover { 
+                transform: translateY(-2px); 
+            }
+            button:active { 
+                transform: translateY(0); 
+            }
+            button:disabled { 
+                opacity: 0.5; 
+                cursor: not-allowed; 
+                transform: none; 
+            }
+            .security-note { 
+                margin-top: 20px; 
+                padding: 10px; 
+                background: #fff3cd; 
+                border-left: 4px solid #ffc107; 
+                text-align: left; 
+                font-size: 0.85rem; 
+                color: #856404; 
+            }
+            .loading-spinner { 
+                display: none; 
+                margin-top: 10px; 
+            }
+            .loading-spinner.show { 
+                display: block; 
+            }
+            .spinner { 
+                border: 3px solid #f3f3f3; 
+                border-top: 3px solid #667eea; 
+                border-radius: 50%; 
+                width: 30px; 
+                height: 30px; 
+                animation: spin 1s linear infinite; 
+                margin: 0 auto; 
+            }
+            @keyframes spin { 
+                0% { transform: rotate(0deg); } 
+                100% { transform: rotate(360deg); } 
+            }
+            {% endraw %}
         </style>
     </head>
     <body>
@@ -254,18 +339,17 @@ def render_login_page():
                 5回失敗で5分間ロック<br>
                 30分無操作で自動ログアウト
             </div>
-            <a href="/" class="back-link">← アプリへ戻る</a>
         </div>
         
         <script>
             const loginForm = document.getElementById('login-form');
             let isSubmitting = false;
             
-            loginForm.addEventListener('submit', function(e) {{
-                if (isSubmitting) {{
+            loginForm.addEventListener('submit', function(e) {
+                if (isSubmitting) {
                     e.preventDefault();
                     return false;
-                }}
+                }
                 
                 isSubmitting = true;
                 
@@ -275,8 +359,9 @@ def render_login_page():
                 button.disabled = true;
                 button.textContent = '処理中...';
                 spinner.classList.add('show');
-            }});
+            });
         </script>
     </body>
     </html>
     """
+    return render_template_string(template)

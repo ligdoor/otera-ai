@@ -1,0 +1,21 @@
+# キャッシュファイルは除外
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+
+# 開発ファイルは除外
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# ログファイルは除外
+*.log
+
+# 環境ファイルは除外（fly.ioの環境変数を使うため）
+.env

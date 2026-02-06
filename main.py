@@ -54,7 +54,9 @@ except ImportError:
     print("⚠️ Sentry SDK not installed - monitoring disabled")
 
 # Flaskアプリケーション初期化
-app = Flask(__name__)
+app = Flask(__name__, 
+            static_folder='static',
+            static_url_path='/static')
 app.config.from_object(Config)
 limiter.init_app(app)
 
