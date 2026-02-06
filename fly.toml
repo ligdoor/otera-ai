@@ -13,6 +13,6 @@ app = "otera-database"
   min_machines_running = 1
 
 [[vm]]
-  memory = '256mb'
+  memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
