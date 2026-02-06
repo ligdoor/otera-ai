@@ -4,6 +4,8 @@ from services.data_source import add_log
 from services.temple_crud import update_fields_data
 from config import Config
 from maintenance import MaintenanceMode
+from datetime import datetime
+from services.supabase_db import get_supabase_client
 import csv
 import io
 
@@ -15,44 +17,65 @@ admin_bp = Blueprint('admin_routes', __name__)
 
 @admin_bp.route('/api/maintenance/status', methods=['GET'])
 def get_maintenance_status():
-    """現在のメンテナンスモード状態を取得"""
-    if 'user_id' not in session:
-        return jsonify({'error': '未ログイン'}), 401
-    
+    """メンテナンスモードの状態を取得"""
     try:
-        is_maintenance = MaintenanceMode.is_enabled()
-        return jsonify({'maintenance_mode': is_maintenance})
+        enabled = MaintenanceMode.is_enabled()
+        return jsonify({'enabled': enabled})
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"メンテナンス状態取得エラー: {e}")
+        return jsonify({'enabled': False})
 
 
 @admin_bp.route('/api/maintenance/toggle', methods=['POST'])
 def toggle_maintenance():
-    """メンテナンスモードをオン/オフ"""
-    if 'user_id' not in session:
-        return jsonify({'error': '未ログイン'}), 401
-    
-    user_id = session['user_id']
-    
-    if Config.USE_SUPABASE:
-        from services.supabase_db import get_supabase_client
+    """メンテナンスモードの切り替え"""
+    try:
+        # セッションからユーザーIDを取得
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': 'ログインが必要です'}), 401
+        
         supabase = get_supabase_client()
         
-        user_result = supabase.table('users').select('role').eq('id', user_id).single().execute()
+        # ユーザーの権限と名前を確認
+        user_result = supabase.table('users').select('role, name').eq('user_id', user_id).single().execute()
         
-        if user_result.data.get('role') != 'admin':
-            return jsonify({'error': '管理者権限が必要です'}), 403
-    else:
-        return jsonify({'error': 'この機能はSupabaseモードでのみ利用可能です'}), 400
-    
-    result = MaintenanceMode.toggle(user_id)
-    
-    if result['success']:
-        return jsonify(result)
-    else:
-        return jsonify(result), 500
-
-    
+        if not user_result.data or user_result.data.get('role') != 'admin':
+            return jsonify({'success': False, 'message': '管理者権限が必要です'}), 403
+        
+        # ユーザー名を取得
+        user_name = user_result.data.get('name', user_id)
+        
+        # MaintenanceModeクラスのtoggleメソッドを使用
+        result = MaintenanceMode.toggle(user_id)
+        
+        if not result.get('success'):
+            return jsonify({
+                'success': False,
+                'message': result.get('error', '切り替えに失敗しました')
+            }), 500
+        
+        # 新しい状態を取得
+        new_enabled = result.get('maintenance_mode', False)
+        
+        # ログ記録
+        supabase.table('logs').insert({
+            'user_id': user_id,
+            'user': user_name,
+            'action': f'メンテナンスモード{"有効化" if new_enabled else "無効化"}',
+            'timestamp': datetime.now().isoformat()
+        }).execute()
+        
+        return jsonify({
+            'success': True,
+            'enabled': new_enabled,
+            'message': f'メンテナンスモードを{"有効" if new_enabled else "無効"}にしました'
+        })
+        
+    except Exception as e:
+        print(f"メンテナンスモード切り替えエラー: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500            
 @admin_bp.route("/admin/fields")
 @login_required
 def admin_fields():

@@ -66,55 +66,55 @@ class MaintenanceMode:
             return 'システムメンテナンス中です'
     
  
-@staticmethod
-def toggle(user_id):
-    """メンテナンスモードを切り替え"""
-    print(f"🔧 toggle() 開始: user_id={user_id}")
-    
-    try:
-        if not Config.USE_SUPABASE:
-            print("❌ Supabaseが無効")
+    @staticmethod
+    def toggle(user_id):
+        """メンテナンスモードを切り替え"""
+        print(f"🔧 toggle() 開始: user_id={user_id}")
+        
+        try:
+            if not Config.USE_SUPABASE:
+                print("❌ Supabaseが無効")
+                return {
+                    'success': False,
+                    'error': 'Google Sheetsモードではメンテナンス機能は利用できません'
+                }
+            
+            from services.supabase_db import get_supabase_client
+            supabase = get_supabase_client()
+            print("✅ Supabaseクライアント取得成功")
+            
+            # 現在の状態を取得
+            print("📡 現在の状態を取得中...")
+            current = supabase.table('system_settings')\
+                .select('value')\
+                .eq('key', 'maintenance_mode')\
+                .single()\
+                .execute()
+            print(f"📊 現在の値: {current.data}")
+            
+            # 状態を反転
+            new_value = 'false' if current.data['value'] == 'true' else 'true'
+            print(f"🔄 新しい値: {new_value}")
+            
+            # 更新
+            print("💾 データベース更新中...")
+            supabase.table('system_settings')\
+                .update({'value': new_value})\
+                .eq('key', 'maintenance_mode')\
+                .execute()
+            
+            print(f"✅ メンテナンスモード切り替え成功: {new_value}")
+            
+            return {
+                'success': True,
+                'maintenance_mode': new_value == 'true'
+            }
+            
+        except Exception as e:
+            print(f"❌ メンテナンスモード切り替えエラー: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 'success': False,
-                'error': 'Google Sheetsモードではメンテナンス機能は利用できません'
+                'error': str(e)
             }
-        
-        from services.supabase_db import get_supabase_client
-        supabase = get_supabase_client()
-        print("✅ Supabaseクライアント取得成功")
-        
-        # 現在の状態を取得
-        print("📡 現在の状態を取得中...")
-        current = supabase.table('system_settings')\
-            .select('value')\
-            .eq('key', 'maintenance_mode')\
-            .single()\
-            .execute()
-        print(f"📊 現在の値: {current.data}")
-        
-        # 状態を反転
-        new_value = 'false' if current.data['value'] == 'true' else 'true'
-        print(f"🔄 新しい値: {new_value}")
-        
-        # 更新
-        print("💾 データベース更新中...")
-        supabase.table('system_settings')\
-            .update({'value': new_value})\
-            .eq('key', 'maintenance_mode')\
-            .execute()
-        
-        print(f"✅ メンテナンスモード切り替え成功: {new_value}")
-        
-        return {
-            'success': True,
-            'maintenance_mode': new_value == 'true'
-        }
-        
-    except Exception as e:
-        print(f"❌ メンテナンスモード切り替えエラー: {e}")
-        import traceback
-        traceback.print_exc()
-        return {
-            'success': False,
-            'error': str(e)
-        }

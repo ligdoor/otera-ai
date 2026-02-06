@@ -1,82 +1,142 @@
-// メンテナンスモード管理
+/**
+ * メンテナンスモード管理
+ */
 
-// ページロード時にメンテナンスモード状態を取得
+// ページ読み込み時に状態を取得
+document.addEventListener('DOMContentLoaded', function() {
+    loadMaintenanceStatus();
+    
+    // トグルスイッチのイベントリスナーを設定
+    const toggleSwitch = document.getElementById('maintenanceToggle');
+    if (toggleSwitch) {
+        toggleSwitch.addEventListener('change', toggleMaintenance);
+    }
+});
+
+/**
+ * メンテナンスモードの状態を取得して表示
+ */
 async function loadMaintenanceStatus() {
     try {
         const response = await fetch('/api/maintenance/status');
         const data = await response.json();
         
-        const toggle = document.getElementById('maintenanceToggle');
-        const status = document.getElementById('maintenanceStatus');
-        
-        toggle.checked = data.maintenance_mode;
-        updateStatusText(data.maintenance_mode);
-        
+        console.log('📡 メンテナンス状態取得:', data);
+        updateMaintenanceUI(data.enabled);
     } catch (error) {
-        console.error('メンテナンスモード状態取得エラー:', error);
-        document.getElementById('maintenanceStatus').textContent = '状態取得エラー';
+        console.error('❌ メンテナンス状態の取得に失敗:', error);
+        updateMaintenanceStatus('エラー');
     }
 }
 
-// ステータステキストを更新
-function updateStatusText(isMaintenanceMode) {
-    const status = document.getElementById('maintenanceStatus');
-    status.textContent = isMaintenanceMode ? 'メンテナンスモード: ON' : 'メンテナンスモード: OFF';
-    status.style.color = isMaintenanceMode ? '#f44336' : '#4caf50';
-}
-
-// トグルスイッチの変更を監視
-document.addEventListener('DOMContentLoaded', function() {
-    const toggle = document.getElementById('maintenanceToggle');
+/**
+ * メンテナンスモードのトグル
+ */
+async function toggleMaintenance() {
+    const toggleSwitch = document.getElementById('maintenanceToggle');
+    const originalState = !toggleSwitch.checked; // トグル前の状態
     
-    if (toggle) {
-        toggle.addEventListener('change', async function() {
-            const status = document.getElementById('maintenanceStatus');
-            const originalState = this.checked;
-            status.textContent = '切り替え中...';
-            status.style.color = '#666';
-            
-            try {
-                const response = await fetch('/api/maintenance/toggle', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    updateStatusText(data.maintenance_mode);
-                    
-                    const message = data.maintenance_mode ? 
-                        '⚠️ メンテナンスモードを有効にしました\n\n一般ユーザーはサイトにアクセスできなくなります。' : 
-                        '✅ メンテナンスモードを解除しました\n\nサイトは通常通り利用可能です。';
-                    
-                    alert(message);
-                } else {
-                    alert('エラー: ' + data.error);
-                    this.checked = !originalState;
-                    updateStatusText(!originalState);
-                }
-            } catch (error) {
-                console.error('メンテナンスモード切り替えエラー:', error);
-                alert('エラーが発生しました\n\n' + error.message);
-                this.checked = !originalState;
-                updateStatusText(!originalState);
+    try {
+        console.log('🔄 メンテナンスモード切り替え開始...');
+        
+        const response = await fetch('/api/maintenance/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             }
         });
         
-        // 初期状態をロード
-        loadMaintenanceStatus();
+        const data = await response.json();
+        console.log('📥 レスポンス:', data);
+        
+        if (data.success) {
+            // 成功: UIを更新
+            updateMaintenanceUI(data.enabled);
+            showNotification(data.message, 'success');
+        } else {
+            // 失敗: 元の状態に戻す
+            toggleSwitch.checked = originalState;
+            showNotification(data.message || 'メンテナンスモードの切り替えに失敗しました', 'error');
+        }
+    } catch (error) {
+        console.error('❌ メンテナンスモード切り替えエラー:', error);
+        // エラー: 元の状態に戻す
+        toggleSwitch.checked = originalState;
+        showNotification('メンテナンスモードの切り替えに失敗しました', 'error');
     }
-});
+}
 
-// 管理者権限がある場合のみメンテナンスセクションを表示
-// この関数は main.js から呼び出されることを想定
-function showMaintenanceSectionIfAdmin(userPermission) {
-    const maintenanceSection = document.getElementById('maintenance-section');
-    if (maintenanceSection && userPermission === 'admin') {
-        maintenanceSection.style.display = 'block';
+/**
+ * メンテナンスモードのUIを更新
+ * @param {boolean} enabled - メンテナンスモードが有効かどうか
+ */
+function updateMaintenanceUI(enabled) {
+    console.log('🎨 UIを更新:', enabled ? 'ON' : 'OFF');
+    
+    // トグルスイッチの状態を更新
+    const toggleSwitch = document.getElementById('maintenanceToggle');
+    if (toggleSwitch) {
+        toggleSwitch.checked = enabled;
     }
+    
+    // ステータステキストを更新
+    updateMaintenanceStatus(enabled ? 'ON' : 'OFF');
+}
+
+/**
+ * メンテナンスステータステキストを更新
+ * @param {string} status - 表示するステータス ('ON', 'OFF', 'エラー', '読み込み中...')
+ */
+function updateMaintenanceStatus(status) {
+    const statusElement = document.getElementById('maintenanceStatus');
+    if (!statusElement) return;
+    
+    statusElement.textContent = status;
+    
+    // ステータスに応じてクラスを設定
+    statusElement.className = 'status-text';
+    if (status === 'ON') {
+        statusElement.classList.add('status-on');
+    } else if (status === 'OFF') {
+        statusElement.classList.add('status-off');
+    } else if (status === 'エラー') {
+        statusElement.classList.add('status-error');
+    }
+}
+
+/**
+ * 通知メッセージを表示
+ * @param {string} message - 表示するメッセージ
+ * @param {string} type - メッセージのタイプ ('success' or 'error')
+ */
+function showNotification(message, type) {
+    console.log(`📢 通知: ${message} (${type})`);
+    
+    // 既存の通知があれば削除
+    const existingNotification = document.querySelector('.maintenance-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // 新しい通知を作成
+    const notification = document.createElement('div');
+    notification.className = `maintenance-notification ${type}`;
+    notification.innerHTML = `
+        <span class="notification-icon">${type === 'success' ? '✅' : '❌'}</span>
+        <span class="notification-message">${message}</span>
+    `;
+    
+    // メンテナンスセクションの後に挿入
+    const maintenanceSection = document.getElementById('maintenance-section');
+    if (maintenanceSection && maintenanceSection.parentNode) {
+        maintenanceSection.parentNode.insertBefore(notification, maintenanceSection.nextSibling);
+    } else {
+        document.body.insertBefore(notification, document.body.firstChild);
+    }
+    
+    // 3秒後に自動で消す
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }

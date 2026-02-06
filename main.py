@@ -2,7 +2,7 @@
 
 import os
 import sys
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session
 from flask_compress import Compress
 from flask_caching import Cache
 from config import Config
@@ -71,27 +71,49 @@ __all__ = ['app', 'cache']
 @app.before_request
 def check_maintenance():
     """
-    メンテナンスモードのチェック
+    メンテナンスモードのチェック（セキュア版）
     全てのリクエストの前に実行される
     """
-    # 除外するパス（これらはメンテナンス中でもアクセス可能）
-    excluded_paths = [
-        '/admin',           # 管理画面
-        '/static/',         # 静的ファイル（CSS/JS）
-        '/health',          # ヘルスチェック
-        '/logout'           # ログアウト
+    # メンテナンス中でも常にアクセス可能なパス（認証不要）
+    always_allowed = [
+        '/static/',      # 静的ファイル（CSS/JS/画像）
+        '/health',       # ヘルスチェック
+        '/admin'         # 管理画面（ログインページ含む）
     ]
     
-    # 除外パスの場合はスキップ
-    for path in excluded_paths:
+    # 管理者専用パス（ログインしていればアクセス可能）
+    admin_only_paths = [
+        '/api/maintenance/',    # メンテナンスモードAPI
+        '/get_current_user',    # ユーザー情報取得
+        '/get_fields',          # フィールド情報取得
+        '/get_all_data',        # 全データ取得
+        '/get_temple_names',    # 寺院名取得
+        '/get_sects',           # 宗派取得
+        '/logout',              # ログアウト
+        '/api/favorites',       # お気に入り管理（管理者用）
+        '/api/notifications',   # 通知管理（管理者用）
+        '/api/user-settings'    # ユーザー設定（管理者用）
+    ]
+    
+    # 1. 常にアクセス可能なパスのチェック
+    for path in always_allowed:
         if request.path.startswith(path):
             return None
     
-    # メンテナンスモードが有効な場合
+    # 2. 管理者専用パスのチェック（ログイン状態で判断）
+    for path in admin_only_paths:
+        if request.path.startswith(path):
+            # ログインしているユーザーのみ通す
+            if session.get('user_id'):
+                return None
+            # ログインしていない場合は、メンテナンスモードでなければ通常処理
+            # メンテナンスモード中の場合は下の処理に進む
+            break
+    
+    # 3. メンテナンスモードが有効な場合
     if MaintenanceMode.is_enabled():
         return render_template('maintenance.html', 
-                             message=MaintenanceMode.get_message())
-
+                             message=MaintenanceMode.get_message())    
 # ============================================================
 # Blueprint登録（メンテナンスチェックの後に配置）
 # ============================================================
