@@ -47,23 +47,196 @@ def index():
     user_name = session.get('user_name', 'ゲスト')
     return render_template('index.html', user_name=user_name)
 
+# temple_routes.py の /ask エンドポイント（デバッグ版）
+
+# temple_routes.py の /search_temple_by_name（最終修正版）
+
+@temple_bp.route('/search_temple_by_name', methods=['POST'])
+def search_temple_by_name():
+    """
+    寺院名で検索（曖昧検索対応・最終版）
+    """
+    data = request.json
+    query = data.get('name', '').strip()
+    
+    print("========== /search_temple_by_name デバッグ開始 ==========")
+    print(f"1. 検索クエリ: {query}")
+    
+    if not query:
+        print("2. クエリが空です")
+        return jsonify({'exact_match': None, 'suggestions': []})
+    
+    from services.data_manager import data_manager
+    
+    # 完全一致を探す
+    exact_match = data_manager.get_temple_by_name(query)
+    print(f"2. 完全一致検索結果: {exact_match}")
+    
+    if exact_match:
+        print("3. 完全一致が見つかりました")
+        return jsonify({
+            'exact_match': exact_match,
+            'suggestions': []
+        })
+    
+    print("3. 完全一致なし、曖昧検索を開始")
+    
+    # 完全一致がない場合、似た名前を探す
+    all_temples = data_manager.get_all_temples()
+    
+    if isinstance(all_temples, dict):
+        temples_list = list(all_temples.values())
+    else:
+        temples_list = all_temples
+    
+    print(f"4. 全寺院数: {len(temples_list)}")
+    
+    # スコアベースで候補を抽出
+    scored_suggestions = []
+    
+    for temple in temples_list:
+        if not isinstance(temple, dict):
+            continue
+        
+        temple_name = temple.get('name', '')
+        if not temple_name:
+            continue
+        
+        score = 0
+        
+        # 1. 完全一致（スコア100）
+        if query == temple_name:
+            score = 100
+        # 2. 前方一致（スコア80）
+        elif temple_name.startswith(query):
+            score = 80
+        # 3. 含まれる（スコア60）
+        elif query in temple_name:
+            score = 60
+        # 4. 最後の1文字を除いて前方一致（スコア50）
+        elif len(query) >= 2 and temple_name.startswith(query[:-1]):
+            score = 50
+        # 5. 最後の1文字を除いて含まれる（スコア40）
+        elif len(query) >= 2 and query[:-1] in temple_name:
+            score = 40
+        # 6. 最初の2文字が一致（スコア30）
+        elif len(query) >= 2 and len(temple_name) >= 2 and query[:2] == temple_name[:2]:
+            score = 30
+        # ★★★ 追加: 最初の1文字が一致（スコア20）★★★
+        elif len(query) >= 1 and len(temple_name) >= 1 and query[0] == temple_name[0]:
+            score = 20
+        
+        # ★★★ 修正: スコア20以上なら候補に追加 ★★★
+        if score >= 20:
+            scored_suggestions.append({
+                'temple': temple,
+                'score': score
+            })
+            print(f"   候補追加: {temple_name} (スコア: {score})")
+    
+    # スコア順にソート
+    scored_suggestions.sort(key=lambda x: x['score'], reverse=True)
+    
+    # 上位5件を返す
+    suggestions = [item['temple'] for item in scored_suggestions[:5]]
+    
+    print(f"5. 見つかった候補数: {len(suggestions)}")
+    for i, s in enumerate(suggestions, 1):
+        print(f"   候補{i}: {s.get('name', '')} (スコア: {scored_suggestions[i-1]['score']})")
+    
+    print("========== /search_temple_by_name デバッグ終了 ==========")
+    
+    return jsonify({
+        'exact_match': None,
+        'suggestions': suggestions
+    })
+
+
+# /ask エンドポイントも同様に修正
+
 @temple_bp.route("/ask", methods=["POST"])
 def ask():
-    """AI質問応答"""
+    """AI質問応答（最終版）"""
     from services.ai import generate_answer_with_ai, generate_static_summary
+    from services.data_manager import data_manager
+    import re
     
     question = request.json.get("question", "")
     mode = request.json.get("mode", "qa")
     
-    # 寺院名を抽出
+    print("========== /ask エンドポイント デバッグ開始 ==========")
+    print(f"1. 受信した質問: {question}")
+    
+    # 寺院名を抽出（完全一致を試す）
     temple_name = None
     for name in otera_database.keys():
         if name in question:
             temple_name = name
+            print(f"2. 完全一致で見つかりました: {temple_name}")
             break
     
+    # 完全一致しない場合、曖昧検索を試す
     if not temple_name:
+        print("3. 完全一致なし、曖昧検索を開始")
+        
+        match = re.search(r'([^のは？\s]+)の', question)
+        print(f"4. 正規表現マッチ結果: {match}")
+        
+        if match:
+            candidate = match.group(1)
+            print(f"5. 抽出された候補: {candidate}")
+            
+            all_temples = data_manager.get_all_temples()
+            if isinstance(all_temples, dict):
+                temples_list = list(all_temples.values())
+            else:
+                temples_list = all_temples
+            
+            print(f"6. 全寺院数: {len(temples_list)}")
+            
+            # 候補を探す - スコアベース検索
+            best_match = None
+            best_score = 0
+            
+            for temple in temples_list:
+                temple_name_db = temple.get('name', '')
+                score = 0
+                
+                # スコア計算（上と同じ）
+                if candidate == temple_name_db:
+                    score = 100
+                elif temple_name_db.startswith(candidate):
+                    score = 80
+                elif candidate in temple_name_db:
+                    score = 60
+                elif len(candidate) >= 2 and temple_name_db.startswith(candidate[:-1]):
+                    score = 50
+                elif len(candidate) >= 2 and candidate[:-1] in temple_name_db:
+                    score = 40
+                elif len(candidate) >= 2 and len(temple_name_db) >= 2 and candidate[:2] == temple_name_db[:2]:
+                    score = 30
+                # ★★★ 追加: 最初の1文字が一致（スコア20）★★★
+                elif len(candidate) >= 1 and len(temple_name_db) >= 1 and candidate[0] == temple_name_db[0]:
+                    score = 20
+                
+                if score > best_score:
+                    best_score = score
+                    best_match = temple_name_db
+                    print(f"   新しいベストマッチ: {temple_name_db} (スコア: {score})")
+            
+            print(f"7. 最終的なベストマッチ: {best_match} (スコア: {best_score})")
+            
+            # ★★★ 修正: スコア20以上なら採用 ★★★
+            if best_match and best_score >= 20:
+                temple_name = best_match
+                question = question.replace(candidate, temple_name)
+                print(f"8. 寺院名確定: {temple_name}")
+    
+    if not temple_name:
+        print("9. 寺院名が見つかりませんでした")
         return jsonify({"answer": "⚠️ 寺院名が見つかりませんでした。正確な寺院名を入力してください。"})
+    
+    print(f"10. 最終的な寺院名: {temple_name}")
     
     temple_info = otera_database.get(temple_name)
     
@@ -80,6 +253,9 @@ def ask():
         answer = generate_static_summary(temple_info, field_config)
     else:
         answer = generate_answer_with_ai(temple_info, question, field_config)
+    
+    print(f"11. 回答生成完了")
+    print("========== /ask エンドポイント デバッグ終了 ==========")
     
     return jsonify({"answer": answer})
 
@@ -530,55 +706,3 @@ def delete_comment():
         except Exception as e:
             print(f"コメント削除エラー: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
-        
-@temple_bp.route('/search_temple_by_name', methods=['POST'])
-def search_temple_by_name():
-    """
-    寺院名で検索（曖昧検索対応）
-    完全一致がない場合は類似した名前を返す
-    """
-    data = request.json
-    query = data.get('name', '').strip()
-    
-    if not query:
-        return jsonify({'exact_match': None, 'suggestions': []})
-    
-    from services.data_manager import data_manager
-    
-    # 完全一致を探す
-    exact_match = data_manager.get_temple_by_name(query)
-    
-    if exact_match:
-        return jsonify({
-            'exact_match': exact_match,
-            'suggestions': []
-        })
-    
-    # 完全一致がない場合、似た名前を探す
-    all_temples = data_manager.get_all_temples()
-    
-    # 辞書かリストか判定
-    if isinstance(all_temples, dict):
-        temples_list = list(all_temples.values())
-    else:
-        temples_list = all_temples
-    
-    # 部分一致で検索（最初の文字が一致 or 途中に含まれる）
-    suggestions = []
-    for temple in temples_list:
-        temple_name = temple.get('name', '')
-        
-        # クエリの最後の1文字を除いた部分で検索（変換ミス対応）
-        if len(query) >= 2:
-            search_term = query[:-1]  # 「大乗寺」→「大乗」
-            if search_term in temple_name:
-                suggestions.append(temple)
-        
-        # 最大5件まで
-        if len(suggestions) >= 5:
-            break
-    
-    return jsonify({
-        'exact_match': None,
-        'suggestions': suggestions
-    })
