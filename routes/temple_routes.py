@@ -530,3 +530,55 @@ def delete_comment():
         except Exception as e:
             print(f"コメント削除エラー: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
+        
+@temple_bp.route('/search_temple_by_name', methods=['POST'])
+def search_temple_by_name():
+    """
+    寺院名で検索（曖昧検索対応）
+    完全一致がない場合は類似した名前を返す
+    """
+    data = request.json
+    query = data.get('name', '').strip()
+    
+    if not query:
+        return jsonify({'exact_match': None, 'suggestions': []})
+    
+    from services.data_manager import data_manager
+    
+    # 完全一致を探す
+    exact_match = data_manager.get_temple_by_name(query)
+    
+    if exact_match:
+        return jsonify({
+            'exact_match': exact_match,
+            'suggestions': []
+        })
+    
+    # 完全一致がない場合、似た名前を探す
+    all_temples = data_manager.get_all_temples()
+    
+    # 辞書かリストか判定
+    if isinstance(all_temples, dict):
+        temples_list = list(all_temples.values())
+    else:
+        temples_list = all_temples
+    
+    # 部分一致で検索（最初の文字が一致 or 途中に含まれる）
+    suggestions = []
+    for temple in temples_list:
+        temple_name = temple.get('name', '')
+        
+        # クエリの最後の1文字を除いた部分で検索（変換ミス対応）
+        if len(query) >= 2:
+            search_term = query[:-1]  # 「大乗寺」→「大乗」
+            if search_term in temple_name:
+                suggestions.append(temple)
+        
+        # 最大5件まで
+        if len(suggestions) >= 5:
+            break
+    
+    return jsonify({
+        'exact_match': None,
+        'suggestions': suggestions
+    })
