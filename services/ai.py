@@ -1,17 +1,131 @@
 from google import genai
 from google.genai import types
 from config import Config
+import re
+import time
 
 # Gemini クライアント初期化
-client = None
+gemini_client = None
 if Config.GEMINI_API_KEY:
-    client = genai.Client(api_key=Config.GEMINI_API_KEY)
+    gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
+
+def generate_answer_with_ai(temple_info, question, field_config):
+    """
+    AIを使って質問に回答を生成
+    通夜・葬儀の質問には専用フォーマットを適用
+    """
+    temple_name = temple_info.get('name', '不明な寺院')
+    
+    # ★★★ 通夜・葬儀の質問かどうか判定 ★★★
+    is_tsuya_question = re.search(r'通夜', question)
+    is_sougi_question = re.search(r'葬儀|葬式', question)
+    
+    # ★★★ 通夜の質問の場合、専用フォーマットで応答 ★★★
+    if is_tsuya_question:
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name}の通夜</div>"]
+        
+        # 通夜関連の項目を取得
+        narimono = temple_info.get('tsuya_narimono', '').strip()
+        ippan = temple_info.get('tsuya_ippan_shoko', '').strip()
+        shinzoku = temple_info.get('tsuya_shinzoku_shoko', '').strip()
+        dokyo = temple_info.get('tsuya_dokyo_length', '').strip()
+        notes = temple_info.get('tsuya_notes', '').strip()
+        
+        response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
+        response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
+        response_parts.append(f"・<strong>一般焼香</strong>: {ippan if ippan else '記載なし'}<br>")
+        response_parts.append(f"・<strong>親族焼香</strong>: {shinzoku if shinzoku else '記載なし'}<br>")
+        response_parts.append(f"・<strong>読経の長さ</strong>: {dokyo if dokyo else '記載なし'}<br>")
+        response_parts.append(f"・<strong>備考</strong>: {notes if notes else '記載なし'}")
+        response_parts.append("</div>")
+        
+        return "".join(response_parts)
+    
+    # ★★★ 葬儀の質問の場合、専用フォーマットで応答 ★★★
+    if is_sougi_question:
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name}の葬儀</div>"]
+        
+        # 葬儀関連の項目を取得
+        narimono = temple_info.get('sougi_narimono', '').strip()
+        ippan = temple_info.get('sougi_ippan_shoko', '').strip()
+        shinzoku = temple_info.get('sougi_shinzoku_shoko', '').strip()
+        dokyo = temple_info.get('sougi_dokyo_length', '').strip()
+        notes = temple_info.get('sougi_notes', '').strip()
+        
+        response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
+        response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
+        response_parts.append(f"・<strong>一般焼香</strong>: {ippan if ippan else '記載なし'}<br>")
+        response_parts.append(f"・<strong>親族焼香</strong>: {shinzoku if shinzoku else '記載なし'}<br>")
+        response_parts.append(f"・<strong>読経の長さ</strong>: {dokyo if dokyo else '記載なし'}<br>")
+        response_parts.append(f"・<strong>備考</strong>: {notes if notes else '記載なし'}")
+        response_parts.append("</div>")
+        
+        return "".join(response_parts)
+    
+    # ★★★ その他の質問はGemini AIで生成 ★★★
+    
+    # 寺院情報を整形
+    temple_data = []
+    for field in field_config:
+        key = field['key']
+        label = field['label']
+        value = temple_info.get(key, '')
+        
+        if value:
+            temple_data.append(f"{label}: {value}")
+    
+    temple_context = "\n".join(temple_data)
+    
+    # プロンプト作成
+    prompt = f"""以下の寺院情報をもとに、質問に答えてください。
+
+【寺院情報】
+{temple_context}
+
+【質問】
+{question}
+
+【回答の指示】
+- 質問に対して簡潔に答えてください
+- 寺院名を明記してください
+- 住所にはGoogleマップリンクと📋コピーボタンを付けてください
+  形式: __📍Googleマップを開く__ 📋 コピー
+- 情報がない場合は「記載なし」と答えてください
+"""
+    
+    # Gemini APIで回答生成
+    try:
+        if not gemini_client:
+            return "⚠️ Gemini APIが設定されていません。"
+        
+        response = gemini_client.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=prompt
+        )
+        
+        response_text = response.text
+        
+        # 住所のリンクを実際に生成
+        address = temple_info.get('address', '')
+        if address and '📍' in response_text:
+            map_url = f"https://www.google.com/maps/search/?api=1&query={address}"
+            address_escaped = address.replace("'", "\\'")
+            # Markdownリンクをdivタグに変換
+            response_text = response_text.replace(
+                "📍Googleマップを開く",
+                f'<div style="display: inline-block; margin: 5px 0;"><a href="{map_url}" target="_blank" style="text-decoration: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; display: inline-block;">📍 Googleマップを開く</a> <button class="copy-btn" onclick="copyToClipboard(\'{address_escaped}\')">📋</button></div>'
+            )
+        
+        return response_text
+        
+    except Exception as e:
+        print(f"AI応答生成エラー: {e}")
+        return f"申し訳ございません。回答の生成中にエラーが発生しました: {str(e)}"
+
 
 def generate_static_summary(temple_info, field_config):
     """寺院情報の静的サマリーを生成（アコーディオン対応）"""
-    import time
-    import re
-
+    
     def get(key):
         value = temple_info.get(key) or ''
         return value
@@ -27,11 +141,10 @@ def generate_static_summary(temple_info, field_config):
             return ''
         
         # 1. 背景色のみ削除（文字色は残す）
-        # background-color と background を削除
         text = re.sub(r'background-color\s*:\s*[^;]+;?', '', text)
         text = re.sub(r'background\s*:\s*[^;]+;?', '', text)
         
-        # 2. <p>タグを<div>に変換（余白を制御しやすくするため）
+        # 2. <p>タグを<div>に変換
         text = re.sub(r'<p([^>]*)>', r'<div\1>', text)
         text = re.sub(r'</p>', '</div>', text)
         
@@ -100,7 +213,6 @@ def generate_static_summary(temple_info, field_config):
         for field in field_config:
             if field['key'] in cat_data['fields']:
                 value = temple_info.get(field['key'], '')
-                # ★ 装飾を残してクリーンアップ
                 clean_value = clean_html_selectively(value)
                 fieldsToShow.append({
                     'key': field['key'],
@@ -138,8 +250,6 @@ def generate_static_summary(temple_info, field_config):
             
             if item['key'] == 'address' and not is_empty:
                 # 住所の場合：地図リンクとコピーボタンを追加
-                address_escaped = item['value'].replace("'", "\\'").replace('"', '&quot;')
-                # HTMLタグを除去したプレーンテキストを取得（コピー用）
                 address_plain = re.sub(r'<[^>]+>', '', item['value'])
                 address_plain_escaped = address_plain.replace("'", "\\'").replace('"', '&quot;')
                 map_url = f"https://www.google.com/maps/search/?api=1&query={address_plain}"
@@ -172,61 +282,3 @@ def generate_static_summary(temple_info, field_config):
         """
     
     return html
-
-def generate_answer_with_ai(temple_info, user_question, field_config):
-    """AIを使用して質問に回答"""
-    info_text = ""
-    for field in field_config:
-        key = field['key']
-        label = field['label']
-        val = temple_info.get(key, '記載なし')
-        info_text += f"{label}: {val}\n"
-    
-    temple_name = temple_info.get('name', '')
-
-    # ★改善: 寺院名を明示した回答形式を指定
-    prompt = f"""
-    【役割】葬儀施行スタッフ専用の業務支援AI
-    【参照データ】
-    寺院名: {temple_name}
-    {info_text}
-    ユーザーの質問: 「{user_question}」
-    
-    【回答形式】
-    必ず以下の形式で回答してください:
-    「{temple_name}の[項目名]は[内容]です」
-    
-    例:
-    - 質問「納棺の注意点は?」→ 「○○寺の納棺仕様は△△です」
-    - 質問「書き物は?」→ 「○○寺の書き物は△△です」
-    - 質問「住所は?」→ 「○○寺の住所は△△です」
-    
-    【特別な処理】
-    - 住所を回答する場合は、必ず以下のHTMLを含めてください:
-    <div style="margin-top:10px;">
-    <a href="https://www.google.com/maps/search/?api=1&query={temple_info.get('address','')}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline;">📍Googleマップを開く</a>
-    <button class="copy-btn" onclick="copyToClipboard('{temple_info.get('address','')}')">📋 コピー</button>
-    </div>
-    
-    【指示】
-    - 挨拶は不要
-    - 簡潔に答える
-    - 必ず寺院名を含める
-    """
-    
-    try:
-        if not Config.GEMINI_API_KEY:
-            return f"{temple_name}の情報: AI機能は現在利用できません。"
-        
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-                max_output_tokens=500
-            )
-        )
-        return response.text
-    except Exception as e:
-        print(f"AI生成エラー: {e}")
-        return f"{temple_name}の情報取得エラー: AI応答の生成に失敗しました"
