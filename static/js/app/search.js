@@ -1,5 +1,5 @@
 // ========================================
-// アプリ - 検索機能（完全版・重複削除）
+// アプリ - 検索機能（完全版・アコーディオン対応）
 // ========================================
 
 // 寺院選択時の処理
@@ -10,8 +10,8 @@ async function onTempleSelect() {
     
     const quickQaArea = document.getElementById('quick-qa-area');
     
-    // 曖昧検索を実行
-    const temple = await searchTempleByName(name);
+    // ★★★ 元の動作を維持：曖昧検索を実行して詳細表示 ★★★
+    const temple = await searchTempleByName(name, false);  // false = 通常の検索
     
     if (temple) {
         currentTempleName = temple.name;
@@ -70,6 +70,7 @@ async function onSectSelect() {
             return;
         }
         
+        // 宗派検索はカード表示のまま
         let listHtml = `<p><b>${sectName}</b> の寺院（${data.results.length}件）</p>`;
         data.results.forEach(temple => {
             const isFav = favorites.includes(temple.name);
@@ -98,6 +99,61 @@ async function onSectSelect() {
     }
 }
 
+// ★★★ 新規追加: セレクトボックスと同じアコーディオン形式で表示 ★★★
+async function displayTempleAccordion(temples, searchQuery) {
+    addMessage(searchQuery, 'user');
+    const loadingId = addMessage('詳細情報を取得中...', 'ai', true);
+    
+    try {
+        // 各寺院の詳細情報を取得
+        const promises = temples.map(temple => 
+            fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: temple.name, mode: 'summary' })
+            })
+            .then(res => res.json())
+            .then(data => ({
+                temple: temple,
+                details: data.answer
+            }))
+        );
+        
+        const results = await Promise.all(promises);
+        document.getElementById(loadingId).remove();
+        
+        // ★★★ 複数の寺院を表示（お気に入りボタンのみ、寺院名ヘッダーなし） ★★★
+        results.forEach((result, index) => {
+            const temple = result.temple;
+            let details = result.details;
+            
+            // お気に入りボタンのみのヘッダー（右寄せ）
+            const favoriteButton = `<div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button class="favorite-btn" onclick="toggleFavorite('${temple.name.replace(/'/g, "\\'")}', event)">${favorites.includes(temple.name) ? '⭐' : '☆'}</button>
+            </div>`;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ai-message';
+            msgDiv.innerHTML = favoriteButton + details;
+            chatWindow.appendChild(msgDiv);
+            
+            if (index < results.length - 1) {
+                // 寺院間の区切り線
+                const divider = document.createElement('div');
+                divider.style.cssText = 'border-top: 3px solid #e0e0e0; margin: 20px 0;';
+                chatWindow.appendChild(divider);
+            }
+        });
+        
+        chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: 'smooth' });
+        
+    } catch (e) {
+        console.error('詳細情報取得エラー:', e);
+        document.getElementById(loadingId).remove();
+        addMessage("❌ 詳細情報の取得に失敗しました", 'ai');
+    }
+}
+
 // 寺院カードをタップ
 function tapTempleList(name) {
     const quickQaArea = document.getElementById('quick-qa-area');
@@ -120,7 +176,7 @@ function askQuick(question) {
 }
 
 // 自由テキスト送信（修正版）
-function sendFreeChat() {
+async function sendFreeChat() {
     const input = document.getElementById('free-input');
     const text = input.value.trim();
     if (!text) return;
@@ -134,6 +190,47 @@ function sendFreeChat() {
     console.log('[sendFreeChat] 入力テキスト:', text);
     console.log('[sendFreeChat] 検出された寺院名候補:', candidates);
     console.log('[sendFreeChat] 現在の寺院名:', currentTempleName);
+    
+    // ★★★ 新規追加: 「〇〇の」パターンがない場合、寺院名のみかチェック ★★★
+    if (candidates.length === 0 && !currentTempleName) {
+        console.log('[sendFreeChat] 寺院名のみの可能性をチェック...');
+        
+        // 寺院名検索を試行
+        const result = await searchTempleByName(text, true);
+        
+        if (result && Array.isArray(result)) {
+            // アコーディオン表示
+            console.log('[sendFreeChat] アコーディオン表示:', result.length, '件');
+            displayTempleAccordion(result, text);
+            input.value = '';
+            hideMenu();
+            return;  // ここで終了
+        }
+        
+        // 寺院が見つからない場合は通常通り送信
+        console.log('[sendFreeChat] 寺院名でないため、通常送信');
+    }
+    
+    // ★★★ 追加: currentTempleNameがある状態で、寺院名候補がない場合もチェック ★★★
+    if (candidates.length === 0 && currentTempleName) {
+        console.log('[sendFreeChat] 現在の寺院名がある状態で新しい寺院名をチェック...');
+        
+        // 寺院名検索を試行
+        const result = await searchTempleByName(text, true);
+        
+        if (result && Array.isArray(result)) {
+            // 新しい寺院が見つかった場合
+            console.log('[sendFreeChat] 新しい寺院を発見。currentTempleNameをクリアしてアコーディオン表示');
+            currentTempleName = "";  // クリア
+            displayTempleAccordion(result, text);
+            input.value = '';
+            hideMenu();
+            return;  // ここで終了
+        }
+        
+        // 寺院が見つからない場合は、currentTempleNameを使って質問
+        console.log('[sendFreeChat] 寺院名でないため、currentTempleNameを付与して送信');
+    }
     
     // 候補が含まれていない場合のみ、currentTempleNameを付ける
     if (candidates.length === 0 && currentTempleName) {
@@ -184,7 +281,7 @@ async function sendChatRequest(text, mode, showUserMessage = true) {
             needsSearch = true;
             
             console.log('6. searchTempleByName を呼び出します...');
-            const temple = await searchTempleByName(candidate);
+            const temple = await searchTempleByName(candidate, false);  // false = 詳細質問での検索
             console.log('7. searchTempleByName の結果:', temple);
             
             if (temple) {
@@ -256,12 +353,13 @@ async function sendChatRequest(text, mode, showUserMessage = true) {
 }
 
 // ========================================
-// 寺院名での曖昧検索（重複削除版）
+// 寺院名での曖昧検索（アコーディオン対応版）
 // ========================================
 
-async function searchTempleByName(templeName) {
+async function searchTempleByName(templeName, isTempleNameOnly = false) {
     console.log('  --- searchTempleByName 開始 ---');
     console.log('  検索する寺院名:', templeName);
+    console.log('  寺院名のみ検索:', isTempleNameOnly);
     
     try {
         const res = await fetch('/search_temple_by_name', {
@@ -277,6 +375,31 @@ async function searchTempleByName(templeName) {
         console.log('  - exact_match:', data.exact_match);
         console.log('  - suggestions:', data.suggestions);
         
+        // ★★★ 寺院名のみ検索の場合は候補リストを返す ★★★
+        if (isTempleNameOnly) {
+            let allResults = [];
+            if (data.exact_match) {
+                allResults.push(data.exact_match);
+            }
+            if (data.suggestions && data.suggestions.length > 0) {
+                data.suggestions.forEach(s => {
+                    if (!data.exact_match || s.name !== data.exact_match.name) {
+                        allResults.push(s);
+                    }
+                });
+            }
+            
+            if (allResults.length === 0) {
+                console.log('  候補が見つかりませんでした');
+                alert(`「${templeName}」が見つかりませんでした`);
+                return null;
+            }
+            
+            console.log('  アコーディオン用候補リストを返します:', allResults.length, '件');
+            return allResults;
+        }
+        
+        // ★★★ 詳細質問での検索の場合は従来通り ★★★
         if (data.exact_match) {
             console.log('  完全一致が見つかりました:', data.exact_match.name);
             return data.exact_match;
