@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規登録 - 寺院情報管理システム</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .register-container {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+        h2 {
+            color: #1a237e;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        label .required {
+            color: #f44336;
+            margin-left: 4px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #333; }
+        .notice {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #1565c0;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loading-spinner.show { display: block; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h2>✍️ 新規登録申請</h2>
+        <p class="subtitle">管理者の承認後、ご利用いただけます</p>
+        
+        <div class="notice">
+            <strong>📌 登録の流れ</strong><br>
+            1. 下記フォームに入力して送信<br>
+            2. 管理者が内容を確認<br>
+            3. 承認後、メールでお知らせ
+        </div>
+        
+        <form id="register-form">
+            <div class="form-group">
+                <label>ユーザーID <span class="required">*</span></label>
+                <input type="text" id="user_id" required placeholder="例: tanaka_taro">
+                <div class="help-text">ログイン時に使用します（半角英数字）</div>
+            </div>
+            
+            <div class="form-group">
+                <label>お名前 <span class="required">*</span></label>
+                <input type="text" id="name" required placeholder="例: 田中太郎">
+            </div>
+            
+            <div class="form-group">
+                <label>メールアドレス <span class="required">*</span></label>
+                <input type="email" id="email" required placeholder="例: tanaka@example.com">
+                <div class="help-text">承認通知を受け取るアドレス</div>
+            </div>
+            
+            <div class="form-group">
+                <label>パスワード <span class="required">*</span></label>
+                <input type="password" id="password" required minlength="8">
+                <div class="help-text">8文字以上、英字と数字を含む</div>
+            </div>
+            
+            <div class="form-group">
+                <label>パスワード（確認） <span class="required">*</span></label>
+                <input type="password" id="password_confirm" required minlength="8">
+            </div>
+            
+            <div class="form-group">
+                <label>所属・部署</label>
+                <input type="text" id="department" placeholder="例: 総務部">
+            </div>
+            
+            <div class="form-group">
+                <label>備考・申請理由</label>
+                <textarea id="notes" placeholder="登録が必要な理由や業務内容など"></textarea>
+            </div>
+            
+            <button type="submit" id="submit-btn">📤 申請を送信</button>
+            
+            <div class="loading-spinner" id="loading-spinner">
+                <div class="spinner"></div>
+                <p style="margin-top:10px; color:#666;">送信中...</p>
+            </div>
+        </form>
+        
+        <a href="/admin" class="back-link">← ログイン画面に戻る</a>
+    </div>
+    
+    <script>
+        const form = document.getElementById('register-form');
+        let isSubmitting = false;
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (isSubmitting) return;
+            
+            // パスワード確認
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password_confirm').value;
+            
+            if (password !== passwordConfirm) {
+                alert('❌ パスワードが一致しません');
+                return;
+            }
+            
+            // パスワード強度チェック
+            if (password.length < 8) {
+                alert('❌ パスワードは8文字以上必要です');
+                return;
+            }
+            if (!/[a-zA-Z]/.test(password)) {
+                alert('❌ パスワードには英字を含めてください');
+                return;
+            }
+            if (!/[0-9]/.test(password)) {
+                alert('❌ パスワードには数字を含めてください');
+                return;
+            }
+            
+            isSubmitting = true;
+            
+            const button = document.getElementById('submit-btn');
+            const spinner = document.getElementById('loading-spinner');
+            
+            button.disabled = true;
+            spinner.classList.add('show');
+            
+            // フォームデータ作成
+            const formData = {
+                user_id: document.getElementById('user_id').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: password,
+                department: document.getElementById('department').value.trim(),
+                notes: document.getElementById('notes').value.trim()
+            };
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ 登録申請を受け付けました！\n\n管理者の承認後、メールでお知らせします。');
+                    window.location.href = '/admin';
+                } else {
+                    alert('❌ エラー: ' + data.message);
+                    isSubmitting = false;
+                    button.disabled = false;
+                    spinner.classList.remove('show');
+                }
+            } catch (error) {
+                alert('❌ 通信エラーが発生しました');
+                isSubmitting = false;
+                button.disabled = false;
+                spinner.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

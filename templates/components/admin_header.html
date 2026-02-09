@@ -16,11 +16,19 @@
                         <span class="icon">📋</span>
                         <span>ログ表示</span>
                     </button>
+                    <!-- 承認待ち一覧リンク（管理者のみ表示） -->
+                    <a href="/pending-users" class="dropdown-item" id="pending-users-link" style="display:none;">
+                        <span class="icon">⏳</span>
+                        <span>承認待ち一覧</span>
+                        <span id="pending-badge-menu" class="pending-badge" style="display: none;"></span>
+                    </a>
+                    <!-- ユーザー管理リンク -->
                     <a href="/admin/users" class="dropdown-item" id="user-management-link-dropdown" style="display:none;">
                         <span class="icon">👥</span>
                         <span>ユーザー管理</span>
                     </a>
-                    <a href="/admin/fields" class="dropdown-item">
+                    <!-- ★★★ 項目設定リンク（編集者・管理者のみ表示） ★★★ -->
+                    <a href="/admin/fields" class="dropdown-item" id="fields-setting-link" style="display:none;">
                         <span class="icon">⚙️</span>
                         <span>項目設定</span>
                     </a>
@@ -58,3 +66,62 @@
         </div>
     </div>
 </header>
+
+<!-- ★★★ セッション情報をJavaScriptに渡す ★★★ -->
+<script>
+    const userRole = "{{ session.get('role', '') }}";
+    const userId = "{{ session.get('user_id', '') }}";
+</script>
+
+<!-- ★★★ スタイル追加 ★★★ -->
+<style>
+.pending-badge {
+    background: #ff5722;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+    font-weight: bold;
+    display: inline-block;
+}
+</style>
+
+<!-- ★★★ JavaScript追加 ★★★ -->
+<script>
+// 管理者権限の場合、管理者専用メニューを表示
+if (userRole === 'admin') {
+    const userMgmtLink = document.getElementById('user-management-link-dropdown');
+    const pendingUsersLink = document.getElementById('pending-users-link');
+    
+    if (userMgmtLink) {
+        userMgmtLink.style.display = 'flex';
+    }
+    if (pendingUsersLink) {
+        pendingUsersLink.style.display = 'flex';
+    }
+    
+    // 承認待ちユーザー数を取得して表示
+    checkPendingUsers();
+    // 30秒ごとに更新
+    setInterval(checkPendingUsers, 30000);
+}
+
+// 承認待ちユーザー数を取得して表示
+async function checkPendingUsers() {
+    try {
+        const response = await fetch('/api/pending-users-count');
+        const data = await response.json();
+        
+        if (data.count > 0) {
+            const badge = document.getElementById('pending-badge-menu');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to check pending users:', error);
+    }
+}
+</script>

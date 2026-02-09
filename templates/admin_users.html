@@ -14,6 +14,12 @@
             <span>👥</span>
             ユーザー管理
         </h1>
+        <!-- ★★★ 承認待ち一覧へのリンクを追加 ★★★ -->
+        <a href="/pending-users" class="btn-primary" id="pending-users-btn" style="background: #ff9800; display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold;">
+            <span>⏳ 承認待ち一覧</span>
+            <span id="pending-count-badge" class="badge" style="background: #f44336; padding: 4px 8px; border-radius: 12px; font-size: 0.9rem; display: none;"></span>
+        </a>
+    </div>
         <a href="/admin" class="header-btn">
             <span>←</span>
             <span>管理画面へ</span>
@@ -157,6 +163,33 @@
         </form>
     </div>
 </div>
+
+<script>
+// ページ読み込み時に承認待ち件数を取得
+async function checkPendingUsers() {
+    try {
+        const response = await fetch('/api/pending-users-count');
+        const data = await response.json();
+        
+        if (data.count > 0) {
+            const badge = document.getElementById('pending-count-badge');
+            if (badge) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline-block';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to check pending users:', error);
+    }
+}
+
+// ページ読み込み時に実行
+document.addEventListener('DOMContentLoaded', function() {
+    checkPendingUsers();
+    // 30秒ごとに更新
+    setInterval(checkPendingUsers, 30000);
+});
+</script>
 
 <script>
     let currentUserId = '';
