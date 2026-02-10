@@ -5,6 +5,521 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ユーザー管理</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ヘッダー */
+        header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        .pending-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(245, 87, 108, 0.3);
+        }
+
+        .pending-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(245, 87, 108, 0.4);
+        }
+
+        .pending-badge {
+            background: white;
+            color: #f5576c;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            color: #667eea;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            transform: translateX(-4px);
+        }
+
+        /* メインコンテンツ */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 権限カード */
+        .role-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .role-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .role-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .role-card.admin {
+            --gradient-start: #f093fb;
+            --gradient-end: #f5576c;
+        }
+
+        .role-card.editor {
+            --gradient-start: #4facfe;
+            --gradient-end: #00f2fe;
+        }
+
+        .role-card.viewer {
+            --gradient-start: #43e97b;
+            --gradient-end: #38f9d7;
+        }
+
+        .role-card h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .role-card h3 span {
+            font-size: 24px;
+        }
+
+        .role-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .role-card li {
+            padding: 8px 0;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .role-card li::before {
+            content: '✓';
+            color: var(--gradient-start);
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* テーブルコンテナ */
+        .user-table-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        /* テーブル */
+        .user-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .user-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .user-table th {
+            padding: 16px;
+            text-align: left;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .user-table th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .user-table th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .user-table tbody tr {
+            transition: all 0.2s;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .user-table tbody tr:hover {
+            background: #f7fafc;
+            transform: scale(1.01);
+        }
+
+        .user-table td {
+            padding: 16px;
+            color: #2d3748;
+            vertical-align: middle;
+        }
+
+        .user-table td strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        /* バッジ */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .role-badge.admin {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .role-badge.editor {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .role-badge.viewer {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-right: 8px;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        .self-badge {
+            color: #718096;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input:disabled {
+            background: #f7fafc;
+            color: #718096;
+        }
+
+        .modal-footer {
+            padding: 24px 32px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            header {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 22px;
+            }
+
+            .user-table-container {
+                padding: 16px;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -14,24 +529,28 @@
             <span>👥</span>
             ユーザー管理
         </h1>
-        <!-- ★★★ 承認待ち一覧へのリンクを追加 ★★★ -->
-        <a href="/pending-users" class="btn-primary" id="pending-users-btn" style="background: #ff9800; display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; text-decoration: none; color: white; font-weight: bold;">
-            <span>⏳ 承認待ち一覧</span>
-            <span id="pending-count-badge" class="badge" style="background: #f44336; padding: 4px 8px; border-radius: 12px; font-size: 0.9rem; display: none;"></span>
-        </a>
-    </div>
-        <a href="/admin" class="header-btn">
-            <span>←</span>
-            <span>管理画面へ</span>
-        </a>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <a href="/pending-users" class="pending-btn">
+                <span>⏳</span>
+                <span>承認待ち一覧</span>
+                <span id="pending-count-badge" class="pending-badge" style="display: none;"></span>
+            </a>
+            <a href="/admin" class="back-btn">
+                <span>←</span>
+                <span>管理画面へ</span>
+            </a>
+        </div>
     </div>
 </header>
 
 <main>
-    <!-- 権限説明 -->
+    <!-- 権限説明カード -->
     <div class="role-info">
         <div class="role-card admin">
-            <h3><span>🔐</span>管理者 (Admin)</h3>
+            <h3>
+                <span>🔐</span>
+                管理者
+            </h3>
             <ul>
                 <li>全機能利用可能</li>
                 <li>ユーザー管理</li>
@@ -39,7 +558,10 @@
             </ul>
         </div>
         <div class="role-card editor">
-            <h3><span>✏️</span>編集者 (Editor)</h3>
+            <h3>
+                <span>✏️</span>
+                編集者
+            </h3>
             <ul>
                 <li>寺院データの追加・編集・削除</li>
                 <li>CSV インポート/エクスポート</li>
@@ -47,7 +569,10 @@
             </ul>
         </div>
         <div class="role-card viewer">
-            <h3><span>👁️</span>閲覧者 (Viewer)</h3>
+            <h3>
+                <span>👁️</span>
+                閲覧者
+            </h3>
             <ul>
                 <li>データの閲覧のみ</li>
                 <li>CSV エクスポート</li>
@@ -56,79 +581,34 @@
         </div>
     </div>
 
-    <button class="add-btn" onclick="openAddModal()">
-        <span>➕</span>
-        新規ユーザーを追加
-    </button>
-
+    <!-- ユーザーテーブル -->
     <div class="user-table-container">
         <table class="user-table">
             <thead>
                 <tr>
                     <th>ユーザーID</th>
                     <th>名前</th>
+                    <th>メールアドレス</th>
+                    <th>所属</th>
                     <th>権限</th>
+                    <th>ステータス</th>
                     <th>作成日時</th>
                     <th>最終ログイン</th>
                     <th>操作</th>
                 </tr>
             </thead>
             <tbody id="user-list">
-                <tr><td colspan="6" class="empty-state">読み込み中...</td></tr>
+                <tr><td colspan="9" class="empty-state">読み込み中...</td></tr>
             </tbody>
         </table>
     </div>
 </main>
 
-<!-- 追加モーダル -->
-<div id="add-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>➕ 新規ユーザー追加</h2>
-            <button class="modal-close" onclick="closeModal('add-modal')">&times;</button>
-        </div>
-        <form id="add-form">
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">ユーザーID *</label>
-                    <input type="text" id="new-user-id" class="form-input" required placeholder="例: tanaka_taro">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">名前 *</label>
-                    <input type="text" id="new-name" class="form-input" required placeholder="例: 田中太郎">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">パスワード *</label>
-                    <input type="password" id="new-password" class="form-input" required minlength="8">
-                    <small style="color:#666;">8文字以上</small>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">権限 *</label>
-                    <select id="new-role" class="form-select" required>
-                        <option value="viewer">👁️ 閲覧者 (Viewer)</option>
-                        <option value="editor">✏️ 編集者 (Editor)</option>
-                        <option value="admin">🔐 管理者 (Admin)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-cancel" onclick="closeModal('add-modal')">
-                    キャンセル
-                </button>
-                <button type="submit" class="btn btn-save">
-                    <span>➕</span>
-                    追加する
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- 権限変更モーダル -->
+<!-- 編集モーダル -->
 <div id="edit-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>✏️ 権限変更</h2>
+            <h2>✏️ ユーザー情報編集</h2>
             <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
         </div>
         <form id="edit-form">
@@ -139,25 +619,40 @@
                     <input type="text" id="edit-user-id-display" class="form-input" disabled>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">名前</label>
-                    <input type="text" id="edit-name-display" class="form-input" disabled>
+                    <label class="form-label">名前 *</label>
+                    <input type="text" id="edit-name" class="form-input" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">新しい権限 *</label>
+                    <label class="form-label">メールアドレス *</label>
+                    <input type="email" id="edit-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">所属</label>
+                    <input type="text" id="edit-department" class="form-input" placeholder="例: 総務部">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">権限 *</label>
                     <select id="edit-role" class="form-select" required>
                         <option value="viewer">👁️ 閲覧者 (Viewer)</option>
                         <option value="editor">✏️ 編集者 (Editor)</option>
                         <option value="admin">🔐 管理者 (Admin)</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">ステータス *</label>
+                    <select id="edit-status" class="form-select" required>
+                        <option value="active">✅ 有効</option>
+                        <option value="inactive">❌ 無効</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-cancel" onclick="closeModal('edit-modal')">
+                <button type="button" class="btn-cancel" onclick="closeModal('edit-modal')">
                     キャンセル
                 </button>
-                <button type="submit" class="btn btn-save">
+                <button type="submit" class="btn-save">
                     <span>💾</span>
-                    変更する
+                    変更を保存
                 </button>
             </div>
         </form>
@@ -165,7 +660,7 @@
 </div>
 
 <script>
-// ページ読み込み時に承認待ち件数を取得
+// 承認待ち件数を取得
 async function checkPendingUsers() {
     try {
         const response = await fetch('/api/pending-users-count');
@@ -183,190 +678,161 @@ async function checkPendingUsers() {
     }
 }
 
-// ページ読み込み時に実行
 document.addEventListener('DOMContentLoaded', function() {
     checkPendingUsers();
-    // 30秒ごとに更新
     setInterval(checkPendingUsers, 30000);
+});
+
+let currentUserId = '';
+
+async function init() {
+    try {
+        const currentRes = await fetch('/get_current_user');
+        const currentData = await currentRes.json();
+        currentUserId = currentData.user_id;
+        await loadUsers();
+    } catch (e) {
+        console.error(e);
+        alert('❌ 初期化に失敗しました');
+    }
+}
+init();
+
+async function loadUsers() {
+    try {
+        const res = await fetch('/get_users');
+        const data = await res.json();
+        
+        const tbody = document.getElementById('user-list');
+        tbody.innerHTML = '';
+        
+        if (data.users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state">ユーザーが登録されていません</td></tr>';
+            return;
+        }
+        
+        data.users.forEach(user => {
+            const tr = document.createElement('tr');
+            
+            const roleMap = {
+                'admin': '🔐 管理者',
+                'editor': '✏️ 編集者',
+                'viewer': '👁️ 閲覧者'
+            };
+            
+            const status = user.status || 'active';
+            const statusBadge = status === 'active' 
+                ? '<span class="status-badge active">✅ 有効</span>'
+                : '<span class="status-badge inactive">❌ 無効</span>';
+            
+            const isSelf = user.user_id === currentUserId;
+            
+            const buttons = isSelf 
+                ? '<span class="self-badge">（本人）</span>'
+                : `<button class="btn btn-edit" onclick="openEditModal('${user.user_id}', '${user.name}', '${user.email || ''}', '${user.department || ''}', '${user.role}', '${status}')">✏️ 編集</button>
+                   <button class="btn btn-delete" onclick="deleteUser('${user.user_id}', '${user.name}')">🗑️ 削除</button>`;
+            
+            tr.innerHTML = `
+                <td><strong>${user.user_id}</strong></td>
+                <td>${user.name}</td>
+                <td>${user.email || '-'}</td>
+                <td>${user.department || '-'}</td>
+                <td><span class="role-badge ${user.role}">${roleMap[user.role]}</span></td>
+                <td>${statusBadge}</td>
+                <td>${user.created_at ? user.created_at.substring(0, 10) : '-'}</td>
+                <td>${user.last_login ? user.last_login.substring(0, 10) : '-'}</td>
+                <td>${buttons}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error(e);
+        alert('❌ ユーザー一覧の読み込みに失敗しました');
+    }
+}
+
+function openEditModal(userId, name, email, department, currentRole, status) {
+    document.getElementById('edit-user-id').value = userId;
+    document.getElementById('edit-user-id-display').value = userId;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-email').value = email || '';
+    document.getElementById('edit-department').value = department || '';
+    document.getElementById('edit-role').value = currentRole;
+    document.getElementById('edit-status').value = status || 'active';
+    document.getElementById('edit-modal').classList.add('show');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+document.getElementById('edit-form').onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('edit-user-id').value;
+    const updateData = {
+        user_id: userId,
+        name: document.getElementById('edit-name').value.trim(),
+        email: document.getElementById('edit-email').value.trim(),
+        department: document.getElementById('edit-department').value.trim(),
+        role: document.getElementById('edit-role').value,
+        status: document.getElementById('edit-status').value
+    };
+    
+    if (!confirm('ユーザー情報を変更しますか？')) return;
+    
+    try {
+        const res = await fetch('/update_user_role', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(updateData)
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            alert('✅ ユーザー情報を変更しました！');
+            closeModal('edit-modal');
+            await loadUsers();
+        } else {
+            alert('❌ エラー: ' + data.message);
+        }
+    } catch (e) {
+        alert('❌ 通信エラーが発生しました');
+    }
+};
+
+async function deleteUser(userId, name) {
+    if (!confirm(`本当に「${name}」を削除しますか？\n\nこの操作は取り消せません。`)) return;
+    
+    try {
+        const res = await fetch('/delete_user', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: userId })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            alert('✅ ユーザーを削除しました');
+            await loadUsers();
+        } else {
+            alert('❌ エラー: ' + data.message);
+        }
+    } catch (e) {
+        alert('❌ 通信エラーが発生しました');
+    }
+}
+
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
 });
 </script>
 
-<script>
-    let currentUserId = '';
-
-    async function init() {
-        try {
-            // 現在のユーザー情報を取得
-            const currentRes = await fetch('/get_current_user');
-            const currentData = await currentRes.json();
-            currentUserId = currentData.user_id;
-
-            // ユーザー一覧を読み込み
-            await loadUsers();
-        } catch (e) {
-            console.error(e);
-            alert('❌ 初期化に失敗しました');
-        }
-    }
-    init();
-
-    async function loadUsers() {
-        try {
-            const res = await fetch('/get_users');
-            const data = await res.json();
-            
-            const tbody = document.getElementById('user-list');
-            tbody.innerHTML = '';
-            
-            if (data.users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">ユーザーが登録されていません</td></tr>';
-                return;
-            }
-            
-            data.users.forEach(user => {
-                const tr = document.createElement('tr');
-                
-                const roleMap = {
-                    'admin': '🔐 管理者',
-                    'editor': '✏️ 編集者',
-                    'viewer': '👁️ 閲覧者'
-                };
-                
-                const isSelf = user.user_id === currentUserId;
-                const deleteBtn = isSelf 
-                    ? '<span style="color:#999; font-size:0.85rem;">（本人）</span>'
-                    : `<button class="btn btn-delete" onclick="deleteUser('${user.user_id}', '${user.name}')">🗑️ 削除</button>`;
-                
-                const editBtn = isSelf
-                    ? ''
-                    : `<button class="btn btn-edit" onclick="openEditModal('${user.user_id}', '${user.name}', '${user.role}')">✏️ 権限変更</button>`;
-                
-                tr.innerHTML = `
-                    <td><strong>${user.user_id}</strong></td>
-                    <td>${user.name}</td>
-                    <td><span class="role-badge ${user.role}">${roleMap[user.role]}</span></td>
-                    <td>${user.created_at || '-'}</td>
-                    <td>${user.last_login || '-'}</td>
-                    <td>${editBtn}${deleteBtn}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        } catch (e) {
-            console.error(e);
-            alert('❌ ユーザー一覧の読み込みに失敗しました');
-        }
-    }
-
-    function openAddModal() {
-        document.getElementById('add-modal').classList.add('show');
-        document.getElementById('add-form').reset();
-    }
-
-    function openEditModal(userId, name, currentRole) {
-        document.getElementById('edit-user-id').value = userId;
-        document.getElementById('edit-user-id-display').value = userId;
-        document.getElementById('edit-name-display').value = name;
-        document.getElementById('edit-role').value = currentRole;
-        document.getElementById('edit-modal').classList.add('show');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-    }
-
-    document.getElementById('add-form').onsubmit = async function(e) {
-        e.preventDefault();
-        
-        const userData = {
-            user_id: document.getElementById('new-user-id').value.trim(),
-            name: document.getElementById('new-name').value.trim(),
-            password: document.getElementById('new-password').value,
-            role: document.getElementById('new-role').value
-        };
-        
-        if (!confirm(`ユーザー「${userData.name}」を追加しますか？`)) return;
-        
-        try {
-            const res = await fetch('/add_user', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(userData)
-            });
-            
-            const data = await res.json();
-            
-            if (res.ok) {
-                alert('✅ ユーザーを追加しました！');
-                closeModal('add-modal');
-                await loadUsers();
-            } else {
-                alert('❌ エラー: ' + data.message);
-            }
-        } catch (e) {
-            alert('❌ 通信エラーが発生しました');
-        }
-    };
-
-    document.getElementById('edit-form').onsubmit = async function(e) {
-        e.preventDefault();
-        
-        const userId = document.getElementById('edit-user-id').value;
-        const newRole = document.getElementById('edit-role').value;
-        
-        if (!confirm('権限を変更しますか？')) return;
-        
-        try {
-            const res = await fetch('/update_user_role', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_id: userId, role: newRole })
-            });
-            
-            const data = await res.json();
-            
-            if (res.ok) {
-                alert('✅ 権限を変更しました！');
-                closeModal('edit-modal');
-                await loadUsers();
-            } else {
-                alert('❌ エラー: ' + data.message);
-            }
-        } catch (e) {
-            alert('❌ 通信エラーが発生しました');
-        }
-    };
-
-    async function deleteUser(userId, name) {
-        if (!confirm(`本当に「${name}」を削除しますか？\n\nこの操作は取り消せません。`)) return;
-        
-        try {
-            const res = await fetch('/delete_user', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_id: userId })
-            });
-            
-            const data = await res.json();
-            
-            if (res.ok) {
-                alert('✅ ユーザーを削除しました');
-                await loadUsers();
-            } else {
-                alert('❌ エラー: ' + data.message);
-            }
-        } catch (e) {
-            alert('❌ 通信エラーが発生しました');
-        }
-    }
-
-    // モーダル外クリックで閉じる
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('show');
-            }
-        });
-    });
-</script>
 </body>
 </html>
