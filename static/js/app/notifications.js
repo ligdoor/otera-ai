@@ -135,6 +135,3 @@ function formatNotificationTime(timestamp) {
     
     return date.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' });
 }
-
-// 定期的に未読数をチェック（5分ごと）
-setInterval(loadUnreadCount, 300000);
