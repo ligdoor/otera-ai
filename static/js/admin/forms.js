@@ -116,12 +116,55 @@ document.addEventListener('DOMContentLoaded', function() {
             if (res.ok) {
                 alert("✅ 保存しました！");
                 closeModal('edit-modal');
-                await loadList();
+                
+                // ⭐ 修正: loadList()の代わりにセレクトボックスを更新
+                if (mode === 'add') {
+                    // 新規追加の場合はセレクトボックスを再読み込み
+                    if (typeof loadTempleSelectList === 'function') {
+                        await loadTempleSelectList();
+                    }
+                    // 追加した寺院を自動選択
+                    const templeSelect = document.getElementById('temple-select');
+                    if (templeSelect) {
+                        // 少し待ってから選択（リストの更新を待つ）
+                        setTimeout(() => {
+                            const options = Array.from(templeSelect.options);
+                            const addedOption = options.find(opt => opt.text === formData.name);
+                            if (addedOption) {
+                                templeSelect.value = addedOption.value;
+                                // 選択イベントを発火
+                                templeSelect.dispatchEvent(new Event('change'));
+                            }
+                        }, 500);
+                    }
+                } else {
+                    // 編集の場合は現在選択中の寺院を再表示
+                    const templeSelect = document.getElementById('temple-select');
+                    if (templeSelect && templeSelect.value) {
+                        // 寺院名が変更された可能性があるので、リストを再読み込み
+                        if (typeof loadTempleSelectList === 'function') {
+                            await loadTempleSelectList();
+                        }
+                        // 編集後の寺院名で再選択
+                        setTimeout(async () => {
+                            const options = Array.from(templeSelect.options);
+                            const updatedOption = options.find(opt => opt.text === formData.name);
+                            if (updatedOption) {
+                                templeSelect.value = updatedOption.value;
+                                // 表示を更新
+                                if (typeof displaySelectedTemple === 'function') {
+                                    await displaySelectedTemple(formData.name);
+                                }
+                            }
+                        }, 500);
+                    }
+                }
             } else {
                 const err = await res.json();
                 alert("❌ エラー: " + err.message);
             }
         } catch (e) {
+            console.error('保存エラー:', e);
             alert("❌ 通信エラーが発生しました");
         }
     };

@@ -15,7 +15,7 @@
 
 <main>
 
-    <!-- メンテナンスモード切り替え（管理者のみ表示） -->
+    <!-- メンテナンスモード切り替え(管理者のみ表示) -->
     <div id="maintenance-section" class="maintenance-section" style="display:none; margin-bottom:20px;">
         <div class="maintenance-control">
             <div class="maintenance-info">
@@ -52,7 +52,21 @@
         新規寺院を追加
     </button>
 
-    <div id="temple-list" class="temple-list"></div>
+    <!-- 🆕 寺院選択セクション -->
+    <div class="temple-selector-container" style="margin: 20px 0;">
+        <label for="temple-select" style="font-size: 18px; font-weight: bold; display: block; margin-bottom: 10px;">
+            🏯 寺院を選択
+        </label>
+        <select id="temple-select" style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #4a5568; border-radius: 8px; background: white;">
+            <option value="">-- 寺院を選択してください --</option>
+        </select>
+    </div>
+
+    <!-- 🆕 選択された寺院の表示エリア -->
+    <div id="selected-temple-display"></div>
+
+    <!-- 既存の寺院一覧は非表示に -->
+    <div id="temple-list" class="temple-list" style="display: none;"></div>
 </main>
 
 <!-- ローディングオーバーレイ -->
@@ -75,5 +89,7 @@
 <script src="{{ url_for('static', filename='js/admin/dropdown.js') }}"></script>
 <script src="{{ url_for('static', filename='js/log_modal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin/maintenance.js') }}"></script>
+<!-- 🆕 寺院選択機能 -->
+<script src="{{ url_for('static', filename='js/admin/temple-selector.js') }}"></script>
 </body>
 </html>
