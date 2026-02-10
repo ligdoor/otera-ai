@@ -64,9 +64,12 @@ def _get_users_supabase():
     
     Supabaseのusersテーブル構造:
     - user_id: TEXT
-    - name: TEXT  ★Google Sheetsと同じ
+    - name: TEXT
+    - email: TEXT  ★追加
+    - department: TEXT  ★追加
     - password_hash: TEXT
-    - role: TEXT  ★Google Sheetsと同じ
+    - role: TEXT
+    - status: TEXT  ★追加
     - created_at: TEXT
     - last_login: TEXT
     """
@@ -79,8 +82,11 @@ def _get_users_supabase():
     for user in all_users:
         users.append({
             'user_id': user.get('user_id'),
-            'name': user.get('name'),  # ★修正: user_name → name
-            'role': user.get('role', 'viewer'),  # ★修正: permission → role
+            'name': user.get('name'),
+            'email': user.get('email', ''),  # ★追加
+            'department': user.get('department', ''),  # ★追加
+            'role': user.get('role', 'viewer'),
+            'status': user.get('status', 'active'),  # ★追加
             'created_at': user.get('created_at', ''),
             'last_login': user.get('last_login', '')
         })
@@ -210,60 +216,94 @@ def _add_user_sheets(user_id, name, password, role):
 @login_required
 @role_required('admin')
 def update_user_role():
-    """ユーザー権限変更（管理者のみ）"""
+    """ユーザー情報更新（管理者のみ）"""
     data = request.json
     user_id = data.get('user_id')
-    new_role = data.get('role')
     
-    if new_role not in ['admin', 'editor', 'viewer']:
-        return jsonify({"message": "無効な権限レベルです"}), 400
+    # 更新するフィールドを収集
+    updates = {}
+    
+    if 'role' in data:
+        new_role = data['role']
+        if new_role not in ['admin', 'editor', 'viewer']:
+            return jsonify({"message": "無効な権限レベルです"}), 400
+        updates['role'] = new_role
+    
+    if 'name' in data:
+        updates['name'] = data['name'].strip()
+    
+    if 'email' in data:
+        updates['email'] = data['email'].strip()
+    
+    if 'department' in data:
+        updates['department'] = data['department'].strip()
+    
+    if 'status' in data:
+        if data['status'] not in ['active', 'inactive']:
+            return jsonify({"message": "無効なステータスです"}), 400
+        updates['status'] = data['status']
     
     # 自分自身の権限変更を防止
-    if session.get('user_id') == user_id:
+    if session.get('user_id') == user_id and 'role' in updates:
         return jsonify({"message": "自分自身の権限は変更できません"}), 400
     
     try:
         if Config.USE_SUPABASE:
-            return _update_user_role_supabase(user_id, new_role)
+            return _update_user_supabase(user_id, updates)
         else:
-            return _update_user_role_sheets(user_id, new_role)
+            return _update_user_sheets(user_id, updates)
     except Exception as e:
-        print(f"❌ 権限変更エラー: {e}")
+        print(f"❌ ユーザー更新エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"message": str(e)}), 500
 
-def _update_user_role_supabase(user_id, new_role):
-    """Supabase版の権限変更"""
+def _update_user_supabase(user_id, updates):
+    """Supabase版のユーザー更新（複数フィールド対応）"""
     from services import supabase_db
     
     user = supabase_db.get_user_by_id(user_id)
     if not user:
         return jsonify({"message": "ユーザーが見つかりません"}), 404
     
-    # ★修正: permission列ではなくrole列を更新
-    supabase_db.update_user(user_id, {'role': new_role})
-    add_log("権限変更", f"{user_id} の権限を {new_role} に変更")
+    supabase_db.update_user(user_id, updates)
     
-    print(f"✅ Supabaseで権限変更: {user_id} → {new_role}")
+    # ログ記録
+    details = ', '.join([f"{k}={v}" for k, v in updates.items()])
+    add_log("ユーザー情報更新", f"{user_id} の情報を更新: {details}")
+    
+    print(f"✅ Supabaseでユーザー更新: {user_id} → {updates}")
     return jsonify({"status": "success"})
 
-def _update_user_role_sheets(user_id, new_role):
-    """Google Sheets版の権限変更"""
+def _update_user_sheets(user_id, updates):
+    """Google Sheets版のユーザー更新（複数フィールド対応）"""
     from services.spreadsheet import get_spreadsheet_client
     
     client = get_spreadsheet_client()
     sheet = client.open(Config.CONFIG_SPREADSHEET_NAME).worksheet('users')
     
     cell = sheet.find(user_id, in_column=1)
-    if cell:
-        # 列4が role列
-        sheet.update_cell(cell.row, 4, new_role)
-        add_log("権限変更", f"{user_id} の権限を {new_role} に変更")
-        print(f"✅ Google Sheetsで権限変更: {user_id} → {new_role}")
-        return jsonify({"status": "success"})
-    else:
+    if not cell:
         return jsonify({"message": "ユーザーが見つかりません"}), 404
+    
+    # 列マッピング（Google Sheets）
+    # 列1: user_id, 列2: password_hash, 列3: name, 列4: role, 
+    # 列5: created_at, 列6: last_login
+    column_map = {
+        'name': 3,
+        'role': 4,
+        # email, departmentは現状のSheetsにはないので、追加する場合は列を増やす必要あり
+    }
+    
+    for field, value in updates.items():
+        if field in column_map:
+            sheet.update_cell(cell.row, column_map[field], value)
+    
+    details = ', '.join([f"{k}={v}" for k, v in updates.items()])
+    add_log("ユーザー情報更新", f"{user_id} の情報を更新: {details}")
+    
+    print(f"✅ Google Sheetsでユーザー更新: {user_id} → {updates}")
+    return jsonify({"status": "success"})
 
 @user_bp.route("/delete_user", methods=["POST"])
 @login_required
