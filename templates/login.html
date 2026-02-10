@@ -24,7 +24,14 @@
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .register-link { display: block; width: 100%; padding: 15px; margin-top: 10px; background: white; color: #667eea; border: 2px solid #667eea; border-radius: 8px; font-size: 16px; font-weight: bold; text-decoration: none; text-align: center; transition: all 0.2s; box-sizing: border-box; }
         .register-link:hover { background: #f0f4ff; transform: translateY(-2px); }
+        /* ★追加: パスワードリセットリンク用のスタイル */
+        .links-container { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
+        .password-reset-link { display: block; color: #667eea; text-decoration: none; font-size: 0.9rem; margin-top: 10px; transition: color 0.3s; }
+        .password-reset-link:hover { color: #764ba2; text-decoration: underline; }
         .back-link { display: block; margin-top: 20px; color: #666; text-decoration: none; font-size: 0.9rem; }
+        /* ★追加: 成功メッセージ用のスタイル */
+        .success-message { padding: 14px 16px; margin-bottom: 20px; border-radius: 10px; text-align: center; font-size: 14px; background: #d4edda; color: #155724; border: 2px solid #c3e6cb; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .security-note { margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; text-align: left; font-size: 0.85rem; color: #856404; }
         .loading-spinner { display: none; margin-top: 10px; }
         .loading-spinner.show { display: block; }
@@ -35,6 +42,12 @@
 <body>
     <div class="login-container">
         <div class="lock-icon">🔐</div>
+        
+        <!-- ★追加: 成功メッセージ表示 -->
+        {% if success %}
+            <div class="success-message">{{ success }}</div>
+        {% endif %}
+        
         <form method="post" id="login-form">
             <h2>セキュアログイン</h2>
             <input type="text" name="user_id" placeholder="ログインID" required autocomplete="username" id="user-id-input">
@@ -45,6 +58,13 @@
             <a href="/register" class="register-link">
                 ✍️ 新規登録はこちら
             </a>
+            
+            <!-- ★追加: パスワードリセットリンク -->
+            <div class="links-container">
+                <a href="/password-reset-request" class="password-reset-link">
+                    🔑 パスワードを忘れた方
+                </a>
+            </div>
             
             <div class="loading-spinner" id="loading-spinner">
                 <div class="spinner"></div>
