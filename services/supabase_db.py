@@ -7,13 +7,11 @@ Google SheetsからSupabaseへの移行のための
 
 from supabase import create_client, Client
 from config import Config
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 from datetime import datetime
 import pytz
 import time
-import httpx
 from functools import wraps
-from httpx import RemoteProtocolError
 
 # グローバルクライアント
 _supabase_client: Optional[Client] = None
@@ -35,19 +33,32 @@ def retry_on_failure(max_retries=3, delay=1):
     return decorator
 
 def get_supabase_client() -> Client:
-    """Supabaseクライアントを取得（シングルトン）"""
+    """
+    Supabaseクライアントを取得（シングルトン）
+    
+    Returns:
+        Client: Supabaseクライアント
+    
+    Raises:
+        ValueError: 設定が不足している場合
+    """
     global _supabase_client
     
     if _supabase_client is None:
-        url = Config.SUPABASE_URL
-        key = Config.SUPABASE_SERVICE_KEY
+        if not Config.SUPABASE_URL or not Config.SUPABASE_SERVICE_KEY:
+            raise ValueError(
+                "Supabase設定が不足しています。"
+                "環境変数 SUPABASE_URL と SUPABASE_SERVICE_KEY を設定してください。"
+            )
         
-        # シンプルにクライアントを作成
-        _supabase_client = create_client(url, key)
-        
-        print("✅ Supabaseクライアント初期化完了")
+        _supabase_client = create_client(
+            Config.SUPABASE_URL,
+            Config.SUPABASE_SERVICE_KEY
+        )
+        print("✅ Supabase接続完了")
     
     return _supabase_client
+
 
 def get_jst_timestamp() -> str:
     """
@@ -394,38 +405,15 @@ def get_user_by_id(user_id: str) -> Optional[Dict]:
 
 def get_all_users() -> List[Dict]:
     """
-    すべてのユーザーを取得（リトライ機能付き）
+    すべてのユーザーを取得
     
     Returns:
         List[Dict]: ユーザーのリスト
     """
-    max_retries = 3
-    retry_delay = 1  # 秒
-    
-    for attempt in range(max_retries):
-        try:
-            client = get_supabase_client()
-            response = client.table('users').select('*').order('name').execute()
-            return response.data if response.data else []
-            
-        except RemoteProtocolError as e:
-            if attempt < max_retries - 1:
-                print(f"⚠️ Supabase接続エラー (試行 {attempt + 1}/{max_retries}): {e}")
-                print(f"🔄 {retry_delay}秒後にリトライします...")
-                time.sleep(retry_delay)
-                retry_delay *= 2  # 指数バックオフ（1秒 → 2秒 → 4秒）
-                # クライアントをリセット
-                global _supabase_client
-                _supabase_client = None
-            else:
-                print(f"❌ Supabase接続失敗（最大試行回数に達しました）: {e}")
-                return []  # 空のリストを返す
-                
-        except Exception as e:
-            print(f"❌ ユーザー取得エラー: {e}")
-            return []  # 空のリストを返す
-    
-    return []
+    client = get_supabase_client()
+    response = client.table('users').select('*').order('name').execute()  # ★修正: user_name → name
+    return response.data
+
 
 def create_user(user_data: Dict) -> Dict:
     """

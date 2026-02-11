@@ -11,8 +11,7 @@ from services.data_source import (
 from services.temple_crud import (
     update_temple_data,
     add_temple_data,
-    delete_temple_data,
-    update_fields_data
+    delete_temple_data
 )
 from services.cache import cache_manager
 from utils.helpers import get_jst_now, get_jst_timestamp
