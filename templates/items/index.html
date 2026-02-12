@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仏具図鑑 - 寺院管理システム</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/items-index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#667eea">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+</head>
+<body>
+
+<!-- ヘッダー -->
+{% include 'components/app_header.html' %}
+
+<!-- 戻るボタン -->
+<button class="clear-chat-btn" onclick="window.location.href='/'" style="left: 10px;">← 戻る</button>
+
+<!-- メインコンテンツ -->
+<div style="margin-top: 80px;">
+    <div class="items-top-page">
+        <div class="items-header">
+            <div class="header-icon">🙏</div>
+            <h1>仏具図鑑</h1>
+            <p class="items-subtitle">会社所有の仏具カタログ</p>
+            <div class="items-count-badge">
+                <span class="count-number">{{ total_count }}</span>
+                <span class="count-label">点</span>
+            </div>
+        </div>
+
+        <div class="search-methods">
+            <h2>仏具の探し方</h2>
+            
+            <div class="method-cards">
+                <!-- 画像から探す -->
+                <a href="/items/gallery" class="method-card">
+                    <div class="method-icon">📷</div>
+                    <h3>画像から探す</h3>
+                    <p>写真を見ながら探せます</p>
+                </a>
+
+                <!-- 名前から探す -->
+                <a href="/items/search" class="method-card">
+                    <div class="method-icon">📝</div>
+                    <h3>名前から探す</h3>
+                    <p>名前やふりがなで検索</p>
+                </a>
+
+                <!-- 種類から探す -->
+                <a href="/items/categories" class="method-card">
+                    <div class="method-icon">🏷️</div>
+                    <h3>種類から探す</h3>
+                    <p>カテゴリ別に表示</p>
+                </a>
+
+                <!-- 全て見る -->
+                <a href="/items/gallery" class="method-card">
+                    <div class="method-icon">📋</div>
+                    <h3>全て見る</h3>
+                    <p>全ての仏具を表示</p>
+                </a>
+            </div>
+        </div>
+
+        {% if categories %}
+        <div class="categories-preview">
+            <h3>カテゴリ一覧</h3>
+            <div class="category-tags">
+                {% for category in categories %}
+                <a href="/items/category/{{ category.name }}" class="category-tag">
+                    <span class="category-icon">{{ category.icon }}</span>
+                    <span>{{ category.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="{{ url_for('static', filename='js/app/main.js') }}"></script>
+
+</body>
+</html>

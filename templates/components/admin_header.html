@@ -32,6 +32,11 @@
                         <span class="icon">⚙️</span>
                         <span>項目設定</span>
                     </a>
+                    <!-- ★★★ 仏具管理リンク（編集者・管理者のみ表示） ★★★ -->
+                    <a href="/admin/items" class="dropdown-item" id="items-management-link" style="display:none;">
+                        <span class="icon">🙏</span>
+                        <span>仏具管理</span>
+                    </a>
                     <button class="dropdown-item warning" onclick="reloadData(); closeAllDropdowns();">
                         <span class="icon">🔄</span>
                         <span>データ更新</span>
@@ -105,6 +110,19 @@ if (userRole === 'admin') {
     checkPendingUsers();
     // 30秒ごとに更新
     //setInterval(checkPendingUsers, 30000);
+}
+
+// 編集者・管理者権限の場合、編集者用メニューを表示
+if (userRole === 'admin' || userRole === 'editor') {
+    const fieldsLink = document.getElementById('fields-setting-link');
+    const itemsLink = document.getElementById('items-management-link');
+    
+    if (fieldsLink) {
+        fieldsLink.style.display = 'flex';
+    }
+    if (itemsLink) {
+        itemsLink.style.display = 'flex';
+    }
 }
 
 // 承認待ちユーザー数を取得して表示

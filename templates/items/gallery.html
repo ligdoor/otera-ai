@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画像ギャラリー - 仏具図鑑</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/items-index.css') }}">
+</head>
+<body>
+
+{% include 'components/app_header.html' %}
+
+<button class="clear-chat-btn" onclick="window.location.href='/items'" style="left: 10px;">← 戻る</button>
+
+<div style="margin-top: 80px; padding: 20px;">
+    <div style="max-width: 1400px; margin: 0 auto;">
+        <h1 style="text-align: center; margin-bottom: 10px;">📷 画像ギャラリー</h1>
+        <p style="text-align: center; color: var(--color-gray-500); margin-bottom: 30px;">
+            全 {{ total_count }} 点
+        </p>
+
+        <!-- カテゴリフィルター -->
+        <div style="margin-bottom: 30px; text-align: center;">
+            <div style="display: inline-flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                <a href="/items/gallery?category=all" 
+                   class="category-tag {% if current_category == 'all' %}active{% endif %}"
+                   style="{% if current_category == 'all' %}background: var(--color-primary); color: white;{% endif %}">
+                    全て
+                </a>
+                {% for category in categories %}
+                <a href="/items/gallery?category={{ category.name }}" 
+                   class="category-tag {% if current_category == category.name %}active{% endif %}"
+                   style="{% if current_category == category.name %}background: var(--color-primary); color: white;{% endif %}">
+                    {{ category.icon }} {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 画像グリッド -->
+        {% if items %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px;">
+            {% for item in items %}
+            <a href="/items/detail/{{ item.id }}" style="text-decoration: none; color: inherit;">
+                <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                    {% if item.main_image_url %}
+                    <img src="{{ item.main_image_url }}" 
+                         alt="{{ item.name }}"
+                         style="width: 100%; height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div style="width: 100%; height: 200px; background: var(--color-gray-100); display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                        🙏
+                    </div>
+                    {% endif %}
+                    <div style="padding: 15px;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 1.1rem;">{{ item.name }}</h3>
+                        {% if item.name_kana %}
+                        <p style="margin: 0 0 8px 0; font-size: 0.85rem; color: var(--color-gray-500);">{{ item.name_kana }}</p>
+                        {% endif %}
+                        <span style="display: inline-block; padding: 4px 10px; background: var(--color-gray-100); border-radius: 12px; font-size: 0.8rem;">
+                            {{ item.category }}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- ページネーション -->
+        {% if total_count > per_page %}
+        <div style="text-align: center; margin-top: 30px;">
+            {% if current_page > 1 %}
+            <a href="/items/gallery?category={{ current_category }}&page={{ current_page - 1 }}" 
+               style="padding: 10px 20px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 8px; margin: 0 5px;">
+                ← 前へ
+            </a>
+            {% endif %}
+            <span style="margin: 0 15px;">{{ current_page }} ページ</span>
+            {% if (current_page * per_page) < total_count %}
+            <a href="/items/gallery?category={{ current_category }}&page={{ current_page + 1 }}" 
+               style="padding: 10px 20px; background: var(--color-primary); color: white; text-decoration: none; border-radius: 8px; margin: 0 5px;">
+                次へ →
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--color-gray-500);">
+            <p style="font-size: 3rem; margin-bottom: 20px;">📦</p>
+            <p style="font-size: 1.2rem;">まだ仏具が登録されていません</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

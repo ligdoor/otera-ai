@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ category_name }} - 仏具図鑑</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+{% include 'components/app_header.html' %}
+
+<button class="clear-chat-btn" onclick="window.location.href='/items/categories'" style="left: 10px;">← カテゴリ一覧</button>
+
+<div style="margin-top: 80px; padding: 20px;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h1 style="text-align: center; margin-bottom: 10px;">{{ category_name }}</h1>
+        <p style="text-align: center; color: var(--color-gray-500); margin-bottom: 40px;">
+            {{ items|length }} 点
+        </p>
+
+        {% if items %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+            {% for item in items %}
+            <a href="/items/detail/{{ item.id }}" style="text-decoration: none; color: inherit;">
+                <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                    {% if item.main_image_url %}
+                    <img src="{{ item.main_image_url }}" 
+                         alt="{{ item.name }}"
+                         style="width: 100%; height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div style="width: 100%; height: 200px; background: var(--color-gray-100); display: flex; align-items: center; justify-content: center; font-size: 3rem;">
+                        🙏
+                    </div>
+                    {% endif %}
+                    <div style="padding: 20px;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.2rem;">{{ item.name }}</h3>
+                        {% if item.name_kana %}
+                        <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--color-gray-500);">{{ item.name_kana }}</p>
+                        {% endif %}
+                        {% if item.description %}
+                        <p style="margin: 0; color: var(--color-gray-600); font-size: 0.9rem; line-height: 1.5;">
+                            {{ item.description[:80] }}{% if item.description|length > 80 %}...{% endif %}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--color-gray-500);">
+            <p style="font-size: 3rem; margin-bottom: 20px;">📦</p>
+            <p style="font-size: 1.2rem;">このカテゴリにはまだ仏具がありません</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+a:hover div {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+</style>
+
+</body>
+</html>

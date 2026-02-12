@@ -37,7 +37,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def role_required(*allowed_roles):
+def role_required(allowed_roles):
     """指定された権限を持つユーザーのみアクセス可能"""
     def decorator(f):
         @wraps(f)

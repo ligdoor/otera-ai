@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お気に入り - 寺院管理システム</title>
+    
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#667eea">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+</head>
+<body>
+
+<!-- ヘッダー -->
+{% include 'components/app_header.html' %}
+
+<!-- 戻るボタン -->
+<button class="clear-chat-btn" onclick="window.location.href='/'" style="left: 10px;">← 戻る</button>
+
+<!-- メインコンテンツ -->
+<div style="margin-top: 80px; padding: 20px;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <h1 style="text-align: center; margin-bottom: 20px;">⭐ お気に入り</h1>
+        <p style="text-align: center; color: #718096;">お気に入りの寺院を表示します</p>
+        
+        <div id="favorites-list" style="margin-top: 30px;">
+            <!-- お気に入りリストはJavaScriptで動的に表示 -->
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script src="{{ url_for('static', filename='js/app/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app/favorites.js') }}"></script>
+
+</body>
+</html>

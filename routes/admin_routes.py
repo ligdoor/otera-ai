@@ -127,7 +127,7 @@ def get_fields():
 
 @admin_bp.route('/import_csv', methods=['POST'])
 @login_required
-@role_required('admin', 'editor')
+@role_required(['admin', 'editor'])
 def import_csv():
     MAX_FILE_SIZE = 10 * 1024 * 1024
     
@@ -259,3 +259,204 @@ def export_csv():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
+# ============================================================
+# 仏具管理
+# ============================================================
+
+@admin_bp.route('/admin/items')
+@login_required
+def admin_items():
+    """仏具管理画面"""
+    try:
+        user_id = session.get('user_id')
+        user_name = session.get('user_name', 'ゲスト')
+        
+        # DBから権限を取得
+        supabase = get_supabase_client()
+        user_result = supabase.table('users').select('role').eq('user_id', user_id).single().execute()
+        
+        if not user_result.data:
+            return jsonify({"message": "ユーザー情報が見つかりません"}), 404
+        
+        user_role = user_result.data.get('role', 'viewer')
+        
+        # 権限チェック
+        if user_role not in ['admin', 'editor']:
+            return jsonify({"message": "この操作を行う権限がありません"}), 403
+        
+        print(f"[DEBUG] admin_items: user_name={user_name}, user_role={user_role}")
+        return render_template('admin_items.html', user_name=user_name, user_role=user_role)
+    
+    except Exception as e:
+        print(f"Error in admin_items: {e}")
+        return jsonify({"message": "エラーが発生しました"}), 500
+
+@admin_bp.route('/api/admin/items', methods=['GET'])
+@login_required
+def get_admin_items():
+    """仏具一覧取得API"""
+    try:
+        supabase = get_supabase_client()
+        items_response = supabase.table('buddhist_items').select('*').order('created_at', desc=True).execute()
+        items = items_response.data if items_response.data else []
+        return jsonify({'success': True, 'items': items})
+    except Exception as e:
+        print(f"Error in get_admin_items: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/items/<item_id>', methods=['GET'])
+@login_required
+def get_admin_item(item_id):
+    """仏具詳細取得API"""
+    try:
+        supabase = get_supabase_client()
+        item_response = supabase.table('buddhist_items').select('*').eq('id', item_id).single().execute()
+        if not item_response.data:
+            return jsonify({'success': False, 'error': '仏具が見つかりません'}), 404
+        return jsonify({'success': True, 'item': item_response.data})
+    except Exception as e:
+        print(f"Error in get_admin_item: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/items', methods=['POST'])
+@login_required
+def create_admin_item():
+    """仏具作成API"""
+    try:
+        # 権限チェック
+        user_id = session.get('user_id')
+        supabase = get_supabase_client()
+        user_result = supabase.table('users').select('role').eq('user_id', user_id).single().execute()
+        
+        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
+            return jsonify({'success': False, 'error': '権限がありません'}), 403
+        
+        data = request.json
+        if not data.get('name') or not data.get('category'):
+            return jsonify({'success': False, 'error': '名前とカテゴリは必須です'}), 400
+        item_data = {
+            'name': data.get('name'), 'name_kana': data.get('name_kana'),
+            'category': data.get('category'), 'description': data.get('description'),
+            'usage': data.get('usage'), 'material': data.get('material'),
+            'size': data.get('size'), 'main_image_url': data.get('main_image_url'),
+            'stock_quantity': data.get('stock_quantity', 1),
+            'display_order': data.get('display_order', 0),
+            'is_public': data.get('is_public', True)
+        }
+        item_response = supabase.table('buddhist_items').insert(item_data).execute()
+        if not item_response.data:
+            return jsonify({'success': False, 'error': '作成に失敗しました'}), 500
+        return jsonify({'success': True, 'item': item_response.data[0]})
+    except Exception as e:
+        print(f"Error in create_admin_item: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/items/<item_id>', methods=['PUT'])
+@login_required
+def update_admin_item(item_id):
+    """仏具更新API"""
+    try:
+        # 権限チェック
+        user_id = session.get('user_id')
+        supabase = get_supabase_client()
+        user_result = supabase.table('users').select('role').eq('user_id', user_id).single().execute()
+        
+        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
+            return jsonify({'success': False, 'error': '権限がありません'}), 403
+        
+        data = request.json
+        update_data = {k: v for k, v in {
+            'name': data.get('name'), 'name_kana': data.get('name_kana'),
+            'category': data.get('category'), 'description': data.get('description'),
+            'usage': data.get('usage'), 'material': data.get('material'),
+            'size': data.get('size'), 'main_image_url': data.get('main_image_url'),
+            'stock_quantity': data.get('stock_quantity'),
+            'display_order': data.get('display_order'),
+            'is_public': data.get('is_public')
+        }.items() if v is not None}
+        item_response = supabase.table('buddhist_items').update(update_data).eq('id', item_id).execute()
+        if not item_response.data:
+            return jsonify({'success': False, 'error': '更新に失敗しました'}), 500
+        return jsonify({'success': True, 'item': item_response.data[0]})
+    except Exception as e:
+        print(f"Error in update_admin_item: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/items/<item_id>', methods=['DELETE'])
+@login_required
+def delete_admin_item(item_id):
+    """仏具削除API（管理者のみ）"""
+    try:
+        # 権限チェック（管理者のみ）
+        user_id = session.get('user_id')
+        supabase = get_supabase_client()
+        user_result = supabase.table('users').select('role').eq('user_id', user_id).single().execute()
+        
+        if not user_result.data or user_result.data.get('role') != 'admin':
+            return jsonify({'success': False, 'error': '管理者権限が必要です'}), 403
+        
+        supabase.table('buddhist_items').delete().eq('id', item_id).execute()
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Error in delete_admin_item: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/categories', methods=['GET'])
+@login_required
+def get_admin_categories():
+    """カテゴリ一覧取得API"""
+    try:
+        supabase = get_supabase_client()
+        categories_response = supabase.table('item_categories').select('*').order('display_order').execute()
+        categories = categories_response.data if categories_response.data else []
+        return jsonify({'success': True, 'categories': categories})
+    except Exception as e:
+        print(f"Error in get_admin_categories: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@admin_bp.route('/api/admin/upload-image', methods=['POST'])
+@login_required
+def upload_image():
+    """画像アップロードAPI"""
+    try:
+        # 権限チェック
+        user_id = session.get('user_id')
+        supabase = get_supabase_client()
+        user_result = supabase.table('users').select('role').eq('user_id', user_id).single().execute()
+        
+        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
+            return jsonify({'success': False, 'error': '権限がありません'}), 403
+        
+        # ファイルチェック
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'ファイルがありません'}), 400
+        
+        file = request.files['file']
+        filename = request.form.get('filename', 'image.jpg')
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
+        
+        # Supabase Storageにアップロード
+        file_bytes = file.read()
+        
+        # パスを設定（buddhist-items/ファイル名）
+        storage_path = f"{filename}"
+        
+        # アップロード実行
+        upload_result = supabase.storage.from_('buddhist-items').upload(
+            storage_path,
+            file_bytes,
+            file_options={"content-type": file.content_type}
+        )
+        
+        # 公開URLを取得
+        public_url = supabase.storage.from_('buddhist-items').get_public_url(storage_path)
+        
+        return jsonify({'success': True, 'url': public_url})
+    
+    except Exception as e:
+        print(f"Error in upload_image: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500

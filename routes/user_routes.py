@@ -27,7 +27,7 @@ def add_log(action, details):
 
 @user_bp.route("/admin/users")
 @login_required
-@role_required('admin')
+@role_required(['admin'])
 def admin_users():
     """ユーザー管理画面（管理者のみ）"""
     return render_template("admin_users.html")
@@ -44,7 +44,7 @@ def get_current_user():
 
 @user_bp.route("/get_users")
 @login_required
-@role_required('admin')
+@role_required(['admin'])
 def get_users():
     """ユーザー一覧取得（管理者のみ）"""
     try:
@@ -128,7 +128,7 @@ def _get_users_sheets():
 
 @user_bp.route("/add_user", methods=["POST"])
 @login_required
-@role_required('admin')
+@role_required(['admin'])
 def add_user():
     """ユーザー追加（管理者のみ）"""
     data = request.json
@@ -214,7 +214,7 @@ def _add_user_sheets(user_id, name, password, role):
 
 @user_bp.route("/update_user_role", methods=["POST"])
 @login_required
-@role_required('admin')
+@role_required(['admin'])
 def update_user_role():
     """ユーザー情報更新（管理者のみ）"""
     data = request.json
@@ -307,7 +307,7 @@ def _update_user_sheets(user_id, updates):
 
 @user_bp.route("/delete_user", methods=["POST"])
 @login_required
-@role_required('admin')
+@role_required(['admin'])
 def delete_user():
     """ユーザー削除（管理者のみ）"""
     user_id = request.json.get('user_id')

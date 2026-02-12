@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if item %}{{ item.name }}{% else %}仏具詳細{% endif %} - 仏具図鑑</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+
+{% include 'components/app_header.html' %}
+
+<button class="clear-chat-btn" onclick="history.back()" style="left: 10px;">← 戻る</button>
+
+<div style="margin-top: 80px; padding: 20px;">
+    {% if item %}
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <div style="background: white; border-radius: 16px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+            
+            <!-- タイトル部分 -->
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="margin: 0 0 10px 0; font-size: 2rem;">{{ item.name }}</h1>
+                {% if item.name_kana %}
+                <p style="margin: 0 0 15px 0; font-size: 1.1rem; color: var(--color-gray-500);">{{ item.name_kana }}</p>
+                {% endif %}
+                <span style="display: inline-block; padding: 8px 20px; background: var(--gradient-primary); color: white; border-radius: 20px; font-size: 0.95rem;">
+                    {{ item.category }}
+                </span>
+            </div>
+
+            <!-- メイン画像 -->
+            <div style="margin-bottom: 30px;">
+                {% if item.main_image_url %}
+                <img src="{{ item.main_image_url }}" 
+                     alt="{{ item.name }}"
+                     style="width: 100%; max-height: 500px; object-fit: contain; border-radius: 12px; background: var(--color-gray-50);">
+                {% else %}
+                <div style="width: 100%; height: 300px; background: var(--color-gray-100); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">
+                    🙏
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 追加画像 -->
+            {% if images %}
+            <div style="display: flex; gap: 10px; margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px;">
+                {% for image in images %}
+                <img src="{{ image.image_url }}" 
+                     alt="{{ image.caption or item.name }}"
+                     style="height: 100px; border-radius: 8px; cursor: pointer; object-fit: cover;">
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- 詳細情報 -->
+            <div style="display: grid; gap: 25px;">
+                {% if item.description %}
+                <div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: var(--color-gray-700);">説明</h3>
+                    <p style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">{{ item.description }}</p>
+                </div>
+                {% endif %}
+
+                {% if item.usage %}
+                <div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: var(--color-gray-700);">使い方</h3>
+                    <p style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">{{ item.usage }}</p>
+                </div>
+                {% endif %}
+
+                {% if item.material or item.size %}
+                <div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: var(--color-gray-700);">仕様</h3>
+                    <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px;">
+                        {% if item.material %}
+                        <span style="color: var(--color-gray-500);">素材:</span>
+                        <span>{{ item.material }}</span>
+                        {% endif %}
+                        {% if item.size %}
+                        <span style="color: var(--color-gray-500);">サイズ:</span>
+                        <span>{{ item.size }}</span>
+                        {% endif %}
+                        {% if item.stock_quantity %}
+                        <span style="color: var(--color-gray-500);">在庫:</span>
+                        <span>{{ item.stock_quantity }} 個</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ボタン -->
+            <div style="margin-top: 40px; text-align: center;">
+                <button onclick="history.back()" 
+                        style="padding: 12px 40px; background: var(--color-gray-200); color: var(--color-gray-700); border: none; border-radius: 8px; cursor: pointer; font-size: 1rem;">
+                    ← 一覧に戻る
+                </button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 100px 20px; color: var(--color-gray-500);">
+        <p style="font-size: 3rem; margin-bottom: 20px;">⚠️</p>
+        <p style="font-size: 1.3rem;">この仏具は見つかりませんでした</p>
+        <p style="margin-top: 20px;">
+            <a href="/items" style="color: var(--color-primary); text-decoration: underline;">仏具図鑑トップに戻る</a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

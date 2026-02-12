@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カテゴリ一覧 - 仏具図鑑</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/items-index.css') }}">
+</head>
+<body>
+
+{% include 'components/app_header.html' %}
+
+<button class="clear-chat-btn" onclick="window.location.href='/items'" style="left: 10px;">← 戻る</button>
+
+<div style="margin-top: 80px; padding: 20px;">
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <h1 style="text-align: center; margin-bottom: 10px;">🏷️ 種類から探す</h1>
+        <p style="text-align: center; color: var(--color-gray-500); margin-bottom: 40px;">
+            カテゴリ別に仏具を探せます
+        </p>
+
+        {% if categories %}
+        <div style="display: grid; gap: 20px;">
+            {% for category in categories %}
+            <a href="/items/category/{{ category.name }}" style="text-decoration: none; color: inherit;">
+                <div style="background: white; padding: 25px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 3rem;">{{ category.icon }}</div>
+                        <div>
+                            <h3 style="margin: 0 0 5px 0; font-size: 1.5rem;">{{ category.name }}</h3>
+                            {% if category.description %}
+                            <p style="margin: 0; color: var(--color-gray-600); font-size: 0.95rem;">{{ category.description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="background: var(--color-primary); color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600;">
+                            {{ category.count }} 点
+                        </span>
+                        <span style="font-size: 1.5rem; color: var(--color-gray-400);">›</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; color: var(--color-gray-500);">
+            <p style="font-size: 3rem; margin-bottom: 20px;">📦</p>
+            <p style="font-size: 1.2rem;">カテゴリがまだ登録されていません</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+a:hover div {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+</style>
+
+</body>
+</html>

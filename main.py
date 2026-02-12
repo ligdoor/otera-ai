@@ -11,6 +11,7 @@ from routes.admin_routes import admin_bp
 from routes.temple_routes import temple_bp, init_temple_data
 from routes.user_routes import user_bp
 from routes.api_routes import api_bp
+from routes.items_routes import items_bp  # 追加
 from flask_extensions import limiter
 from utils.env_checker import check_required_env
 # ★ 追加: メンテナンスモードのインポート
@@ -124,6 +125,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(temple_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(api_bp)
+app.register_blueprint(items_bp)  # 追加
 
 # 初期データ読み込み
 with app.app_context():

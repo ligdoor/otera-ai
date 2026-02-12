@@ -322,7 +322,7 @@ def get_fields():
 
 @temple_bp.route("/update_temple", methods=["POST"])
 @login_required
-@role_required('admin', 'editor')
+@role_required(['admin', 'editor'])
 def update_temple():
     """寺院情報を更新"""
     global otera_database
@@ -376,7 +376,7 @@ def update_temple():
 
 @temple_bp.route("/add_temple", methods=["POST"])
 @login_required
-@role_required('admin', 'editor')
+@role_required(['admin', 'editor'])
 def add_temple():
     """新規寺院を追加"""
     global otera_database
@@ -427,7 +427,7 @@ def add_temple():
 
 @temple_bp.route("/delete_temple", methods=["POST"])
 @login_required
-@role_required('admin', 'editor')
+@role_required(['admin', 'editor'])
 def delete_temple():
     """寺院を削除"""
     global otera_database
@@ -514,7 +514,7 @@ def export_csv():
 
 @temple_bp.route("/import_csv", methods=["POST"])
 @login_required
-@role_required('admin', 'editor')
+@role_required(['admin', 'editor'])
 def import_csv():
     """CSVインポート"""
     if 'file' not in request.files:

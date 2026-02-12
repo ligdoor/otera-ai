@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仏具管理 - 管理画面</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+
+<style>
+/* 入力欄のフォーカススタイル */
+#item-form input:focus,
+#item-form textarea:focus,
+#item-form select:focus {
+    outline: none;
+    border-color: #667eea !important;
+    background: #f0f4ff !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* プレースホルダーのスタイル */
+#item-form input::placeholder,
+#item-form textarea::placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* 必須マーク */
+label span[style*="color: red"] {
+    font-size: 1.2em;
+    margin-left: 4px;
+}
+</style>
+
+{% include 'components/admin_header.html' %}
+
+<main style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2 style="margin: 0;">🙏 仏具管理</h2>
+        <button class="btn btn-edit" onclick="openAddModal()" id="add-item-btn">
+            <span class="icon">➕</span>
+            <span>新規登録</span>
+        </button>
+    </div>
+
+    <!-- 仏具一覧テーブル -->
+    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: var(--color-gray-100, #f7fafc);">
+                <tr>
+                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--color-gray-200, #e2e8f0);">画像</th>
+                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--color-gray-200, #e2e8f0);">名前</th>
+                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--color-gray-200, #e2e8f0);">カテゴリ</th>
+                    <th style="padding: 15px; text-align: left; border-bottom: 2px solid var(--color-gray-200, #e2e8f0);">公開</th>
+                    <th style="padding: 15px; text-align: center; border-bottom: 2px solid var(--color-gray-200, #e2e8f0);">操作</th>
+                </tr>
+            </thead>
+            <tbody id="items-table-body">
+                <tr>
+                    <td colspan="5" style="padding: 40px; text-align: center; color: var(--color-gray-500, #718096);">
+                        読み込み中...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- 追加/編集モーダル -->
+<div id="item-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+    <div style="max-width: 800px; margin: 50px auto; background: white; border-radius: 16px; padding: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="margin: 0;" id="modal-title">新規登録</h3>
+            <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-gray-500);">×</button>
+        </div>
+
+        <form id="item-form" onsubmit="saveItem(event)">
+            <input type="hidden" id="item-id">
+
+            <div style="display: grid; gap: 20px;">
+                <!-- 名前 -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                        名前 <span style="color: red;">*</span>
+                    </label>
+                    <input type="text" id="item-name" required placeholder="例: 木魚"
+                           style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                </div>
+
+                <!-- ふりがな -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">ふりがな</label>
+                    <input type="text" id="item-kana" placeholder="例: もくぎょ"
+                           style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                </div>
+
+                <!-- カテゴリ -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">
+                        カテゴリ <span style="color: red;">*</span>
+                    </label>
+                    <select id="item-category" required
+                            style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                        <option value="">選択してください</option>
+                    </select>
+                </div>
+
+                <!-- 説明 -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">説明</label>
+                    <textarea id="item-description" rows="3" placeholder="例: 読経の際にリズムを取るために使用する打楽器です"
+                              style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; resize: vertical; background: white; transition: all 0.2s;"></textarea>
+                </div>
+
+                <!-- 使い方 -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">使い方</label>
+                    <textarea id="item-usage" rows="2" placeholder="例: 撥で叩いて使用します"
+                              style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; resize: vertical; background: white; transition: all 0.2s;"></textarea>
+                </div>
+
+                <!-- 素材・サイズ -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">素材</label>
+                        <input type="text" id="item-material" placeholder="例: 木製"
+                               style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">サイズ</label>
+                        <input type="text" id="item-size" placeholder="例: 中"
+                               style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                    </div>
+                </div>
+
+                <!-- メイン画像 -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px;">メイン画像</label>
+                    
+                    <!-- プレビューエリア -->
+                    <div id="image-preview" style="margin-bottom: 15px; display: none;">
+                        <img id="preview-img" src="" alt="プレビュー" 
+                             style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid var(--color-gray-200);">
+                        <button type="button" onclick="clearImage()" 
+                                style="margin-top: 10px; padding: 6px 12px; background: var(--color-gray-200); border: none; border-radius: 6px; cursor: pointer;">
+                            × 画像を削除
+                        </button>
+                    </div>
+                    
+                    <!-- アップロードボタン -->
+                    <div style="margin-bottom: 15px;">
+                        <label class="btn btn-edit" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                            <span class="icon">📷</span>
+                            <span>画像を選択</span>
+                            <input type="file" id="item-image-file" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                        </label>
+                        <span id="upload-status" style="margin-left: 15px; color: var(--color-gray-500); font-size: 0.9rem;"></span>
+                    </div>
+                    
+                    <!-- 画像URL（非表示） -->
+                    <input type="hidden" id="item-image-url">
+                    
+                    <!-- または手動入力 -->
+                    <details style="margin-top: 10px;">
+                        <summary style="cursor: pointer; color: var(--color-gray-600); font-size: 0.9rem;">または画像URLを直接入力</summary>
+                        <input type="url" id="item-image-url-manual"
+                               placeholder="https://example.com/image.jpg"
+                               style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; margin-top: 10px; background: white; transition: all 0.2s;">
+                    </details>
+                </div>
+
+                <!-- 在庫数・表示順・公開設定 -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">在庫数</label>
+                        <input type="number" id="item-stock" min="0" value="1"
+                               style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">表示順</label>
+                        <input type="number" id="item-order" min="0" value="0"
+                               style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">公開設定</label>
+                        <select id="item-public"
+                                style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1rem; background: white; transition: all 0.2s;">
+                            <option value="true">公開</option>
+                            <option value="false">非公開</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ボタン -->
+            <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: flex-end;">
+                <button type="button" onclick="closeModal()" class="btn" style="background: var(--color-gray-300); color: var(--color-gray-700);">
+                    キャンセル
+                </button>
+                <button type="submit" class="btn btn-edit">
+                    <span class="icon">💾</span>
+                    <span>保存</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let categories = [];
+let items = [];
+
+// セッション情報のデバッグ
+console.log('User Role:', "{{ session.get('role', 'unknown') }}");
+console.log('Is Admin:', "{{ session.get('is_admin', False) }}");
+
+// 初期化
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories();
+    await loadItems();
+});
+
+// カテゴリ読み込み
+async function loadCategories() {
+    try {
+        const res = await fetch('/api/admin/categories');
+        const data = await res.json();
+        if (data.success) {
+            categories = data.categories;
+            const select = document.getElementById('item-category');
+            select.innerHTML = '<option value="">選択してください</option>';
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat.name}">${cat.icon} ${cat.name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('カテゴリ読み込みエラー:', error);
+    }
+}
+
+// 仏具一覧読み込み
+async function loadItems() {
+    try {
+        const res = await fetch('/api/admin/items');
+        const data = await res.json();
+        if (data.success) {
+            items = data.items;
+            renderItems();
+        }
+    } catch (error) {
+        console.error('仏具読み込みエラー:', error);
+    }
+}
+
+// 仏具一覧表示
+function renderItems() {
+    const tbody = document.getElementById('items-table-body');
+    
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 40px; text-align: center; color: var(--color-gray-500);">仏具がまだ登録されていません</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = items.map(item => `
+        <tr style="border-bottom: 1px solid var(--color-gray-200);">
+            <td style="padding: 15px;">
+                ${item.main_image_url 
+                    ? `<img src="${item.main_image_url}" alt="${item.name}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">`
+                    : '<div style="width: 60px; height: 60px; background: var(--color-gray-100); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🙏</div>'
+                }
+            </td>
+            <td style="padding: 15px;">
+                <div style="font-weight: 600;">${item.name}</div>
+                ${item.name_kana ? `<div style="font-size: 0.85rem; color: var(--color-gray-500);">${item.name_kana}</div>` : ''}
+            </td>
+            <td style="padding: 15px;">
+                <span style="padding: 4px 10px; background: var(--color-gray-100); border-radius: 12px; font-size: 0.85rem;">
+                    ${item.category}
+                </span>
+            </td>
+            <td style="padding: 15px;">
+                ${item.is_public 
+                    ? '<span style="color: green;">●</span> 公開' 
+                    : '<span style="color: gray;">●</span> 非公開'
+                }
+            </td>
+            <td style="padding: 15px; text-align: center;">
+                <button onclick="editItem('${item.id}')" class="btn btn-edit" style="padding: 6px 12px; font-size: 0.85rem; margin-right: 5px;">
+                    編集
+                </button>
+                <button onclick="deleteItem('${item.id}', '${item.name}')" class="btn btn-delete" style="padding: 6px 12px; font-size: 0.85rem;">
+                    削除
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// 追加モーダル開く
+function openAddModal() {
+    document.getElementById('modal-title').textContent = '新規登録';
+    document.getElementById('item-form').reset();
+    document.getElementById('item-id').value = '';
+    document.getElementById('item-modal').style.display = 'block';
+}
+
+// 編集モーダル開く
+async function editItem(id) {
+    try {
+        const res = await fetch(`/api/admin/items/${id}`);
+        const data = await res.json();
+        if (data.success) {
+            const item = data.item;
+            document.getElementById('modal-title').textContent = '編集';
+            document.getElementById('item-id').value = item.id;
+            document.getElementById('item-name').value = item.name || '';
+            document.getElementById('item-kana').value = item.name_kana || '';
+            document.getElementById('item-category').value = item.category || '';
+            document.getElementById('item-description').value = item.description || '';
+            document.getElementById('item-usage').value = item.usage || '';
+            document.getElementById('item-material').value = item.material || '';
+            document.getElementById('item-size').value = item.size || '';
+            document.getElementById('item-image-url').value = item.main_image_url || '';
+            document.getElementById('item-image-url-manual').value = item.main_image_url || '';
+            document.getElementById('item-stock').value = item.stock_quantity || 1;
+            document.getElementById('item-order').value = item.display_order || 0;
+            document.getElementById('item-public').value = item.is_public ? 'true' : 'false';
+            
+            // 既存画像のプレビュー
+            if (item.main_image_url) {
+                document.getElementById('preview-img').src = item.main_image_url;
+                document.getElementById('image-preview').style.display = 'block';
+            }
+            
+            document.getElementById('item-modal').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('編集エラー:', error);
+        alert('仏具情報の取得に失敗しました');
+    }
+}
+
+// モーダル閉じる
+function closeModal() {
+    document.getElementById('item-modal').style.display = 'none';
+    clearImage();
+}
+
+// 画像選択時の処理
+async function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // ファイルサイズチェック（5MB以下）
+    if (file.size > 5 * 1024 * 1024) {
+        alert('ファイルサイズが大きすぎます（5MB以下にしてください）');
+        return;
+    }
+    
+    // 画像タイプチェック
+    if (!file.type.startsWith('image/')) {
+        alert('画像ファイルを選択してください');
+        return;
+    }
+    
+    // プレビュー表示
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('image-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+    
+    // Supabaseにアップロード
+    await uploadImageToSupabase(file);
+}
+
+// Supabaseに画像をアップロード
+async function uploadImageToSupabase(file) {
+    const statusEl = document.getElementById('upload-status');
+    statusEl.textContent = 'アップロード中...';
+    statusEl.style.color = 'var(--color-primary)';
+    
+    try {
+        // ファイル名を生成（タイムスタンプ + ランダム文字列）
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(7);
+        const ext = file.name.split('.').pop();
+        const filename = `${timestamp}_${random}.${ext}`;
+        
+        // FormDataを作成
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('filename', filename);
+        
+        // サーバーにアップロード
+        const res = await fetch('/api/admin/upload-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            document.getElementById('item-image-url').value = data.url;
+            statusEl.textContent = '✓ アップロード完了';
+            statusEl.style.color = 'green';
+        } else {
+            throw new Error(data.error || 'アップロードに失敗しました');
+        }
+    } catch (error) {
+        console.error('アップロードエラー:', error);
+        statusEl.textContent = '✗ アップロード失敗';
+        statusEl.style.color = 'red';
+        alert('画像のアップロードに失敗しました: ' + error.message);
+    }
+}
+
+// 画像をクリア
+function clearImage() {
+    document.getElementById('item-image-file').value = '';
+    document.getElementById('item-image-url').value = '';
+    document.getElementById('item-image-url-manual').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('upload-status').textContent = '';
+}
+
+// 保存
+async function saveItem(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('item-id').value;
+    
+    // 画像URLは、アップロードされたものか手動入力のどちらかを使用
+    let imageUrl = document.getElementById('item-image-url').value;
+    if (!imageUrl) {
+        imageUrl = document.getElementById('item-image-url-manual').value;
+    }
+    
+    const data = {
+        name: document.getElementById('item-name').value,
+        name_kana: document.getElementById('item-kana').value,
+        category: document.getElementById('item-category').value,
+        description: document.getElementById('item-description').value,
+        usage: document.getElementById('item-usage').value,
+        material: document.getElementById('item-material').value,
+        size: document.getElementById('item-size').value,
+        main_image_url: imageUrl,
+        stock_quantity: parseInt(document.getElementById('item-stock').value),
+        display_order: parseInt(document.getElementById('item-order').value),
+        is_public: document.getElementById('item-public').value === 'true'
+    };
+    
+    try {
+        const url = id ? `/api/admin/items/${id}` : '/api/admin/items';
+        const method = id ? 'PUT' : 'POST';
+        
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await res.json();
+        
+        if (result.success) {
+            alert(id ? '更新しました' : '登録しました');
+            closeModal();
+            await loadItems();
+        } else {
+            alert('エラー: ' + result.error);
+        }
+    } catch (error) {
+        console.error('保存エラー:', error);
+        alert('保存に失敗しました');
+    }
+}
+
+// 削除
+async function deleteItem(id, name) {
+    if (!confirm(`「${name}」を削除しますか？\nこの操作は取り消せません。`)) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/admin/items/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            alert('削除しました');
+            await loadItems();
+        } else {
+            alert('削除に失敗しました: ' + data.error);
+        }
+    } catch (error) {
+        console.error('削除エラー:', error);
+        alert('削除に失敗しました');
+    }
+}
+</script>
+
+</body>
+</html>

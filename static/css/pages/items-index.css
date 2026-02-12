@@ -1,0 +1,283 @@
+/* ==========================================
+   仏具図鑑トップページ
+   ========================================== */
+
+.items-top-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-lg, 16px);
+}
+
+/* ヘッダー部分 */
+.items-header {
+    text-align: center;
+    margin-bottom: var(--spacing-3xl, 32px);
+    padding: var(--spacing-2xl, 24px);
+    background: white;
+    border-radius: var(--radius-xl, 16px);
+    box-shadow: var(--shadow-sm, 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+}
+
+body.dark-mode .items-header {
+    background: var(--color-gray-800, #1a202c);
+}
+
+.items-header .header-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-sm, 8px);
+}
+
+.items-header h1 {
+    font-size: var(--font-4xl, 2.25rem);
+    margin: var(--spacing-sm, 8px) 0;
+    color: var(--color-gray-700, #2d3748);
+    font-weight: var(--font-bold, 700);
+}
+
+body.dark-mode .items-header h1 {
+    color: white;
+}
+
+.items-header .items-subtitle {
+    font-size: var(--font-base, 1rem);
+    color: var(--color-gray-500, #718096);
+    margin: var(--spacing-sm, 8px) 0 var(--spacing-lg, 16px);
+}
+
+body.dark-mode .items-header .items-subtitle {
+    color: var(--color-gray-400, #a0aec0);
+}
+
+/* カウントバッジ */
+.items-count-badge {
+    display: inline-flex;
+    align-items: baseline;
+    background: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    color: white;
+    padding: var(--spacing-sm, 8px) var(--spacing-2xl, 24px);
+    border-radius: var(--radius-full, 9999px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.items-count-badge .count-number {
+    font-size: var(--font-4xl, 2.25rem);
+    font-weight: var(--font-bold, 700);
+    margin-right: var(--spacing-xs, 4px);
+}
+
+.items-count-badge .count-label {
+    font-size: var(--font-base, 1rem);
+}
+
+/* 探し方セクション */
+.search-methods {
+    margin-bottom: var(--spacing-3xl, 32px);
+}
+
+.search-methods h2 {
+    text-align: center;
+    font-size: var(--font-2xl, 1.5rem);
+    margin-bottom: var(--spacing-2xl, 24px);
+    color: var(--color-gray-700, #2d3748);
+    font-weight: var(--font-semibold, 600);
+}
+
+body.dark-mode .search-methods h2 {
+    color: white;
+}
+
+/* メソッドカード */
+.method-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg, 16px);
+}
+
+.method-card {
+    background: white;
+    border: 2px solid var(--color-gray-100, #f5f5f5);
+    border-radius: var(--radius-xl, 16px);
+    padding: var(--spacing-2xl, 24px) var(--spacing-lg, 16px);
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: var(--transition-slow, 0.3s ease);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm, 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+}
+
+body.dark-mode .method-card {
+    background: var(--color-gray-800, #1a202c);
+    border-color: var(--color-gray-700, #2d3748);
+}
+
+.method-card:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (hover: hover) {
+    .method-card:hover {
+        border-color: var(--color-primary, #667eea);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+        transform: translateY(-2px);
+    }
+}
+
+.method-card .method-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md, 12px);
+}
+
+.method-card h3 {
+    font-size: var(--font-lg, 1.125rem);
+    margin-bottom: var(--spacing-sm, 8px);
+    color: var(--color-gray-700, #2d3748);
+    font-weight: var(--font-semibold, 600);
+}
+
+body.dark-mode .method-card h3 {
+    color: white;
+}
+
+.method-card p {
+    font-size: var(--font-sm, 0.875rem);
+    color: var(--color-gray-500, #718096);
+    margin: 0;
+    line-height: 1.4;
+}
+
+body.dark-mode .method-card p {
+    color: var(--color-gray-400, #a0aec0);
+}
+
+/* カテゴリプレビュー */
+.categories-preview {
+    background: white;
+    border-radius: var(--radius-xl, 16px);
+    padding: var(--spacing-2xl, 24px);
+    box-shadow: var(--shadow-sm, 0 2px 4px -1px rgba(0, 0, 0, 0.06));
+}
+
+body.dark-mode .categories-preview {
+    background: var(--color-gray-800, #1a202c);
+}
+
+.categories-preview h3 {
+    font-size: var(--font-xl, 1.25rem);
+    margin-bottom: var(--spacing-lg, 16px);
+    color: var(--color-gray-700, #2d3748);
+    font-weight: var(--font-semibold, 600);
+}
+
+body.dark-mode .categories-preview h3 {
+    color: white;
+}
+
+.category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md, 12px);
+}
+
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm, 8px);
+    background: var(--color-gray-50, #f7fafc);
+    border: 1px solid var(--color-gray-200, #e2e8f0);
+    border-radius: var(--radius-full, 9999px);
+    padding: var(--spacing-sm, 8px) var(--spacing-lg, 16px);
+    text-decoration: none;
+    color: var(--color-gray-700, #2d3748);
+    font-size: var(--font-sm, 0.875rem);
+    transition: var(--transition-base, 0.2s ease);
+}
+
+body.dark-mode .category-tag {
+    background: var(--color-gray-700, #2d3748);
+    border-color: var(--color-gray-600, #4a5568);
+    color: var(--color-gray-200, #e2e8f0);
+}
+
+.category-tag:active {
+    transform: scale(0.95);
+}
+
+@media (hover: hover) {
+    .category-tag:hover {
+        background: var(--color-primary, #667eea);
+        color: white;
+        border-color: var(--color-primary, #667eea);
+    }
+}
+
+.category-tag .category-icon {
+    font-size: var(--font-xl, 1.25rem);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 480px) {
+    .items-top-page {
+        padding: var(--spacing-sm, 8px);
+    }
+
+    .items-header {
+        padding: var(--spacing-lg, 16px);
+    }
+
+    .items-header h1 {
+        font-size: var(--font-3xl, 1.875rem);
+    }
+    
+    .items-header .header-icon {
+        font-size: 2.5rem;
+    }
+    
+    .items-count-badge .count-number {
+        font-size: var(--font-3xl, 1.875rem);
+    }
+    
+    .method-card .method-icon {
+        font-size: 2rem;
+    }
+    
+    .method-card h3 {
+        font-size: var(--font-base, 1rem);
+    }
+    
+    .method-card p {
+        font-size: var(--font-xs, 0.75rem);
+    }
+}
+
+@media (min-width: 768px) {
+    /* タブレット以上 */
+    .items-top-page {
+        padding: var(--spacing-2xl, 24px);
+    }
+
+    .method-cards {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-2xl, 24px);
+    }
+    
+    .items-header h1 {
+        font-size: var(--font-4xl, 2.25rem);
+    }
+    
+    .method-card {
+        padding: var(--spacing-3xl, 32px) var(--spacing-2xl, 24px);
+    }
+    
+    .method-card .method-icon {
+        font-size: 3rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    /* PC */
+    .items-top-page {
+        padding: var(--spacing-3xl, 32px) var(--spacing-2xl, 24px);
+    }
+}
