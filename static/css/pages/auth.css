@@ -1,0 +1,147 @@
+/* ==========================================
+   認証ページ専用スタイル
+   (ログイン、登録、パスワードリセット)
+   ========================================== */
+
+/* === ページレイアウト === */
+body.auth-page {
+    background: var(--gradient-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+}
+
+/* === 認証コンテナ === */
+.auth-container {
+    background: white;
+    padding: var(--spacing-4xl) var(--spacing-3xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.register-container {
+    max-width: 500px;
+}
+
+/* === アイコン === */
+.lock-icon,
+.auth-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-xl);
+}
+
+/* === メッセージ === */
+.success-message {
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: var(--font-sm);
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
+    border: 2px solid #c3e6cb;
+    animation: slideDown var(--transition-slow) ease;
+}
+
+.error-message {
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: var(--font-sm);
+    background: var(--color-error-light);
+    color: var(--color-error-dark);
+    border: 2px solid #f5c6cb;
+    animation: slideDown var(--transition-slow) ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* === リンクコンテナ === */
+.links-container {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--color-gray-200);
+}
+
+.password-reset-link {
+    display: block;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: var(--font-sm);
+    margin-top: var(--spacing-md);
+    transition: color var(--transition-base);
+}
+
+.password-reset-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+/* === セキュリティノート === */
+.security-note {
+    margin-top: var(--spacing-xl);
+    padding: var(--spacing-md);
+    background: var(--color-warning-light);
+    border-left: 4px solid var(--color-warning);
+    text-align: left;
+    font-size: var(--font-sm);
+    color: var(--color-warning-dark);
+    border-radius: var(--radius-sm);
+}
+
+/* === ローディング === */
+.auth-loading-spinner {
+    display: none;
+    margin-top: var(--spacing-md);
+}
+
+.auth-loading-spinner.show {
+    display: block;
+}
+
+.auth-spinner {
+    border: 3px solid var(--color-gray-200);
+    border-top: 3px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.auth-loading-text {
+    margin-top: var(--spacing-md);
+    color: var(--color-gray-600);
+}
+
+/* === レスポンシブ === */
+@media (max-width: 480px) {
+    .auth-container {
+        padding: var(--spacing-3xl) var(--spacing-xl);
+    }
+
+    .lock-icon,
+    .auth-icon {
+        font-size: 2.5rem;
+    }
+}

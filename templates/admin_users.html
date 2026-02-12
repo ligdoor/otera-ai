@@ -3,572 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ユーザー管理</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        /* ヘッダー */
-        header {
-            background: white;
-            border-radius: 16px;
-            padding: 24px 32px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        header h1 {
-            font-size: 28px;
-            color: #1a202c;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-        }
-
-        .pending-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(245, 87, 108, 0.3);
-        }
-
-        .pending-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(245, 87, 108, 0.4);
-        }
-
-        .pending-badge {
-            background: white;
-            color: #f5576c;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 700;
-        }
-
-        .back-btn {
-            color: #667eea;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .back-btn:hover {
-            transform: translateX(-4px);
-        }
-
-        /* メインコンテンツ */
-        main {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* 権限カード */
-        .role-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .role-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .role-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .role-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
-        }
-
-        .role-card.admin {
-            --gradient-start: #f093fb;
-            --gradient-end: #f5576c;
-        }
-
-        .role-card.editor {
-            --gradient-start: #4facfe;
-            --gradient-end: #00f2fe;
-        }
-
-        .role-card.viewer {
-            --gradient-start: #43e97b;
-            --gradient-end: #38f9d7;
-        }
-
-        .role-card h3 {
-            font-size: 18px;
-            margin-bottom: 16px;
-            color: #1a202c;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .role-card h3 span {
-            font-size: 24px;
-        }
-
-        .role-card ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .role-card li {
-            padding: 8px 0;
-            color: #4a5568;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .role-card li::before {
-            content: '✓';
-            color: var(--gradient-start);
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        /* テーブルコンテナ */
-        .user-table-container {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-        }
-
-        /* テーブル */
-        .user-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .user-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .user-table th {
-            padding: 16px;
-            text-align: left;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .user-table th:first-child {
-            border-top-left-radius: 12px;
-        }
-
-        .user-table th:last-child {
-            border-top-right-radius: 12px;
-        }
-
-        .user-table tbody tr {
-            transition: all 0.2s;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .user-table tbody tr:hover {
-            background: #f7fafc;
-            transform: scale(1.01);
-        }
-
-        .user-table td {
-            padding: 16px;
-            color: #2d3748;
-            vertical-align: middle;
-        }
-
-        .user-table td strong {
-            color: #1a202c;
-            font-weight: 600;
-        }
-
-        /* バッジ */
-        .role-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            white-space: nowrap;
-        }
-
-        .role-badge.admin {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .role-badge.editor {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .role-badge.viewer {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .status-badge.active {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-badge.inactive {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        /* ボタン */
-        .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .btn-edit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin-right: 8px;
-        }
-
-        .btn-edit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-delete {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .btn-delete:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
-        }
-
-        .self-badge {
-            color: #718096;
-            font-size: 13px;
-            font-style: italic;
-        }
-
-        /* モーダル */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-header {
-            padding: 24px 32px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px 20px 0 0;
-        }
-
-        .modal-header h2 {
-            color: white;
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .modal-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            font-size: 28px;
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: rotate(90deg);
-        }
-
-        .modal-body {
-            padding: 32px;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #2d3748;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-input:disabled {
-            background: #f7fafc;
-            color: #718096;
-        }
-
-        .modal-footer {
-            padding: 24px 32px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        .btn-cancel {
-            background: #e2e8f0;
-            color: #4a5568;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-cancel:hover {
-            background: #cbd5e0;
-        }
-
-        .btn-save {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #718096;
-            font-style: italic;
-        }
-
-        /* レスポンシブ */
-        @media (max-width: 768px) {
-            body {
-                padding: 12px;
-            }
-
-            header {
-                padding: 16px;
-            }
-
-            header h1 {
-                font-size: 22px;
-            }
-
-            .user-table-container {
-                padding: 16px;
-            }
-
-            .modal-content {
-                width: 95%;
-            }
-
-            .modal-body {
-                padding: 20px;
-            }
-        }
-    </style>
+    <title>ユーザー管理 - 寺院情報管理システム</title>
+    
+    <!-- 新CSS構成 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout/common-layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/forms.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/modals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/badges.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/tables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin-users.css') }}">
 </head>
-<body>
+<body class="admin-page">
 
-<header>
+<header class="header-admin">
     <div class="header-content">
         <h1>
             <span>👥</span>
             ユーザー管理
         </h1>
-        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-            <a href="/pending-users" class="pending-btn">
+        <div class="btn-group">
+            <a href="/admin/pending-users" class="btn btn-warning btn-sm pending-btn">
                 <span>⏳</span>
-                <span>承認待ち一覧</span>
-                <span id="pending-count-badge" class="pending-badge" style="display: none;"></span>
+                承認待ち
+                <span class="badge-light" id="pending-count-badge" style="display:none;">0</span>
             </a>
-            <a href="/admin" class="back-btn">
+            <a href="/admin" class="btn btn-back">
                 <span>←</span>
-                <span>管理画面へ</span>
+                管理画面に戻る
             </a>
         </div>
     </div>
 </header>
 
-<main>
+<main class="container">
     <!-- 権限説明カード -->
     <div class="role-info">
-        <div class="role-card admin">
+        <div class="role-card card-bordered admin">
             <h3>
                 <span>🔐</span>
                 管理者
             </h3>
             <ul>
-                <li>全機能利用可能</li>
+                <li>全ての操作権限</li>
                 <li>ユーザー管理</li>
-                <li>項目設定変更</li>
+                <li>システム設定</li>
+                <li>メンテナンスモード</li>
             </ul>
         </div>
-        <div class="role-card editor">
+
+        <div class="role-card card-bordered editor">
             <h3>
                 <span>✏️</span>
                 編集者
             </h3>
             <ul>
-                <li>寺院データの追加・編集・削除</li>
-                <li>CSV インポート/エクスポート</li>
-                <li>コメント追加</li>
+                <li>データの編集・追加</li>
+                <li>CSV エクスポート</li>
+                <li>統計情報の確認</li>
             </ul>
         </div>
-        <div class="role-card viewer">
+
+        <div class="role-card card-bordered viewer">
             <h3>
                 <span>👁️</span>
                 閲覧者
@@ -614,32 +113,38 @@
         <form id="edit-form">
             <div class="modal-body">
                 <input type="hidden" id="edit-user-id">
+                
                 <div class="form-group">
                     <label class="form-label">ユーザーID</label>
                     <input type="text" id="edit-user-id-display" class="form-input" disabled>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">名前 *</label>
+                    <label class="form-label">名前 <span class="required">*</span></label>
                     <input type="text" id="edit-name" class="form-input" required>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">メールアドレス *</label>
+                    <label class="form-label">メールアドレス <span class="required">*</span></label>
                     <input type="email" id="edit-email" class="form-input" required>
                 </div>
+                
                 <div class="form-group">
                     <label class="form-label">所属</label>
                     <input type="text" id="edit-department" class="form-input" placeholder="例: 総務部">
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">権限 *</label>
+                    <label class="form-label">権限 <span class="required">*</span></label>
                     <select id="edit-role" class="form-select" required>
                         <option value="viewer">👁️ 閲覧者 (Viewer)</option>
                         <option value="editor">✏️ 編集者 (Editor)</option>
                         <option value="admin">🔐 管理者 (Admin)</option>
                     </select>
                 </div>
+                
                 <div class="form-group">
-                    <label class="form-label">ステータス *</label>
+                    <label class="form-label">ステータス <span class="required">*</span></label>
                     <select id="edit-status" class="form-select" required>
                         <option value="active">✅ 有効</option>
                         <option value="inactive">❌ 無効</option>
@@ -647,10 +152,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="closeModal('edit-modal')">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('edit-modal')">
                     キャンセル
                 </button>
-                <button type="submit" class="btn-save">
+                <button type="submit" class="btn btn-primary">
                     <span>💾</span>
                     変更を保存
                 </button>
@@ -680,7 +185,6 @@ async function checkPendingUsers() {
 
 document.addEventListener('DOMContentLoaded', function() {
     checkPendingUsers();
-    //setInterval(checkPendingUsers, 30000);
 });
 
 let currentUserId = '';
@@ -722,26 +226,26 @@ async function loadUsers() {
             
             const status = user.status || 'active';
             const statusBadge = status === 'active' 
-                ? '<span class="status-badge active">✅ 有効</span>'
-                : '<span class="status-badge inactive">❌ 無効</span>';
+                ? '<span class="badge badge-active">✅ 有効</span>'
+                : '<span class="badge badge-inactive">❌ 無効</span>';
             
             const isSelf = user.user_id === currentUserId;
             
             const buttons = isSelf 
-                ? '<span class="self-badge">（本人）</span>'
-                : `<button class="btn btn-edit" onclick="openEditModal('${user.user_id}', '${user.name}', '${user.email || ''}', '${user.department || ''}', '${user.role}', '${status}')">✏️ 編集</button>
-                   <button class="btn btn-delete" onclick="deleteUser('${user.user_id}', '${user.name}')">🗑️ 削除</button>`;
+                ? '<span class="badge-self">（本人）</span>'
+                : `<button class="btn btn-info btn-sm" onclick="openEditModal('${user.user_id}', '${user.name}', '${user.email || ''}', '${user.department || ''}', '${user.role}', '${status}')">✏️ 編集</button>
+                   <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.user_id}', '${user.name}')">🗑️ 削除</button>`;
             
             tr.innerHTML = `
                 <td><strong>${user.user_id}</strong></td>
                 <td>${user.name}</td>
                 <td>${user.email || '-'}</td>
                 <td>${user.department || '-'}</td>
-                <td><span class="role-badge ${user.role}">${roleMap[user.role]}</span></td>
+                <td><span class="badge badge-role badge-${user.role}">${roleMap[user.role]}</span></td>
                 <td>${statusBadge}</td>
                 <td>${user.created_at ? user.created_at.substring(0, 10) : '-'}</td>
                 <td>${user.last_login ? user.last_login.substring(0, 10) : '-'}</td>
-                <td>${buttons}</td>
+                <td class="table-actions">${buttons}</td>
             `;
             tbody.appendChild(tr);
         });

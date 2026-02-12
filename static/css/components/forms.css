@@ -1,0 +1,124 @@
+/* ==========================================
+   フォーム共通スタイル
+   ========================================== */
+
+/* === フォームグループ === */
+.form-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-gray-700);
+    font-weight: var(--font-semibold);
+    font-size: var(--font-sm);
+}
+
+.form-label .required {
+    color: var(--color-error);
+    margin-left: var(--spacing-xs);
+}
+
+.form-help {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-sm);
+    color: var(--color-gray-500);
+}
+
+/* === 入力フィールド === */
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    font-size: var(--font-base);
+    transition: border-color var(--transition-base);
+    background: white;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-input:disabled,
+.form-textarea:disabled,
+.form-select:disabled {
+    background: var(--color-gray-50);
+    color: var(--color-gray-400);
+    cursor: not-allowed;
+}
+
+/* テキストエリア */
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* セレクト */
+.form-select {
+    cursor: pointer;
+}
+
+/* === バリデーション === */
+.form-input.error,
+.form-textarea.error,
+.form-select.error {
+    border-color: var(--color-error);
+}
+
+.form-input.success,
+.form-textarea.success,
+.form-select.success {
+    border-color: var(--color-success);
+}
+
+.form-error {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-sm);
+    color: var(--color-error);
+}
+
+.form-success {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-sm);
+    color: var(--color-success);
+}
+
+/* === チェックボックス・ラジオボタン === */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-check-input {
+    width: auto;
+    margin: 0;
+}
+
+.form-check-label {
+    margin: 0;
+    font-weight: var(--font-normal);
+}
+
+/* === インラインフォーム === */
+.form-inline {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+}
+
+.form-inline .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}

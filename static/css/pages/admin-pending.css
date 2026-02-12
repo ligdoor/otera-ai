@@ -1,0 +1,87 @@
+/* ==========================================
+   承認待ちユーザーページ専用スタイル
+   ========================================== */
+
+/* === ページコンテナ === */
+.pending-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-3xl);
+}
+
+/* === ページタイトル === */
+.pending-title {
+    color: var(--color-gray-900);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.pending-subtitle {
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-3xl);
+    font-size: var(--font-base);
+}
+
+/* === アクション === */
+.pending-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.permission-select {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--color-gray-200);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    background: white;
+    cursor: pointer;
+    transition: border-color var(--transition-base);
+}
+
+.permission-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* === 備考セクション === */
+.notes-section {
+    background: var(--color-gray-50);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.notes-section strong {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-gray-600);
+}
+
+.notes-content {
+    color: var(--color-gray-800);
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+/* === レスポンシブ === */
+@media (max-width: 768px) {
+    .pending-container {
+        padding: var(--spacing-xl);
+    }
+
+    .pending-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .permission-select {
+        width: 100%;
+    }
+}

@@ -1,0 +1,306 @@
+/* ==========================================
+   ユーザー管理画面専用スタイル
+   ========================================== */
+
+/* ==========================================
+   権限カード
+   ========================================== */
+.role-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.role-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.role-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.role-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+}
+
+.role-card.admin {
+    --gradient-start: #f093fb;
+    --gradient-end: #f5576c;
+}
+
+.role-card.editor {
+    --gradient-start: #4facfe;
+    --gradient-end: #00f2fe;
+}
+
+.role-card.viewer {
+    --gradient-start: #43e97b;
+    --gradient-end: #38f9d7;
+}
+
+.role-card h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #1a202c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.role-card h3 span {
+    font-size: 24px;
+}
+
+.role-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.role-card li {
+    padding: 8px 0;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.role-card li::before {
+    content: '✓';
+    color: var(--gradient-start);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* ==========================================
+   承認待ちボタン
+   ========================================== */
+.pending-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(245, 87, 108, 0.3);
+}
+
+.pending-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(245, 87, 108, 0.4);
+}
+
+.pending-badge {
+    background: white;
+    color: #f5576c;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 700;
+}
+
+/* ==========================================
+   ユーザーテーブル
+   ========================================== */
+.user-table-container {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.user-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.user-table th {
+    padding: 16px;
+    text-align: left;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.user-table th:first-child {
+    border-top-left-radius: 12px;
+}
+
+.user-table th:last-child {
+    border-top-right-radius: 12px;
+}
+
+.user-table tbody tr {
+    transition: all 0.2s;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.user-table tbody tr:hover {
+    background: #f7fafc;
+    transform: scale(1.01);
+}
+
+.user-table td {
+    padding: 16px;
+    color: #2d3748;
+    vertical-align: middle;
+}
+
+.user-table td strong {
+    color: #1a202c;
+    font-weight: 600;
+}
+
+/* ==========================================
+   バッジ
+   ========================================== */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+
+.role-badge.admin {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.role-badge.editor {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.role-badge.viewer {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.self-badge {
+    color: #667eea;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+/* ==========================================
+   テーブル内のボタン
+   ========================================== */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-edit {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 172, 254, 0.3);
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(245, 87, 108, 0.3);
+}
+
+.btn-approve {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.btn-reject {
+    background: #f44336;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #da190b;
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   レスポンシブ
+   ========================================== */
+@media (max-width: 768px) {
+    .user-table-container {
+        padding: 16px;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 12px 8px;
+        font-size: 13px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}

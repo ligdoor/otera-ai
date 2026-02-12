@@ -1,0 +1,275 @@
+/* ==========================================
+   共通レイアウトスタイル
+   ========================================== */
+
+/* === ページ全体のレイアウト === */
+body.admin-page {
+    background: var(--gradient-primary);
+    min-height: 100vh;
+    padding: var(--spacing-xl);
+}
+
+body.auth-page {
+    background: var(--gradient-primary);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* === コンテナ === */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.container-sm {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.container-xs {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* === ヘッダー === */
+.header-admin {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl) var(--spacing-3xl);
+    margin-bottom: var(--spacing-2xl);
+    box-shadow: var(--shadow-md);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+}
+
+.header-content h1 {
+    font-size: var(--font-3xl);
+    color: var(--color-gray-800);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-weight: var(--font-bold);
+    margin: 0;
+}
+
+/* === メインコンテンツ === */
+main {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* === グリッドシステム === */
+.grid {
+    display: grid;
+    gap: var(--spacing-xl);
+}
+
+.grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* === Flexboxユーティリティ === */
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-start {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.flex-end {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.gap-sm {
+    gap: var(--spacing-sm);
+}
+
+.gap-md {
+    gap: var(--spacing-md);
+}
+
+.gap-lg {
+    gap: var(--spacing-lg);
+}
+
+.gap-xl {
+    gap: var(--spacing-xl);
+}
+
+/* === セクション === */
+.section {
+    margin-bottom: var(--spacing-3xl);
+}
+
+.section-title {
+    font-size: var(--font-2xl);
+    font-weight: var(--font-bold);
+    color: var(--color-gray-800);
+    margin-bottom: var(--spacing-xl);
+}
+
+.section-subtitle {
+    font-size: var(--font-base);
+    color: var(--color-gray-600);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* === 空状態 === */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-4xl) var(--spacing-xl);
+    color: var(--color-gray-400);
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-xl);
+}
+
+.empty-state-message {
+    font-size: var(--font-lg);
+    color: var(--color-gray-500);
+}
+
+/* === ローディング === */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-4xl);
+}
+
+.loading-spinner {
+    border: 3px solid var(--color-gray-200);
+    border-top: 3px solid var(--color-primary);
+    border-radius: var(--radius-full);
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: var(--spacing-lg);
+    color: var(--color-gray-600);
+}
+
+/* === ページ固有のコンテナ === */
+.auth-container {
+    background: white;
+    padding: var(--spacing-4xl) var(--spacing-3xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    width: 90%;
+    max-width: 400px;
+}
+
+.pending-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-3xl);
+}
+
+/* === レスポンシブ === */
+@media (max-width: 1024px) {
+    .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body.admin-page {
+        padding: var(--spacing-md);
+    }
+
+    .header-admin {
+        padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-content h1 {
+        font-size: var(--font-xl);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-container {
+        padding: var(--spacing-3xl) var(--spacing-2xl);
+    }
+
+    .pending-container {
+        padding: var(--spacing-xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content h1 {
+        font-size: var(--font-lg);
+    }
+
+    .section-title {
+        font-size: var(--font-xl);
+    }
+}

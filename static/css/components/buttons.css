@@ -1,0 +1,170 @@
+/* ==========================================
+   ボタン共通スタイル
+   ========================================== */
+
+/* === ベースボタン === */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-2xl);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* === サイズバリエーション === */
+.btn-sm {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-size: var(--font-xs);
+}
+
+.btn-lg {
+    padding: var(--spacing-lg) var(--spacing-3xl);
+    font-size: var(--font-lg);
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* === カラーバリエーション === */
+
+/* プライマリー */
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* セカンダリー */
+.btn-secondary {
+    background: var(--color-gray-200);
+    color: var(--color-gray-700);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--color-gray-300);
+}
+
+/* 成功 */
+.btn-success {
+    background: var(--color-success);
+    color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: var(--color-success-dark);
+    transform: translateY(-2px);
+}
+
+/* 危険 */
+.btn-danger {
+    background: var(--gradient-admin);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(245, 87, 108, 0.3);
+}
+
+/* 情報 */
+.btn-info {
+    background: var(--gradient-editor);
+    color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(79, 172, 254, 0.3);
+}
+
+/* 警告 */
+.btn-warning {
+    background: var(--color-warning);
+    color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: var(--color-warning-dark);
+    transform: translateY(-2px);
+}
+
+/* アウトライン */
+.btn-outline {
+    background: white;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+/* テキストのみ */
+.btn-text {
+    background: none;
+    color: var(--color-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.btn-text:hover:not(:disabled) {
+    background: var(--color-primary-light);
+}
+
+/* === 特殊なボタン === */
+
+/* 戻るボタン */
+.btn-back {
+    color: var(--color-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+}
+
+.btn-back:hover {
+    transform: translateX(-4px);
+    background: var(--color-primary-light);
+}
+
+/* ヘッダーボタン */
+.btn-header {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-sm);
+}
+
+.btn-header:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* === ボタングループ === */
+.btn-group {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.btn-group .btn {
+    flex: 1;
+    min-width: fit-content;
+}

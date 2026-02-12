@@ -1,0 +1,164 @@
+/* ==========================================
+   テーブル共通スタイル
+   ========================================== */
+
+/* === テーブルコンテナ === */
+.table-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+    box-shadow: var(--shadow-md);
+    overflow-x: auto;
+}
+
+/* === ベーステーブル === */
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* === テーブルヘッダー === */
+.table thead {
+    background: var(--gradient-primary);
+}
+
+.table th {
+    padding: var(--spacing-lg);
+    text-align: left;
+    color: white;
+    font-weight: var(--font-semibold);
+    font-size: var(--font-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.table th:first-child {
+    border-top-left-radius: var(--radius-lg);
+}
+
+.table th:last-child {
+    border-top-right-radius: var(--radius-lg);
+}
+
+/* === テーブルボディ === */
+.table tbody tr {
+    transition: all var(--transition-base);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: var(--color-gray-50);
+    transform: scale(1.01);
+}
+
+.table td {
+    padding: var(--spacing-lg);
+    color: var(--color-gray-700);
+    vertical-align: middle;
+}
+
+.table td strong {
+    color: var(--color-gray-800);
+    font-weight: var(--font-semibold);
+}
+
+/* === 空状態 === */
+.table-empty {
+    text-align: center;
+    padding: var(--spacing-4xl) var(--spacing-xl);
+    color: var(--color-gray-400);
+}
+
+/* === ユーザーテーブル（特定スタイル） === */
+.user-table-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl);
+    box-shadow: var(--shadow-md);
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.user-table thead {
+    background: var(--gradient-primary);
+}
+
+.user-table th {
+    padding: var(--spacing-lg);
+    text-align: left;
+    color: white;
+    font-weight: var(--font-semibold);
+    font-size: var(--font-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.user-table th:first-child {
+    border-top-left-radius: var(--radius-lg);
+}
+
+.user-table th:last-child {
+    border-top-right-radius: var(--radius-lg);
+}
+
+.user-table tbody tr {
+    transition: all var(--transition-base);
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.user-table tbody tr:hover {
+    background: var(--color-gray-50);
+    transform: scale(1.01);
+}
+
+.user-table td {
+    padding: var(--spacing-lg);
+    color: var(--color-gray-700);
+    vertical-align: middle;
+}
+
+.user-table td strong {
+    color: var(--color-gray-800);
+    font-weight: var(--font-semibold);
+}
+
+/* === テーブル内のアクション === */
+.table-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+/* === レスポンシブ === */
+@media (max-width: 768px) {
+    .table-container,
+    .user-table-container {
+        padding: var(--spacing-lg);
+    }
+
+    .table th,
+    .table td,
+    .user-table th,
+    .user-table td {
+        padding: var(--spacing-md) var(--spacing-sm);
+        font-size: var(--font-sm);
+    }
+
+    /* スクロール可能にする */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}

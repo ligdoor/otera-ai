@@ -4,10 +4,12 @@ from services.auth import check_login_attempts, record_login_attempt, authentica
 from utils.decorators import login_required, update_session_activity, check_session_timeout
 from config import Config
 from flask_extensions import limiter
+from werkzeug.security import generate_password_hash, check_password_hash
 from services.supabase_db import get_supabase_client
 from utils.email_service import email_service
-import secrets  # パスワードリセット用
+import uuid
 from datetime import datetime, timedelta
+import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -460,6 +462,152 @@ def _change_password_sheets(user_id, current_pass, new_pass):
             return jsonify({"message": "現在のパスワードが間違っています"}), 400
     else:
         return jsonify({"message": "ユーザーが見つかりません"}), 404
+
+
+# ============================================================
+# ★★★ パスワードリセット機能（ここから追加） ★★★
+# ============================================================
+
+@auth_bp.route('/password-reset-request', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
+def password_reset_request():
+    """パスワードリセットリクエスト画面"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        
+        if not email:
+            return render_template('password_reset_request.html', 
+                                 error='メールアドレスを入力してください')
+        
+        try:
+            client = get_supabase_client()
+            
+            # ユーザーを検索
+            response = client.table('users').select('*').eq('email', email).execute()
+            
+            # セキュリティのため、ユーザーが存在しない場合でも同じメッセージを表示
+            # （悪意のある人がメールアドレスの存在確認をできないようにする）
+            if response.data and len(response.data) > 0:
+                user = response.data[0]
+                
+                # リセットトークンを生成（推測不可能なランダム文字列）
+                token = secrets.token_urlsafe(32)
+                
+                # 有効期限を設定（1時間後）
+                expires_at = datetime.utcnow() + timedelta(hours=1)
+                
+                # トークンをデータベースに保存
+                client.table('password_reset_tokens').insert({
+                    'user_id': user['id'],
+                    'token': token,
+                    'expires_at': expires_at.isoformat(),
+                    'used': False
+                }).execute()
+                
+                # リセットリンクを生成
+                reset_link = url_for('auth.password_reset', 
+                                   token=token, 
+                                   _external=True)  # _external=True で完全なURLを生成
+                
+                # メールを送信
+                email_service.send_password_reset_email(
+                    to_email=email,
+                    reset_link=reset_link,
+                    user_name=user.get('name')
+                )
+            
+            # 成功メッセージ（ユーザーの存在に関わらず同じメッセージ）
+            return render_template('password_reset_request.html', 
+                                 success='パスワードリセット用のメールを送信しました。メールをご確認ください。')
+            
+        except Exception as e:
+            print(f"パスワードリセットリクエストエラー: {str(e)}")
+            return render_template('password_reset_request.html', 
+                                 error='エラーが発生しました。もう一度お試しください。')
+    
+    return render_template('password_reset_request.html')
+
+
+@auth_bp.route('/password-reset/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
+def password_reset(token):
+    """パスワードリセット実行画面"""
+    try:
+        client = get_supabase_client()
+        
+        # トークンの有効性を確認
+        response = client.table('password_reset_tokens')\
+            .select('*')\
+            .eq('token', token)\
+            .eq('used', False)\
+            .execute()
+        
+        if not response.data or len(response.data) == 0:
+            return render_template('password_reset.html', 
+                                 token=token,
+                                 error='無効なリセットリンクです。')
+        
+        token_data = response.data[0]
+        
+        # 有効期限を確認
+        expires_at = datetime.fromisoformat(token_data['expires_at'].replace('Z', '+00:00'))
+        now = datetime.now(expires_at.tzinfo)
+        
+        if now > expires_at:
+            return render_template('password_reset.html', 
+                                 token=token,
+                                 error='リセットリンクの有効期限が切れています。もう一度リクエストしてください。')
+        
+        # POSTリクエスト（パスワード変更実行）
+        if request.method == 'POST':
+            password = request.form.get('password', '').strip()
+            password_confirm = request.form.get('password_confirm', '').strip()
+            
+            # バリデーション
+            if not password or not password_confirm:
+                return render_template('password_reset.html', 
+                                     token=token,
+                                     error='パスワードを入力してください。')
+            
+            if password != password_confirm:
+                return render_template('password_reset.html', 
+                                     token=token,
+                                     error='パスワードが一致しません。')
+            
+            if len(password) < 8:
+                return render_template('password_reset.html', 
+                                     token=token,
+                                     error='パスワードは8文字以上で設定してください。')
+            
+            # パスワードをハッシュ化
+            hashed_password = bcrypt.hashpw(
+                password.encode('utf-8'), 
+                bcrypt.gensalt()
+            ).decode('utf-8')
+            
+            # パスワードを更新
+            client.table('users').update({
+                'password_hash': hashed_password
+            }).eq('id', token_data['user_id']).execute()
+            
+            # トークンを使用済みにする
+            client.table('password_reset_tokens').update({
+                'used': True
+            }).eq('id', token_data['id']).execute()
+            
+            # ログインページにリダイレクト（成功メッセージ付き）
+            return render_template('login.html', 
+                                 success='パスワードを変更しました。新しいパスワードでログインしてください。')
+        
+        # GETリクエスト（パスワード入力画面を表示）
+        return render_template('password_reset.html', token=token)
+        
+    except Exception as e:
+        print(f"パスワードリセットエラー: {str(e)}")
+        return render_template('password_reset.html', 
+                             token=token,
+                             error='エラーが発生しました。もう一度お試しください。')
+
 
 def render_login_page():
     """ログインページのHTMLを返す（連打防止機能付き）"""

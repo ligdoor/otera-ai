@@ -1,0 +1,145 @@
+/* ==========================================
+   バッジ共通スタイル
+   ========================================== */
+
+/* === ベースバッジ === */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: var(--font-sm);
+    font-weight: var(--font-semibold);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* === ロールバッジ === */
+.badge-role {
+    color: white;
+}
+
+.badge-admin {
+    background: var(--gradient-admin);
+}
+
+.badge-editor {
+    background: var(--gradient-editor);
+}
+
+.badge-viewer {
+    background: var(--gradient-viewer);
+}
+
+/* === ステータスバッジ === */
+.badge-status {
+    font-weight: var(--font-semibold);
+}
+
+.badge-success,
+.badge-active {
+    background: var(--color-success-light);
+    color: var(--color-success-dark);
+}
+
+.badge-error,
+.badge-inactive {
+    background: var(--color-error-light);
+    color: var(--color-error-dark);
+}
+
+.badge-warning,
+.badge-pending {
+    background: var(--color-warning-light);
+    color: var(--color-warning-dark);
+}
+
+.badge-info {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+/* === ライトバッジ === */
+.badge-light {
+    background: white;
+    color: var(--color-accent-red);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: var(--font-xs);
+    font-weight: var(--font-bold);
+}
+
+/* === ユーザーバッジ === */
+.user-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-sm);
+}
+
+/* === セルフバッジ === */
+.badge-self {
+    color: var(--color-primary);
+    font-size: var(--font-sm);
+    font-weight: var(--font-semibold);
+}
+
+/* === カウントバッジ === */
+.badge-count {
+    background: var(--color-error);
+    color: white;
+    min-width: 20px;
+    height: 20px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-xs);
+    font-weight: var(--font-bold);
+    padding: 0 var(--spacing-xs);
+}
+
+/* === ドットバッジ === */
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    display: inline-block;
+    margin-right: var(--spacing-xs);
+}
+
+.badge-dot.success {
+    background: var(--color-success);
+}
+
+.badge-dot.error {
+    background: var(--color-error);
+}
+
+.badge-dot.warning {
+    background: var(--color-warning);
+}
+
+.badge-dot.info {
+    background: var(--color-info);
+}
+
+/* === タイムスタンプバッジ === */
+.badge-timestamp {
+    color: var(--color-gray-500);
+    font-size: var(--font-sm);
+    font-weight: var(--font-normal);
+}
+
+/* === ユーザーIDバッジ === */
+.badge-user-id {
+    color: var(--color-gray-600);
+    font-size: var(--font-sm);
+    font-family: 'Courier New', monospace;
+    background: var(--color-gray-100);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    display: inline-block;
+}

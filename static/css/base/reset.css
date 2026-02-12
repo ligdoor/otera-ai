@@ -1,0 +1,73 @@
+/* ==========================================
+   CSSリセット・基本設定
+   ========================================== */
+
+/* ボックスサイズをborder-boxに統一 */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* HTMLとBODYの基本設定 */
+html {
+    height: 100%;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                 "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-size: var(--font-base);
+    line-height: 1.5;
+    color: var(--color-gray-800);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 見出しのリセット */
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-weight: var(--font-semibold);
+    line-height: 1.2;
+}
+
+/* リストのリセット */
+ul, ol {
+    list-style: none;
+}
+
+/* リンクのリセット */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ボタンのリセット */
+button {
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+/* フォーム要素のリセット */
+input,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* 画像のリセット */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
