@@ -502,6 +502,40 @@ async function deleteItem(id, name) {
         alert('削除に失敗しました');
     }
 }
+
+// ドロップダウンメニューの制御
+function toggleDropdown(menuId) {
+    const menu = document.getElementById(menuId);
+    const allMenus = document.querySelectorAll('.dropdown-menu');
+    
+    // 他のメニューを全て閉じる
+    allMenus.forEach(m => {
+        if (m.id !== menuId) {
+            m.style.display = 'none';
+        }
+    });
+    
+    // クリックされたメニューを開閉
+    if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+    } else {
+        menu.style.display = 'block';
+    }
+}
+
+function closeAllDropdowns() {
+    const allMenus = document.querySelectorAll('.dropdown-menu');
+    allMenus.forEach(m => {
+        m.style.display = 'none';
+    });
+}
+
+// メニュー外クリックで閉じる
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown')) {
+        closeAllDropdowns();
+    }
+});
 </script>
 
 </body>

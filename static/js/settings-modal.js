@@ -303,3 +303,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 10000);
 });
+// ==========================================
+// グローバル関数（ヘッダーから呼び出し用）
+// ==========================================
+function openSettingsModal() {
+    if (settingsModal && settingsModal.initialized) {
+        settingsModal.open();
+    } else {
+        console.error('設定モーダルが初期化されていません');
+    }
+}

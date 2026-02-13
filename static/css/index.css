@@ -452,11 +452,43 @@ transform: scale(1.05);
     cursor: pointer;
     font-size: 14px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transition: transform 0.2s;
+    transition: all 0.2s;
 }
 
 .clear-chat-btn:hover {
     transform: scale(1.05);
+    background: #dd2222;
+}
+
+/* 戻るボタン（仏具図鑑用） */
+.back-btn {
+    position: fixed;
+    top: 70px;
+    left: 10px;
+    z-index: 100;
+    background: #3877e4;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    background: #1253c4;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.back-btn:active {
+    transform: translateY(0);
 }
 /* === ダークモード === */
 body.dark-mode {
@@ -573,6 +605,15 @@ body.dark-mode .clear-chat-btn {
     background: rgba(46,46,46,0.9);  /* クリアボタン背景：半透明の濃いグレー */
     color: #aaa;  /* テキスト：グレー */
     border-color: #444;  /* ボーダー：グレー */
+}
+
+body.dark-mode .back-btn {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+body.dark-mode .back-btn:hover {
+    background: #1a202c;
 }
 
 body.dark-mode .favorites-toggle {

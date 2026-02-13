@@ -9,15 +9,12 @@
                 🔔
                 <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
             </button>
-            <button id="settings-btn" class="header-btn" title="表示設定">⚙️</button>
+            <button id="settings-btn" class="header-btn" title="表示設定" onclick="openSettingsModal()">⚙️</button>
             <a href="/admin" class="header-btn" title="管理画面">📊</a>
             <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')">🚪</a>
         </div>
     </div>
 </header>
-
-<!-- クリアボタン -->
-<button class="clear-chat-btn" onclick="clearAllChat()">🗑️ クリア</button>
 
 <style>
 .mobile-break {

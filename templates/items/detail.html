@@ -7,12 +7,19 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-size.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-modal.css') }}">
 </head>
 <body>
 
 {% include 'components/app_header.html' %}
 
-<button class="clear-chat-btn" onclick="history.back()" style="left: 10px;">← 戻る</button>
+<button class="back-btn" onclick="history.back()">
+    <span>←</span>
+    <span>戻る</span>
+</button>
+
+{% include 'components/notification_modal.html' %}
 
 <div style="margin-top: 80px; padding: 20px;">
     {% if item %}

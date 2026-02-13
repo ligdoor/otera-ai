@@ -18,6 +18,9 @@
 <!-- ヘッダー -->
 {% include 'components/app_header.html' %}
 
+<!-- クリアボタン（トップページのみ） -->
+<button class="clear-chat-btn" onclick="clearAllChat()">🗑️ クリア</button>
+
 <!-- チャットウィンドウ -->
 <div id="chat-window" onclick="hideMenu()">
     <div class="message ai-message" style="margin-top: 20px;">
