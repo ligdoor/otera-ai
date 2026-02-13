@@ -44,3 +44,6 @@ Flask-Limiter==3.5.0
 # Supabase接続
 supabase==2.10.0
 postgrest==0.18.0
+
+# 画像処理（WebP圧縮）
+Pillow==11.0.0

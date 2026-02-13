@@ -417,7 +417,7 @@ def get_admin_categories():
 @admin_bp.route('/api/admin/upload-image', methods=['POST'])
 @login_required
 def upload_image():
-    """画像アップロードAPI"""
+    """画像アップロードAPI（WebP圧縮）"""
     try:
         # 権限チェック
         user_id = session.get('user_id')
@@ -432,26 +432,54 @@ def upload_image():
             return jsonify({'success': False, 'error': 'ファイルがありません'}), 400
         
         file = request.files['file']
-        filename = request.form.get('filename', 'image.jpg')
+        original_filename = request.form.get('filename', 'image.jpg')
         
         if file.filename == '':
             return jsonify({'success': False, 'error': 'ファイルが選択されていません'}), 400
         
+        # 画像をWebP形式に圧縮
+        from PIL import Image
+        import io
+        
+        # 画像を読み込み
+        image = Image.open(file.stream)
+        
+        # RGBAの場合はRGBに変換（WebPはRGBAもサポートするが、lossyの場合はRGBが推奨）
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # 透明度がある場合は白背景で合成
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
+        elif image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # WebP形式で圧縮（lossy, quality=80）
+        webp_buffer = io.BytesIO()
+        image.save(webp_buffer, format='WebP', quality=80, method=6)
+        webp_bytes = webp_buffer.getvalue()
+        
+        # ファイル名を.webpに変更
+        filename_without_ext = original_filename.rsplit('.', 1)[0]
+        storage_path = f"{filename_without_ext}.webp"
+        
         # Supabase Storageにアップロード
-        file_bytes = file.read()
-        
-        # パスを設定（buddhist-items/ファイル名）
-        storage_path = f"{filename}"
-        
-        # アップロード実行
         upload_result = supabase.storage.from_('buddhist-items').upload(
             storage_path,
-            file_bytes,
-            file_options={"content-type": file.content_type}
+            webp_bytes,
+            file_options={"content-type": "image/webp"}
         )
         
         # 公開URLを取得
         public_url = supabase.storage.from_('buddhist-items').get_public_url(storage_path)
+        
+        # 圧縮情報をログ出力
+        original_size = len(file.read())
+        file.seek(0)
+        compressed_size = len(webp_bytes)
+        compression_ratio = (1 - compressed_size / original_size) * 100
+        print(f"[Image Upload] Original: {original_size:,} bytes → WebP: {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
         
         return jsonify({'success': True, 'url': public_url})
     
