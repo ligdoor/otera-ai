@@ -135,13 +135,41 @@ def items_search():
         
         items = []
         if keyword:
-            # 名前またはふりがなで検索
-            items_response = supabase.table('buddhist_items')\
-                .select('*')\
-                .eq('is_public', True)\
-                .or_(f'name.ilike.%{keyword}%,name_kana.ilike.%{keyword}%')\
-                .order('name')\
-                .execute()
+            # 行検索の定義（ま行なら「ま・み・む・め・も」で始まる）
+            kana_rows = {
+                'あ': ['あ', 'い', 'う', 'え', 'お'],
+                'か': ['か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'],
+                'さ': ['さ', 'し', 'す', 'せ', 'そ', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ'],
+                'た': ['た', 'ち', 'つ', 'て', 'と', 'だ', 'ぢ', 'づ', 'で', 'ど'],
+                'な': ['な', 'に', 'ぬ', 'ね', 'の'],
+                'は': ['は', 'ひ', 'ふ', 'へ', 'ほ', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'],
+                'ま': ['ま', 'み', 'む', 'め', 'も'],
+                'や': ['や', 'ゆ', 'よ'],
+                'ら': ['ら', 'り', 'る', 'れ', 'ろ'],
+                'わ': ['わ', 'を', 'ん']
+            }
+            
+            # keywordが行の代表文字（1文字）の場合は行検索
+            if len(keyword) == 1 and keyword in kana_rows:
+                # 行検索: 「ま」→「ま・み・む・め・も」で始まる
+                kana_list = kana_rows[keyword]
+                # OR条件を構築
+                or_conditions = ','.join([f'name_kana.ilike.{kana}%' for kana in kana_list])
+                
+                items_response = supabase.table('buddhist_items')\
+                    .select('*')\
+                    .eq('is_public', True)\
+                    .or_(or_conditions)\
+                    .order('name_kana')\
+                    .execute()
+            else:
+                # 通常検索: 名前またはふりがなで部分一致
+                items_response = supabase.table('buddhist_items')\
+                    .select('*')\
+                    .eq('is_public', True)\
+                    .or_(f'name.ilike.%{keyword}%,name_kana.ilike.%{keyword}%')\
+                    .order('name')\
+                    .execute()
             
             items = items_response.data if items_response.data else []
         
@@ -154,6 +182,8 @@ def items_search():
     
     except Exception as e:
         print(f"Error in items_search: {e}")
+        import traceback
+        traceback.print_exc()
         return render_template('items/search.html',
                              items=[],
                              keyword='',

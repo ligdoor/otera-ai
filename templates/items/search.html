@@ -7,6 +7,24 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    
+    <style>
+    /* 行ボタンのホバー効果 */
+    .kana-row-btn:hover {
+        background: var(--color-primary, #667eea) !important;
+        color: white !important;
+        border-color: var(--color-primary, #667eea) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 600px) {
+        .kana-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+    </style>
 </head>
 <body>
 
@@ -44,14 +62,18 @@
         <!-- あいうえお索引 -->
         <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
             <h3 style="margin-bottom: 15px;">頭文字から探す</h3>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                {% for kana in ['あ', 'か', 'さ', 'た', 'な', 'は', 'ま', 'や', 'ら', 'わ'] %}
+            <div class="kana-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;">
+                {% for kana, label in [('あ', 'あ行'), ('か', 'か行'), ('さ', 'さ行'), ('た', 'た行'), ('な', 'な行'), ('は', 'は行'), ('ま', 'ま行'), ('や', 'や行'), ('ら', 'ら行'), ('わ', 'わ行')] %}
                 <a href="/items/search?q={{ kana }}" 
-                   style="padding: 10px 15px; background: var(--color-gray-100); border-radius: 8px; text-decoration: none; color: var(--color-gray-700); transition: background 0.2s;">
-                    {{ kana }}
+                   class="kana-row-btn"
+                   style="padding: 12px 15px; background: var(--color-gray-100); border-radius: 8px; text-decoration: none; color: var(--color-gray-700); text-align: center; font-weight: 500; transition: all 0.2s; border: 2px solid transparent;">
+                    {{ label }}
                 </a>
                 {% endfor %}
             </div>
+            <p style="font-size: 0.85rem; color: var(--color-gray-500); margin-top: 15px; text-align: center;">
+                ※ あ行には「あいうえお」、か行には「かきくけこ・がぎぐげご」などが含まれます
+            </p>
         </div>
 
         <!-- 検索結果 -->

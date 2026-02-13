@@ -441,6 +441,11 @@ def upload_image():
         from PIL import Image
         import io
         
+        # 元のファイルサイズを先に取得
+        file.stream.seek(0, 2)  # ファイルの末尾に移動
+        original_size = file.stream.tell()
+        file.stream.seek(0)  # ファイルの先頭に戻す
+        
         # 画像を読み込み
         image = Image.open(file.stream)
         
@@ -465,21 +470,22 @@ def upload_image():
         storage_path = f"{filename_without_ext}.webp"
         
         # Supabase Storageにアップロード
-        upload_result = supabase.storage.from_('buddhist-items').upload(
+        upload_result = supabase.storage.from_('temple-images').upload(
             storage_path,
             webp_bytes,
             file_options={"content-type": "image/webp"}
         )
         
         # 公開URLを取得
-        public_url = supabase.storage.from_('buddhist-items').get_public_url(storage_path)
+        public_url = supabase.storage.from_('temple-images').get_public_url(storage_path)
         
         # 圧縮情報をログ出力
-        original_size = len(file.read())
-        file.seek(0)
         compressed_size = len(webp_bytes)
-        compression_ratio = (1 - compressed_size / original_size) * 100
-        print(f"[Image Upload] Original: {original_size:,} bytes → WebP: {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
+        if original_size > 0:
+            compression_ratio = (1 - compressed_size / original_size) * 100
+            print(f"[Image Upload] Original: {original_size:,} bytes → WebP: {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
+        else:
+            print(f"[Image Upload] WebP: {compressed_size:,} bytes")
         
         return jsonify({'success': True, 'url': public_url})
     
