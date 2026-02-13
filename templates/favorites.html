@@ -11,8 +11,6 @@
     
     <!-- Page CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-size.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-modal.css') }}">
     
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#667eea">
@@ -21,16 +19,13 @@
 <body>
 
 <!-- ヘッダー -->
-{% include 'components/app_header.html' %}
+{% include 'components/simple_header.html' %}
 
 <!-- 戻るボタン -->
 <button class="back-btn" onclick="window.location.href='/'">
     <span>←</span>
     <span>戻る</span>
 </button>
-
-<!-- 通知モーダル -->
-{% include 'components/notification_modal.html' %}
 
 <!-- メインコンテンツ -->
 <div style="margin-top: 80px; padding: 20px;">
@@ -46,9 +41,7 @@
 
 <!-- JavaScript -->
 <script src="{{ url_for('static', filename='js/app/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/app/notifications.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app/favorites.js') }}"></script>
-<script src="{{ url_for('static', filename='js/settings-modal.js') }}"></script>
 
 </body>
 </html>

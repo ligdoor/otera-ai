@@ -7,19 +7,17 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-size.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-modal.css') }}">
 </head>
 <body>
 
-{% include 'components/app_header.html' %}
+{% include 'components/simple_header.html' %}
 
 <button class="back-btn" onclick="window.location.href='/items'">
     <span>←</span>
     <span>戻る</span>
 </button>
 
-{% include 'components/notification_modal.html' %}
+<!-- 設定モーダル -->
 
 <div style="margin-top: 80px; padding: 20px;">
     <div style="max-width: 800px; margin: 0 auto;">

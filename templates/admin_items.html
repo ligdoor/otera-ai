@@ -38,7 +38,13 @@ label span[style*="color: red"] {
 <main style="max-width: 1400px; margin: 0 auto; padding: 20px;">
     
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h2 style="margin: 0;">🙏 仏具管理</h2>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h2 style="margin: 0;">🙏 仏具管理</h2>
+            <a href="/items" class="btn" style="background: #447fe6; color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.9rem;">
+                <span>←</span>
+                <span>仏具図鑑へ</span>
+            </a>
+        </div>
         <button class="btn btn-edit" onclick="openAddModal()" id="add-item-btn">
             <span class="icon">➕</span>
             <span>新規登録</span>

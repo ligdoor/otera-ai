@@ -1,0 +1,27 @@
+<header>
+    <div class="header-content">
+        <button class="header-btn" onclick="toggleDarkMode()">🌙</button>
+        <h1>🏯 寺院情報<br class="mobile-break">データベース</h1>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            <span style="color: white; font-size: 14px;" class="user-name-display">👤 {{ user_name }}</span>
+            <a href="/admin" class="header-btn" title="管理画面">📊</a>
+            <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')">🚪</a>
+        </div>
+    </div>
+</header>
+
+<style>
+.mobile-break {
+    display: none;
+}
+
+@media (max-width: 600px) {
+    .mobile-break {
+        display: inline;
+    }
+    
+    .user-name-display {
+        display: none !important;
+    }
+}
+</style>
