@@ -35,8 +35,6 @@
     <span>戻る</span>
 </button>
 
-<!-- 設定モーダル -->
-
 <div style="margin-top: 80px; padding: 20px;">
     <div style="max-width: 800px; margin: 0 auto;">
         <h1 style="text-align: center; margin-bottom: 10px;">📝 名前から探す</h1>
@@ -79,7 +77,7 @@
         <!-- 検索結果 -->
         {% if keyword %}
             {% if items %}
-            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div id="search-results" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                 <h3 style="margin-bottom: 20px;">検索結果: {{ items|length }} 件</h3>
                 
                 {% for item in items %}
@@ -114,7 +112,7 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div style="text-align: center; padding: 60px 20px; color: var(--color-gray-500);">
+            <div id="search-results" style="text-align: center; padding: 60px 20px; color: var(--color-gray-500);">
                 <p style="font-size: 3rem; margin-bottom: 20px;">🔍</p>
                 <p style="font-size: 1.2rem;">「{{ keyword }}」に一致する仏具が見つかりませんでした</p>
                 <p style="margin-top: 10px;">別のキーワードで検索してみてください</p>
@@ -129,6 +127,23 @@ a:hover div {
     background: var(--color-gray-50);
 }
 </style>
+
+<script>
+// 検索結果がある場合、自動的に結果エリアまでスクロール
+document.addEventListener('DOMContentLoaded', function() {
+    const searchResults = document.getElementById('search-results');
+    
+    if (searchResults) {
+        // スムーズにスクロール
+        setTimeout(function() {
+            searchResults.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }, 300); // ページ読み込み後300msで実行（安定性のため）
+    }
+});
+</script>
 
 </body>
 </html>
