@@ -1,86 +1,134 @@
 <header>
-    <div class="header-content">
-        <div class="header-title">
-            <h1>🏯 管理画面</h1>
-        </div>
-        <div class="header-btns">
-            <!-- システム管理メニュー -->
-            <div class="dropdown">
-                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('system-menu')">
-                    <span class="icon">⚙️</span>
-                    <span>システム管理</span>
-                    <span class="arrow">▼</span>
-                </button>
-                <div class="dropdown-menu" id="system-menu">
-                    <button class="dropdown-item" onclick="openLogModal(); closeAllDropdowns();">
-                        <span class="icon">📋</span>
-                        <span>ログ表示</span>
-                    </button>
-                    <!-- 承認待ち一覧リンク（管理者のみ表示） -->
-                    <a href="/pending-users" class="dropdown-item" id="pending-users-link" style="display:none;">
-                        <span class="icon">⏳</span>
-                        <span>承認待ち一覧</span>
-                        <span id="pending-badge-menu" class="pending-badge" style="display: none;"></span>
-                    </a>
-                    <!-- ユーザー管理リンク -->
-                    <a href="/admin/users" class="dropdown-item" id="user-management-link-dropdown" style="display:none;">
-                        <span class="icon">👥</span>
-                        <span>ユーザー管理</span>
-                    </a>
-                    <!-- ★★★ 項目設定リンク（編集者・管理者のみ表示） ★★★ -->
-                    <a href="/admin/fields" class="dropdown-item" id="fields-setting-link" style="display:none;">
-                        <span class="icon">⚙️</span>
-                        <span>項目設定</span>
-                    </a>
-                    <!-- ★★★ 仏具管理リンク（編集者・管理者のみ表示） ★★★ -->
-                    <a href="/admin/items" class="dropdown-item" id="items-management-link" style="display:none;">
-                        <span class="icon">🙏</span>
-                        <span>仏具管理</span>
-                    </a>
-                    <button class="dropdown-item warning" onclick="reloadData(); closeAllDropdowns();">
-                        <span class="icon">🔄</span>
-                        <span>データ更新</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ユーザーメニュー -->
-            <div class="dropdown">
-                <button class="header-btn dropdown-toggle" onclick="toggleDropdown('user-menu')">
-                    <span class="icon">👤</span>
-                    <span>{{ user_name }}さん</span>
-                    <span class="arrow">▼</span>
-                </button>
-                <div class="dropdown-menu" id="user-menu">
-                    <button class="dropdown-item" onclick="openPassModal(); closeAllDropdowns();">
-                        <span class="icon">🔑</span>
-                        <span>パスワード変更</span>
-                    </button>
-                    <a href="/logout" class="dropdown-item danger">
-                        <span class="icon">🚪</span>
-                        <span>ログアウト</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- アプリへ戻る -->
-            <a href="/" class="header-btn">
-                <span class="icon">🏠</span>
-                <span>アプリへ</span>
-            </a>
-        </div>
+  <div class="header-content">
+    <div class="header-title">
+      <h1>🏯 管理画面</h1>
     </div>
+    <div class="header-btns">
+      <!-- システム管理メニュー -->
+      <div class="dropdown">
+        <button
+          class="header-btn dropdown-toggle"
+          onclick="toggleDropdown('system-menu')"
+        >
+          <span class="icon">⚙️</span>
+          <span>システム管理</span>
+          <span class="arrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="system-menu">
+          <button
+            class="dropdown-item"
+            onclick="
+              openLogModal();
+              closeAllDropdowns();
+            "
+          >
+            <span class="icon">📋</span>
+            <span>ログ表示</span>
+          </button>
+          <!-- 承認待ち一覧リンク（管理者のみ表示） -->
+          <a
+            href="/admin/pending-users"
+            class="dropdown-item"
+            id="pending-users-link"
+            style="display: none"
+          >
+            <span class="icon">⏳</span>
+            <span>承認待ち一覧</span>
+            <span
+              id="pending-badge-menu"
+              class="pending-badge"
+              style="display: none"
+            ></span>
+          </a>
+          <!-- ユーザー管理リンク -->
+          <a
+            href="/admin/users"
+            class="dropdown-item"
+            id="user-management-link-dropdown"
+            style="display: none"
+          >
+            <span class="icon">👥</span>
+            <span>ユーザー管理</span>
+          </a>
+          <!-- ★★★ 項目設定リンク（編集者・管理者のみ表示） ★★★ -->
+          <a
+            href="/admin/fields"
+            class="dropdown-item"
+            id="fields-setting-link"
+            style="display: none"
+          >
+            <span class="icon">⚙️</span>
+            <span>項目設定</span>
+          </a>
+          <!-- ★★★ 仏具管理リンク（編集者・管理者のみ表示） ★★★ -->
+          <a
+            href="/admin/items"
+            class="dropdown-item"
+            id="items-management-link"
+            style="display: none"
+          >
+            <span class="icon">🙏</span>
+            <span>仏具管理</span>
+          </a>
+          <button
+            class="dropdown-item warning"
+            onclick="
+              reloadData();
+              closeAllDropdowns();
+            "
+          >
+            <span class="icon">🔄</span>
+            <span>データ更新</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ユーザーメニュー -->
+      <div class="dropdown">
+        <button
+          class="header-btn dropdown-toggle"
+          onclick="toggleDropdown('user-menu')"
+        >
+          <span class="icon">👤</span>
+          <span>{{ user_name }}さん</span>
+          <span class="arrow">▼</span>
+        </button>
+        <div class="dropdown-menu" id="user-menu">
+          <button
+            class="dropdown-item"
+            onclick="
+              openPassModal();
+              closeAllDropdowns();
+            "
+          >
+            <span class="icon">🔑</span>
+            <span>パスワード変更</span>
+          </button>
+          <a href="/logout" class="dropdown-item danger">
+            <span class="icon">🚪</span>
+            <span>ログアウト</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- アプリへ戻る -->
+      <a href="/" class="header-btn">
+        <span class="icon">🏠</span>
+        <span>アプリへ</span>
+      </a>
+    </div>
+  </div>
 </header>
 
 <!-- ★★★ セッション情報をJavaScriptに渡す ★★★ -->
 <script>
-    const userRole = "{{ session.get('role', '') }}";
-    const userId = "{{ session.get('user_id', '') }}";
+  const userRole = "{{ session.get('role', '') }}";
+  const userId = "{{ session.get('user_id', '') }}";
 </script>
 
 <!-- ★★★ スタイル追加 ★★★ -->
 <style>
-.pending-badge {
+  .pending-badge {
     background: #ff5722;
     color: white;
     font-size: 0.7rem;
@@ -89,57 +137,59 @@
     margin-left: 5px;
     font-weight: bold;
     display: inline-block;
-}
+  }
 </style>
 
 <!-- ★★★ JavaScript追加 ★★★ -->
 <script>
-// 管理者権限の場合、管理者専用メニューを表示
-if (userRole === 'admin') {
-    const userMgmtLink = document.getElementById('user-management-link-dropdown');
-    const pendingUsersLink = document.getElementById('pending-users-link');
-    
+  // 管理者権限の場合、管理者専用メニューを表示
+  if (userRole === "admin") {
+    const userMgmtLink = document.getElementById(
+      "user-management-link-dropdown",
+    );
+    const pendingUsersLink = document.getElementById("pending-users-link");
+
     if (userMgmtLink) {
-        userMgmtLink.style.display = 'flex';
+      userMgmtLink.style.display = "flex";
     }
     if (pendingUsersLink) {
-        pendingUsersLink.style.display = 'flex';
+      pendingUsersLink.style.display = "flex";
     }
-    
+
     // 承認待ちユーザー数を取得して表示
     checkPendingUsers();
     // 30秒ごとに更新
     //setInterval(checkPendingUsers, 30000);
-}
+  }
 
-// 編集者・管理者権限の場合、編集者用メニューを表示
-if (userRole === 'admin' || userRole === 'editor') {
-    const fieldsLink = document.getElementById('fields-setting-link');
-    const itemsLink = document.getElementById('items-management-link');
-    
+  // 編集者・管理者権限の場合、編集者用メニューを表示
+  if (userRole === "admin" || userRole === "editor") {
+    const fieldsLink = document.getElementById("fields-setting-link");
+    const itemsLink = document.getElementById("items-management-link");
+
     if (fieldsLink) {
-        fieldsLink.style.display = 'flex';
+      fieldsLink.style.display = "flex";
     }
     if (itemsLink) {
-        itemsLink.style.display = 'flex';
+      itemsLink.style.display = "flex";
     }
-}
+  }
 
-// 承認待ちユーザー数を取得して表示
-async function checkPendingUsers() {
+  // 承認待ちユーザー数を取得して表示
+  async function checkPendingUsers() {
     try {
-        const response = await fetch('/api/pending-users-count');
-        const data = await response.json();
-        
-        if (data.count > 0) {
-            const badge = document.getElementById('pending-badge-menu');
-            if (badge) {
-                badge.textContent = data.count;
-                badge.style.display = 'inline-block';
-            }
+      const response = await fetch("/api/pending-users-count");
+      const data = await response.json();
+
+      if (data.count > 0) {
+        const badge = document.getElementById("pending-badge-menu");
+        if (badge) {
+          badge.textContent = data.count;
+          badge.style.display = "inline-block";
         }
+      }
     } catch (error) {
-        console.error('Failed to check pending users:', error);
+      console.error("Failed to check pending users:", error);
     }
-}
+  }
 </script>
