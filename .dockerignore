@@ -11,6 +11,7 @@ __pycache__/
 # 開発ファイルは除外
 .git/
 .gitignore
+.gitattributes
 .vscode/
 .idea/
 tests/
