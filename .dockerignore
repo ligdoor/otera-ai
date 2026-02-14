@@ -13,9 +13,17 @@ __pycache__/
 .gitignore
 .vscode/
 .idea/
+tests/
+pytest.ini
+railway.json
+htmlcov/
 
 # ログファイルは除外
 *.log
+logs/
 
 # 環境ファイルは除外（fly.ioの環境変数を使うため）
 .env
+credentials.json
+.coverage
+.venv
