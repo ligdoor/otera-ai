@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>404 - ページが見つかりません</title>
+    <style>
+      body {
+        font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", sans-serif;
+        background-color: #fafafa;
+        color: #333;
+        text-align: center;
+        padding-top: 10%;
+      }
+      h1 {
+        font-size: 4rem;
+        margin-bottom: 10px;
+      }
+      p {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>404</h1>
+    <p>お探しのページは見つかりませんでした。</p>
+    <p><a href="{{ url_for('index') }}">トップページへ戻る</a></p>
+  </body>
+</html>
