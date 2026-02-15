@@ -24,7 +24,11 @@
 <!-- チャットウィンドウ -->
 <div id="chat-window" onclick="hideMenu()">
     <div class="message ai-message" style="margin-top: 20px;">
-        <p>👋 <strong>お疲れ様です！</strong><br>寺院名を選択して詳細情報を確認できます。</p>
+        {% if session.get('user_name') %}
+            <p><span id="greeting-icon">👋</span> <strong id="greeting-text"></strong><br>寺院名を選択して詳細情報を確認できます。</p>
+        {% else %}
+            <p>👋 <strong>ようこそ！</strong><br>寺院名を選択して詳細情報を確認できます。</p>
+        {% endif %}
     </div>
 </div>
 
@@ -42,6 +46,31 @@
 <script src="{{ url_for('static', filename='js/app/voice.js') }}"></script>
 <script src="{{ url_for('static', filename='js/settings-manager.js') }}"></script>
 <script src="{{ url_for('static', filename='js/settings-modal.js') }}"></script>
+
+<!-- 時間帯別挨拶 -->
+{% if session.get('user_name') %}
+<script>
+    // 時間帯に応じた挨拶
+    const hour = new Date().getHours();
+    const userName = "{{ session.get('user_name') }}";
+    const greetingText = document.getElementById('greeting-text');
+    const greetingIcon = document.getElementById('greeting-icon');
+    
+    if (hour >= 5 && hour < 11) {
+        greetingText.textContent = `おはようございます、${userName}さん！`;
+        greetingIcon.textContent = '🌅';
+    } else if (hour >= 11 && hour < 17) {
+        greetingText.textContent = `こんにちは、${userName}さん！`;
+        greetingIcon.textContent = '☀️';
+    } else if (hour >= 17 && hour < 21) {
+        greetingText.textContent = `こんばんは、${userName}さん！`;
+        greetingIcon.textContent = '🌆';
+    } else {
+        greetingText.textContent = `お疲れ様です、${userName}さん！`;
+        greetingIcon.textContent = '🌙';
+    }
+</script>
+{% endif %}
 
 <!-- Service Worker -->
 <script>

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログビューアー - AI寺院案内サイト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            margin-right: 10px;
+        }
+        
+        select, input[type="date"], input[type="text"], button {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .log-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .log-entry {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .log-entry:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .log-entry.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .log-entry.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .log-entry.info {
+            border-left-color: #17a2b8;
+            background: #f0f9ff;
+        }
+        
+        .log-entry.debug {
+            border-left-color: #6c757d;
+            background: #f8f9fa;
+        }
+        
+        .log-timestamp {
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .log-level {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        .log-level.ERROR {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .log-level.WARNING {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .log-level.INFO {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .log-level.DEBUG {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .log-message {
+            color: #333;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 15px;
+        }
+        
+        .no-logs {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <div class="header">
+            <h1>📊 ログビューアー</h1>
+            <p>AI寺院案内サイト - システムログ分析ダッシュボード</p>
+        </div>
+        
+        <!-- 統計カード -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value" id="total-logs">-</div>
+                <div class="stat-label">総ログ数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">❌</div>
+                <div class="stat-value" id="error-count">-</div>
+                <div class="stat-label">エラー</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-value" id="warning-count">-</div>
+                <div class="stat-label">警告</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">ℹ️</div>
+                <div class="stat-value" id="info-count">-</div>
+                <div class="stat-label">情報</div>
+            </div>
+        </div>
+        
+        <!-- コントロール -->
+        <div class="controls">
+            <div class="control-group">
+                <label>ログタイプ:</label>
+                <select id="log-type" onchange="loadLogs()">
+                    <option value="app">統合ログ (app.log)</option>
+                    <option value="error">エラー (error.log)</option>
+                    <option value="info">情報 (info.log)</option>
+                    <option value="debug">デバッグ (debug.log)</option>
+                    <option value="access">アクセス (access.log)</option>
+                </select>
+                
+                <label>日付:</label>
+                <input type="date" id="date-filter" onchange="loadLogs()">
+                
+                <label>レベル:</label>
+                <select id="level-filter" onchange="loadLogs()">
+                    <option value="">全て</option>
+                    <option value="ERROR">ERROR</option>
+                    <option value="WARNING">WARNING</option>
+                    <option value="INFO">INFO</option>
+                    <option value="DEBUG">DEBUG</option>
+                </select>
+                
+                <button onclick="loadLogs()">🔄 更新</button>
+                <button onclick="exportLogs()">💾 エクスポート</button>
+            </div>
+            
+            <div class="control-group">
+                <label>検索:</label>
+                <input type="text" id="search-text" placeholder="キーワードで検索..." style="flex: 1; max-width: 400px;">
+                <button onclick="searchLogs()">🔍 検索</button>
+            </div>
+        </div>
+        
+        <!-- グラフ -->
+        <div class="chart-container">
+            <div class="chart-title">📈 ログレベル別推移（過去7日間）</div>
+            <canvas id="log-chart" height="80"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-title">🕐 時間帯別ログ数（今日）</div>
+            <canvas id="hourly-chart" height="80"></canvas>
+        </div>
+        
+        <!-- ログ表示エリア -->
+        <div class="log-container">
+            <div class="chart-title">📋 ログ一覧</div>
+            <div id="log-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>ログを読み込み中...</div>
+                </div>
+            </div>
+            
+            <div class="pagination" id="pagination" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPage = 1;
+        let logsPerPage = 50;
+        let allLogs = [];
+        let logChart, hourlyChart;
+        
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 今日の日付を設定
+            document.getElementById('date-filter').valueAsDate = new Date();
+            
+            // グラフ初期化
+            initCharts();
+            
+            // ログ読み込み
+            loadLogs();
+        });
+        
+        // グラフ初期化
+        function initCharts() {
+            // ログレベル別推移グラフ
+            const ctx1 = document.getElementById('log-chart').getContext('2d');
+            logChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'ERROR',
+                            data: [],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'WARNING',
+                            data: [],
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'INFO',
+                            data: [],
+                            borderColor: '#17a2b8',
+                            backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 時間帯別グラフ
+            const ctx2 = document.getElementById('hourly-chart').getContext('2d');
+            hourlyChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'ログ数',
+                        data: new Array(24).fill(0),
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: '#667eea',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ログ読み込み
+        async function loadLogs() {
+            const logType = document.getElementById('log-type').value;
+            const dateFilter = document.getElementById('date-filter').value;
+            const levelFilter = document.getElementById('level-filter').value;
+            
+            try {
+                const response = await fetch(`/admin/logs/api?type=${logType}&date=${dateFilter}&level=${levelFilter}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allLogs = data.data.logs || [];
+                    updateStats(data.data.stats);
+                    updateCharts(data.data.charts);
+                    displayLogs();
+                } else {
+                    document.getElementById('log-content').innerHTML = 
+                        `<div class="no-logs">❌ ${data.error.message}</div>`;
+                }
+            } catch (error) {
+                console.error('ログ読み込みエラー:', error);
+                document.getElementById('log-content').innerHTML = 
+                    '<div class="no-logs">❌ ログの読み込みに失敗しました</div>';
+            }
+        }
+        
+        // 統計更新
+        function updateStats(stats) {
+            document.getElementById('total-logs').textContent = stats.total.toLocaleString();
+            document.getElementById('error-count').textContent = stats.error.toLocaleString();
+            document.getElementById('warning-count').textContent = stats.warning.toLocaleString();
+            document.getElementById('info-count').textContent = stats.info.toLocaleString();
+        }
+        
+        // グラフ更新
+        function updateCharts(charts) {
+            // 日別推移グラフ
+            if (charts.daily) {
+                logChart.data.labels = charts.daily.labels;
+                logChart.data.datasets[0].data = charts.daily.error;
+                logChart.data.datasets[1].data = charts.daily.warning;
+                logChart.data.datasets[2].data = charts.daily.info;
+                logChart.update();
+            }
+            
+            // 時間帯別グラフ
+            if (charts.hourly) {
+                hourlyChart.data.datasets[0].data = charts.hourly;
+                hourlyChart.update();
+            }
+        }
+        
+        // ログ表示
+        function displayLogs() {
+            if (allLogs.length === 0) {
+                document.getElementById('log-content').innerHTML = 
+                    '<div class="no-logs">📭 ログがありません</div>';
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+            
+            const start = (currentPage - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const pageLogs = allLogs.slice(start, end);
+            
+            let html = '';
+            pageLogs.forEach(log => {
+                const levelClass = log.level ? log.level.toLowerCase() : 'info';
+                html += `
+                    <div class="log-entry ${levelClass}">
+                        <span class="log-timestamp">${log.timestamp}</span>
+                        ${log.level ? `<span class="log-level ${log.level}">${log.level}</span>` : ''}
+                        <span class="log-message">${escapeHtml(log.message)}</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('log-content').innerHTML = html;
+            
+            // ページネーション
+            updatePagination();
+        }
+        
+        // ページネーション更新
+        function updatePagination() {
+            const totalPages = Math.ceil(allLogs.length / logsPerPage);
+            
+            if (totalPages <= 1) {
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('pagination').style.display = 'flex';
+            
+            let html = '';
+            
+            if (currentPage > 1) {
+                html += `<button onclick="changePage(${currentPage - 1})">« 前へ</button>`;
+            }
+            
+            html += `<button disabled>Page ${currentPage} / ${totalPages}</button>`;
+            
+            if (currentPage < totalPages) {
+                html += `<button onclick="changePage(${currentPage + 1})">次へ »</button>`;
+            }
+            
+            document.getElementById('pagination').innerHTML = html;
+        }
+        
+        // ページ変更
+        function changePage(page) {
+            currentPage = page;
+            displayLogs();
+            window.scrollTo(0, 0);
+        }
+        
+        // 検索
+        function searchLogs() {
+            const searchText = document.getElementById('search-text').value.toLowerCase();
+            
+            if (!searchText) {
+                loadLogs();
+                return;
+            }
+            
+            allLogs = allLogs.filter(log => 
+                log.message.toLowerCase().includes(searchText) ||
+                (log.level && log.level.toLowerCase().includes(searchText))
+            );
+            
+            currentPage = 1;
+            displayLogs();
+        }
+        
+        // エクスポート
+        function exportLogs() {
+            const logType = document.getElementById('log-type').value;
+            const dateFilter = document.getElementById('date-filter').value;
+            
+            let content = `# ログエクスポート - ${logType}.log\n`;
+            content += `# 日付: ${dateFilter}\n`;
+            content += `# エクスポート日時: ${new Date().toISOString()}\n\n`;
+            
+            allLogs.forEach(log => {
+                content += `[${log.timestamp}] ${log.level || 'INFO'}: ${log.message}\n`;
+            });
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `logs_${logType}_${dateFilter}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // HTMLエスケープ
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

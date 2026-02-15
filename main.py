@@ -21,6 +21,7 @@ from config import Config
 from flask_extensions import limiter
 from utils.env_checker import check_required_env
 from maintenance import MaintenanceMode
+from routes.log_viewer_html import log_viewer_html_bp
 
 # ============================================
 # エラーハンドリングシステムの初期化（NEW!）
@@ -195,6 +196,7 @@ try:
     app.register_blueprint(auth_login_bp)
     app.register_blueprint(auth_register_bp)
     app.register_blueprint(auth_password_bp)
+    app.register_blueprint(log_viewer_html_bp)
     print("  ✅ 認証ルート登録完了")
     logger.info("認証ルート登録完了")
     
