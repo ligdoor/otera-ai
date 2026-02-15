@@ -31,7 +31,13 @@ from modules.error_logger import ErrorLogger
 from modules.decorators import handle_errors
 
 # ログシステムをセットアップ
-ErrorLogger.setup(log_level='INFO', log_dir='logs')
+ErrorLogger.setup(
+    log_level='INFO',
+    log_dir='logs',
+    max_bytes=10 * 1024 * 1024,  # 10MB
+    backup_count=30,              # 30世代保持
+    json_format=False             # JSON形式: True/False
+)
 logger = ErrorLogger.get_logger(__name__)
 
 logger.info("="*60)
@@ -242,7 +248,9 @@ try:
     from routes.user_routes import user_bp
     from routes.api_routes import api_bp
     from routes.items_routes import items_bp
+    from routes.log_viewer import log_viewer_bp
     
+    app.register_blueprint(log_viewer_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(items_bp)

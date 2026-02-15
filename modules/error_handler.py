@@ -19,9 +19,10 @@
 from modules.error_logger import ErrorLogger
 from modules.error_messages import ErrorMessages
 from modules.error_responses import ErrorResponse, ErrorPageRenderer
-from flask import Flask, request, session
+from flask import Flask, request, session, g, jsonify, render_template
 import traceback
 import sys
+import time
 
 
 class ErrorHandler:
@@ -78,7 +79,7 @@ class ErrorHandler:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                logger = ErrorLogger.get_logger(func.__module__, 'error')
+                logger = ErrorLogger.get_logger(func.__module__)
                 logger.error(
                     f"Error in {func.__name__}: {str(e)}",
                     exc_info=True
@@ -111,13 +112,14 @@ class ErrorHandler:
         # 403エラー
         @app.errorhandler(403)
         def handle_403(e):
-            ErrorLogger.log_security(
-                'flask',
-                'permission_denied',
+            logger = ErrorLogger.get_logger('flask')
+            logger.warning(
                 f"403 Forbidden: {request.path}",
-                path=request.path,
-                user_id=session.get('user_id'),
-                ip_address=request.remote_addr
+                extra={
+                    'path': request.path,
+                    'user_id': session.get('user_id'),
+                    'ip_address': request.remote_addr
+                }
             )
             return ErrorPageRenderer.render_403()
         
@@ -158,8 +160,11 @@ class ErrorHandler:
         # リクエスト前処理（ログ記録）
         @app.before_request
         def log_request():
+            # 処理開始時刻を記録
+            g.start_time = time.time()
+            
             # アクセスログ記録
-            logger = ErrorLogger.get_logger('flask', 'access')
+            logger = ErrorLogger.get_logger('flask')
             logger.info(
                 f"{request.method} {request.path} from {request.remote_addr}"
             )
@@ -167,17 +172,30 @@ class ErrorHandler:
         # リクエスト後処理（ログ記録）
         @app.after_request
         def log_response(response):
-            # APIログ記録
-            ErrorLogger.log_api_call(
-                'flask',
-                request.path,
-                request.method,
-                response.status_code,
-                user_id=session.get('user_id'),
-                ip_address=request.remote_addr
-            )
+            """
+            リクエスト処理後のログ記録
+            """
+            try:
+                # start_timeが設定されているかチェック
+                if hasattr(g, 'start_time'):
+                    # 処理時間を計算
+                    duration_ms = (time.time() - g.start_time) * 1000
+                    
+                    # アクセスログを記録
+                    ErrorLogger.log_access(
+                        method=request.method,
+                        path=request.path,
+                        status_code=response.status_code,
+                        duration_ms=duration_ms,
+                        user_id=session.get('user_id'),
+                        ip_address=request.remote_addr
+                    )
+            except Exception as e:
+                # ログ記録に失敗してもアプリは止めない
+                print(f"ログ記録エラー: {e}")
+            
             return response
-    
+
     @staticmethod
     def handle_database_error(error, operation='query'):
         """
@@ -340,21 +358,12 @@ class ErrorHandler:
         Returns:
             dict: エラーレポート
         """
-        # 最近のエラーログを取得
-        recent_errors = ErrorLogger.get_recent_errors('error', lines=100)
-        
-        # エラーコード別に集計
-        error_counts = {}
-        for error in recent_errors:
-            error_code = error.get('error_code', 'UNKNOWN')
-            error_counts[error_code] = error_counts.get(error_code, 0) + 1
-        
-        # レポート作成
+        # 簡易レポート（実装例）
         report = {
-            'total_errors': len(recent_errors),
-            'error_counts': error_counts,
-            'most_common': max(error_counts.items(), key=lambda x: x[1])[0] if error_counts else None,
-            'recent_errors': recent_errors[:10]  # 最新10件
+            'total_errors': 0,
+            'error_counts': {},
+            'most_common': None,
+            'recent_errors': []
         }
         
         return report

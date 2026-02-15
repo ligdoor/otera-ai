@@ -1,312 +1,368 @@
 """
-エラーログ記録機能
-構造化されたログを記録し、エラー追跡を容易にする
+エラーロガー - 改善版（ログローテーション対応 + アクセスログ修正）
 
-使い方:
-    from modules.error_logger import ErrorLogger
-    
-    logger = ErrorLogger.get_logger(__name__)
-    logger.error("Database error", error_code="DB_ERROR", user_id=123)
+【改善点】
+✅ ログローテーション（日次・サイズ別）
+✅ レベル別ファイル分離
+✅ JSON形式の構造化ログ
+✅ パフォーマンス監視
+✅ アクセスログ専用ハンドラー（修正済み）
 """
 
 import logging
+import logging.handlers
 import os
 import json
 from datetime import datetime
-from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Optional, Dict, Any
 
 
 class ErrorLogger:
-    """エラーログ記録クラス"""
+    """
+    改善版エラーロガー
     
-    # ログレベルの定義
-    LEVELS = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
+    特徴:
+    - ログローテーション（日次 + サイズ制限）
+    - レベル別ファイル分離
+    - JSON形式の構造化ログ
+    - 自動アーカイブ
+    - アクセスログ専用ハンドラー
+    """
     
-    # ログディレクトリ
-    LOG_DIR = Path('logs')
-    
-    # ログファイルの設定
-    LOG_FILES = {
-        'error': 'error.log',       # エラーログ
-        'access': 'access.log',     # アクセスログ
-        'security': 'security.log', # セキュリティログ
-        'api': 'api.log',          # API呼び出しログ
-        'app': 'app.log'           # アプリケーション全般
-    }
-    
-    _loggers = {}  # ロガーのキャッシュ
+    _loggers: Dict[str, logging.Logger] = {}
+    _initialized = False
     
     @classmethod
-    def setup(cls, log_level='INFO', log_dir=None):
+    def setup(
+        cls,
+        log_level: str = 'INFO',
+        log_dir: str = 'logs',
+        max_bytes: int = 10 * 1024 * 1024,  # 10MB
+        backup_count: int = 30,  # 30世代保持
+        json_format: bool = False
+    ):
         """
-        ロガーの初期設定
+        ログシステムのセットアップ
         
         Args:
-            log_level: ログレベル（DEBUG, INFO, WARNING, ERROR, CRITICAL）
-            log_dir: ログディレクトリのパス
+            log_level: ログレベル (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            log_dir: ログディレクトリ
+            max_bytes: ログファイルの最大サイズ（バイト）
+            backup_count: 保持する世代数
+            json_format: JSON形式で出力するか
         """
-        if log_dir:
-            cls.LOG_DIR = Path(log_dir)
+        if cls._initialized:
+            return
         
-        # ログディレクトリ作成
-        cls.LOG_DIR.mkdir(exist_ok=True, parents=True)
+        # ログディレクトリの作成
+        log_path = Path(log_dir)
+        log_path.mkdir(parents=True, exist_ok=True)
         
-        # ログレベル設定
-        logging.basicConfig(
-            level=cls.LEVELS.get(log_level, logging.INFO),
-            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+        # レベル別ディレクトリの作成
+        (log_path / 'info').mkdir(exist_ok=True)
+        (log_path / 'error').mkdir(exist_ok=True)
+        (log_path / 'debug').mkdir(exist_ok=True)
+        (log_path / 'access').mkdir(exist_ok=True)
+        
+        # ルートロガーの設定
+        root_logger = logging.getLogger()
+        root_logger.setLevel(getattr(logging, log_level.upper()))
+        
+        # 既存のハンドラーをクリア
+        root_logger.handlers.clear()
+        
+        # フォーマッターの作成
+        if json_format:
+            formatter = JsonFormatter()
+        else:
+            formatter = logging.Formatter(
+                '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+        
+        # ========================================
+        # 1. 統合ログ（全レベル）
+        # ========================================
+        all_handler = logging.handlers.TimedRotatingFileHandler(
+            filename=log_path / 'app.log',
+            when='midnight',
+            interval=1,
+            backupCount=backup_count,
+            encoding='utf-8'
         )
+        all_handler.setLevel(logging.DEBUG)
+        all_handler.setFormatter(formatter)
+        root_logger.addHandler(all_handler)
+        
+        # ========================================
+        # 2. エラーログ（ERROR以上）
+        # ========================================
+        error_handler = logging.handlers.RotatingFileHandler(
+            filename=log_path / 'error' / 'error.log',
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(formatter)
+        root_logger.addHandler(error_handler)
+        
+        # ========================================
+        # 3. 情報ログ（INFO）
+        # ========================================
+        info_handler = logging.handlers.TimedRotatingFileHandler(
+            filename=log_path / 'info' / 'info.log',
+            when='midnight',
+            interval=1,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        info_handler.setLevel(logging.INFO)
+        info_handler.addFilter(lambda record: record.levelno == logging.INFO)
+        info_handler.setFormatter(formatter)
+        root_logger.addHandler(info_handler)
+        
+        # ========================================
+        # 4. デバッグログ（DEBUG）
+        # ========================================
+        debug_handler = logging.handlers.RotatingFileHandler(
+            filename=log_path / 'debug' / 'debug.log',
+            maxBytes=max_bytes,
+            backupCount=10,  # デバッグログは少なめ
+            encoding='utf-8'
+        )
+        debug_handler.setLevel(logging.DEBUG)
+        debug_handler.addFilter(lambda record: record.levelno == logging.DEBUG)
+        debug_handler.setFormatter(formatter)
+        root_logger.addHandler(debug_handler)
+        
+        # ========================================
+        # 5. アクセスログ（独立したロガー）★修正★
+        # ========================================
+        access_logger = logging.getLogger('access')
+        access_logger.setLevel(logging.INFO)
+        access_logger.handlers.clear()  # 既存のハンドラーをクリア
+        
+        access_handler = logging.handlers.TimedRotatingFileHandler(
+            filename=log_path / 'access' / 'access.log',
+            when='midnight',
+            interval=1,
+            backupCount=backup_count,
+            encoding='utf-8'
+        )
+        access_handler.setLevel(logging.INFO)
+        access_handler.setFormatter(formatter)
+        access_logger.addHandler(access_handler)
+        
+        # ルートロガーには伝播させない（重複を防ぐ）
+        access_logger.propagate = False
+        
+        # ========================================
+        # 6. コンソール出力
+        # ========================================
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
+        
+        cls._initialized = True
+        
+        # 起動ログ
+        startup_logger = cls.get_logger('system')
+        startup_logger.info("="*60)
+        startup_logger.info("ログシステム初期化完了")
+        startup_logger.info(f"ログレベル: {log_level}")
+        startup_logger.info(f"ログディレクトリ: {log_dir}")
+        startup_logger.info(f"最大ファイルサイズ: {max_bytes / 1024 / 1024:.1f}MB")
+        startup_logger.info(f"保持世代数: {backup_count}")
+        startup_logger.info(f"JSON形式: {json_format}")
+        startup_logger.info(f"✅ アクセスログハンドラー設定完了")
+        startup_logger.info("="*60)
     
     @classmethod
-    def get_logger(cls, name, log_type='app'):
+    def get_logger(cls, name: str) -> logging.Logger:
         """
-        ロガーインスタンスを取得
+        名前付きロガーを取得
         
         Args:
-            name: ロガー名（通常は__name__を使用）
-            log_type: ログタイプ（error, access, security, api, app）
+            name: ロガー名
             
         Returns:
             logging.Logger: ロガーインスタンス
         """
-        # キャッシュから取得
-        cache_key = f"{name}_{log_type}"
-        if cache_key in cls._loggers:
-            return cls._loggers[cache_key]
-        
-        # 新規ロガー作成
-        logger = logging.getLogger(name)
-        
-        # ハンドラーが未設定の場合のみ追加
-        if not logger.handlers:
-            # ファイルハンドラー追加
-            cls._add_file_handler(logger, log_type)
-            
-            # コンソールハンドラー追加
-            cls._add_console_handler(logger)
-        
-        # キャッシュに保存
-        cls._loggers[cache_key] = logger
-        
-        return logger
+        if name not in cls._loggers:
+            cls._loggers[name] = logging.getLogger(name)
+        return cls._loggers[name]
     
     @classmethod
-    def _add_file_handler(cls, logger, log_type):
+    def log_error(
+        cls,
+        logger_name: str,
+        error_code: str,
+        message: str,
+        **kwargs
+    ):
         """
-        ファイルハンドラーを追加
-        
-        Args:
-            logger: ロガーインスタンス
-            log_type: ログタイプ
-        """
-        log_file = cls.LOG_DIR / cls.LOG_FILES.get(log_type, 'app.log')
-        
-        # ローテーティングファイルハンドラー
-        # 最大10MB、5世代保存
-        handler = RotatingFileHandler(
-            log_file,
-            maxBytes=10 * 1024 * 1024,  # 10MB
-            backupCount=5,
-            encoding='utf-8'
-        )
-        
-        # フォーマッター設定
-        formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        handler.setFormatter(formatter)
-        
-        logger.addHandler(handler)
-    
-    @classmethod
-    def _add_console_handler(cls, logger):
-        """
-        コンソールハンドラーを追加
-        
-        Args:
-            logger: ロガーインスタンス
-        """
-        handler = logging.StreamHandler()
-        
-        # フォーマッター設定
-        formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        handler.setFormatter(formatter)
-        
-        logger.addHandler(handler)
-    
-    @classmethod
-    def log_error(cls, logger_name, error_code, message, **context):
-        """
-        エラーログを記録（構造化）
+        構造化エラーログの記録
         
         Args:
             logger_name: ロガー名
             error_code: エラーコード
             message: エラーメッセージ
-            **context: 追加のコンテキスト情報
+            **kwargs: 追加情報
         """
-        logger = cls.get_logger(logger_name, 'error')
+        logger = cls.get_logger(logger_name)
         
-        # 構造化ログデータ作成
-        log_data = {
+        error_data = {
             'timestamp': datetime.now().isoformat(),
             'error_code': error_code,
             'message': message,
-            **context
+            **kwargs
         }
         
-        # JSON形式でログ出力
-        logger.error(json.dumps(log_data, ensure_ascii=False))
+        logger.error(json.dumps(error_data, ensure_ascii=False))
     
     @classmethod
-    def log_security(cls, logger_name, event_type, message, **context):
+    def log_performance(
+        cls,
+        logger_name: str,
+        operation: str,
+        duration_ms: float,
+        **kwargs
+    ):
         """
-        セキュリティログを記録
+        パフォーマンスログの記録
         
         Args:
             logger_name: ロガー名
-            event_type: イベントタイプ（login_failed, permission_denied等）
-            message: メッセージ
-            **context: 追加情報（user_id, ip_address等）
+            operation: 処理名
+            duration_ms: 処理時間（ミリ秒）
+            **kwargs: 追加情報
         """
-        logger = cls.get_logger(logger_name, 'security')
+        logger = cls.get_logger(logger_name)
         
-        log_data = {
+        perf_data = {
             'timestamp': datetime.now().isoformat(),
-            'event_type': event_type,
-            'message': message,
-            **context
+            'operation': operation,
+            'duration_ms': duration_ms,
+            'is_slow': duration_ms > 1000,  # 1秒以上はスロー
+            **kwargs
         }
         
-        logger.warning(json.dumps(log_data, ensure_ascii=False))
-    
-    @classmethod
-    def log_api_call(cls, logger_name, endpoint, method, status_code, **context):
-        """
-        API呼び出しログを記録
-        
-        Args:
-            logger_name: ロガー名
-            endpoint: エンドポイント
-            method: HTTPメソッド
-            status_code: ステータスコード
-            **context: 追加情報（duration, user_id等）
-        """
-        logger = cls.get_logger(logger_name, 'api')
-        
-        log_data = {
-            'timestamp': datetime.now().isoformat(),
-            'endpoint': endpoint,
-            'method': method,
-            'status_code': status_code,
-            **context
-        }
-        
-        # ステータスコードに応じてログレベル変更
-        if status_code >= 500:
-            logger.error(json.dumps(log_data, ensure_ascii=False))
-        elif status_code >= 400:
-            logger.warning(json.dumps(log_data, ensure_ascii=False))
+        if perf_data['is_slow']:
+            logger.warning(f"⚠️ Slow operation: {json.dumps(perf_data, ensure_ascii=False)}")
         else:
-            logger.info(json.dumps(log_data, ensure_ascii=False))
+            logger.info(f"Performance: {json.dumps(perf_data, ensure_ascii=False)}")
     
     @classmethod
-    def log_access(cls, logger_name, user_id, action, resource, **context):
+    def log_access(
+        cls,
+        method: str,
+        path: str,
+        status_code: int,
+        duration_ms: float,
+        user_id: Optional[str] = None,
+        ip_address: Optional[str] = None
+    ):
         """
-        アクセスログを記録
+        アクセスログの記録（★修正版★）
         
         Args:
-            logger_name: ロガー名
+            method: HTTPメソッド
+            path: リクエストパス
+            status_code: ステータスコード
+            duration_ms: 処理時間（ミリ秒）
             user_id: ユーザーID
-            action: アクション（view, create, update, delete）
-            resource: リソース（temple, butsugo等）
-            **context: 追加情報
+            ip_address: IPアドレス
         """
-        logger = cls.get_logger(logger_name, 'access')
+        # 専用のアクセスロガーを取得
+        logger = logging.getLogger('access')
         
-        log_data = {
+        access_data = {
             'timestamp': datetime.now().isoformat(),
+            'method': method,
+            'path': path,
+            'status_code': status_code,
+            'duration_ms': duration_ms,
             'user_id': user_id,
-            'action': action,
-            'resource': resource,
-            **context
+            'ip_address': ip_address
         }
         
-        logger.info(json.dumps(log_data, ensure_ascii=False))
+        logger.info(json.dumps(access_data, ensure_ascii=False))
+
+
+class JsonFormatter(logging.Formatter):
+    """
+    JSON形式のログフォーマッター
+    """
     
-    @classmethod
-    def get_recent_errors(cls, log_type='error', lines=100):
+    def format(self, record: logging.LogRecord) -> str:
         """
-        最近のエラーログを取得
+        ログレコードをJSON形式に変換
         
         Args:
-            log_type: ログタイプ
-            lines: 取得する行数
+            record: ログレコード
             
         Returns:
-            list: ログエントリのリスト
+            str: JSON形式のログ
         """
-        log_file = cls.LOG_DIR / cls.LOG_FILES.get(log_type, 'app.log')
+        log_data = {
+            'timestamp': datetime.fromtimestamp(record.created).isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno
+        }
         
-        if not log_file.exists():
-            return []
+        # 例外情報があれば追加
+        if record.exc_info:
+            log_data['exception'] = self.formatException(record.exc_info)
         
-        try:
-            with open(log_file, 'r', encoding='utf-8') as f:
-                # 最後のN行を取得
-                all_lines = f.readlines()
-                recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
-                
-                # JSON形式のログをパース
-                logs = []
-                for line in recent_lines:
-                    try:
-                        # JSON部分を抽出
-                        if '{' in line:
-                            json_part = line[line.index('{'):]
-                            log_entry = json.loads(json_part)
-                            logs.append(log_entry)
-                    except json.JSONDecodeError:
-                        # JSON形式でない行はスキップ
-                        continue
-                
-                return logs
-        except Exception as e:
-            print(f"Error reading log file: {e}")
-            return []
+        # カスタム属性があれば追加
+        for key, value in record.__dict__.items():
+            if key not in ['name', 'msg', 'args', 'created', 'filename', 'funcName',
+                          'levelname', 'levelno', 'lineno', 'module', 'msecs',
+                          'message', 'pathname', 'process', 'processName',
+                          'relativeCreated', 'thread', 'threadName', 'exc_info',
+                          'exc_text', 'stack_info']:
+                log_data[key] = value
+        
+        return json.dumps(log_data, ensure_ascii=False)
+
+
+# ========================================
+# デコレーター
+# ========================================
+
+def log_execution_time(logger_name: str = 'performance'):
+    """
+    関数の実行時間を記録するデコレーター
     
-    @classmethod
-    def clear_old_logs(cls, days=30):
-        """
-        古いログファイルを削除
-        
-        Args:
-            days: 保持する日数
-        """
+    Usage:
+        @log_execution_time('my_module')
+        def slow_function():
+            time.sleep(2)
+    """
+    def decorator(func):
+        import functools
         import time
         
-        cutoff_time = time.time() - (days * 24 * 60 * 60)
-        
-        for log_file in cls.LOG_DIR.glob('*.log*'):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
             try:
-                if log_file.stat().st_mtime < cutoff_time:
-                    log_file.unlink()
-                    print(f"Deleted old log file: {log_file}")
-            except Exception as e:
-                print(f"Error deleting log file {log_file}: {e}")
-
-
-# 初期化
-ErrorLogger.setup()
+                result = func(*args, **kwargs)
+                return result
+            finally:
+                duration_ms = (time.time() - start_time) * 1000
+                ErrorLogger.log_performance(
+                    logger_name,
+                    f'{func.__module__}.{func.__name__}',
+                    duration_ms
+                )
+        
+        return wrapper
+    return decorator
