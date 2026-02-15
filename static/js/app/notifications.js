@@ -7,9 +7,14 @@ let unreadCount = 0;
 // 未読数読み込み
 async function loadUnreadCount() {
     try {
-        const res = await fetch('/api/notifications?unread_only=true');
+        const res = await fetch('/api/v1/notifications?unread_only=true');
         const data = await res.json();
-        unreadCount = data.unread_count || 0;
+        if (data.success) {
+            unreadCount = data.data.unread_count || 0;
+        } else {
+            console.error('未読数取得エラー:', data.error.message);
+            unreadCount = 0;
+        }
         updateNotificationBadge();
     } catch (e) {
         console.error('未読数取得エラー:', e);
@@ -36,15 +41,23 @@ async function openNotifications() {
     list.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">読み込み中...</div>';
     
     try {
-        const res = await fetch('/api/notifications');
+        const res = await fetch('/api/v1/notifications');
         const data = await res.json();
         
-        if (data.notifications.length === 0) {
+        if (!data.success) {
+            console.error('通知取得エラー:', data.error.message);
+            list.innerHTML = '<div class="notification-empty">❌ 通知の取得に失敗しました</div>';
+            return;
+        }
+        
+        const notifications = data.data.notifications || [];
+        
+        if (notifications.length === 0) {
             list.innerHTML = '<div class="notification-empty">📭 通知はありません</div>';
             return;
         }
         
-        list.innerHTML = data.notifications.map(notif => {
+        list.innerHTML = notifications.map(notif => {
             const isUnread = !notif.is_read;
             const time = formatNotificationTime(notif.created_at);
             const icon = getNotificationIcon(notif.type);
@@ -80,7 +93,7 @@ function closeNotifications(event) {
 // 通知を既読にする
 async function markNotificationRead(notificationId) {
     try {
-        await fetch(`/api/notifications/${notificationId}/read`, {
+        await fetch(`/api/v1/notifications/${notificationId}/read`, {
             method: 'POST'
         });
         
@@ -95,7 +108,7 @@ async function markNotificationRead(notificationId) {
 // すべて既読にする
 async function markAllRead() {
     try {
-        await fetch('/api/notifications/read-all', {
+        await fetch('/api/v1/notifications/read-all', {
             method: 'POST'
         });
         

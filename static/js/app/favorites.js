@@ -5,13 +5,18 @@
 // お気に入りを読み込み
 async function loadFavorites() {
     try {
-        const res = await fetch('/api/favorites');
+        const res = await fetch('/api/v1/favorites');
         if (res.status === 401) {
             window.location.href = '/admin';
             return;
         }
         const data = await res.json();
-        favorites = data.favorites || [];
+        if (data.success) {
+            favorites = data.data.favorites || [];
+        } else {
+            console.error('お気に入り取得エラー:', data.error.message);
+            favorites = [];
+        }
         updateTempleSelect();
     } catch (e) {
         console.error('お気に入り取得エラー:', e);
@@ -25,7 +30,7 @@ async function toggleFavorite(name, event) {
     event.preventDefault();
     
     try {
-        const res = await fetch('/api/favorites/toggle', {
+        const res = await fetch('/api/v1/favorites/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ temple_name: name })
@@ -33,9 +38,9 @@ async function toggleFavorite(name, event) {
         
         const data = await res.json();
         
-        if (data.status === 'success') {
+        if (data.success) {
             // お気に入りリストを更新
-            if (data.action === 'added') {
+            if (data.data.action === 'added') {
                 favorites.push(name);
             } else {
                 const index = favorites.indexOf(name);

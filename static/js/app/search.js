@@ -47,7 +47,7 @@ async function onSectSelect() {
     try {
         console.log('APIリクエスト送信:', sectName);
         
-        const res = await fetch('/search_by_sect', {
+        const res = await fetch('/api/v1/temples/search/sect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sect: sectName })
@@ -65,14 +65,21 @@ async function onSectSelect() {
         document.getElementById(loadingId).remove();
         select.value = "";
         
-        if (!data.results || data.results.length === 0) {
+        if (!data.success) {
+            addMessage(`エラー: ${data.error.message}`, 'ai');
+            return;
+        }
+        
+        const results = data.data.results || [];
+        
+        if (results.length === 0) {
             addMessage("該当する寺院がありません", 'ai');
             return;
         }
         
         // 宗派検索はカード表示のまま
-        let listHtml = `<p><b>${sectName}</b> の寺院（${data.results.length}件）</p>`;
-        data.results.forEach(temple => {
+        let listHtml = `<p><b>${sectName}</b> の寺院（${results.length}件）</p>`;
+        results.forEach(temple => {
             const isFav = favorites.includes(temple.name);
             const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address)}`;
             listHtml += `<div class="temple-card" onclick="tapTempleList('${temple.name.replace(/'/g, "\\'")}')">

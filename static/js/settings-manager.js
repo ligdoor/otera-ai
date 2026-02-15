@@ -76,23 +76,31 @@ class SettingsManager {
             
             try {
                 // バックエンドのAPIエンドポイントを呼び出し
-                const res = await fetch('/api/user-settings');
+                const res = await fetch('/api/v1/user-settings');
                 
                 if (res.ok) {
                     const data = await res.json();
-                    console.log('[SettingsManager] サーバーから読み込み成功:', data);
                     
-                    // サーバーの設定を適用
-                    this.currentFontSize = data.font_size || 'normal';
-                    this.currentTheme = data.theme || 'light';
-                    
-                    this.applyFontSize(this.currentFontSize);
-                    this.applyTheme(this.currentTheme);
-                    this.applyLineHeight(this.currentLineHeight);
-                    
-                    // localStorageにも保存（オフライン時用）
-                    localStorage.setItem('fontSize', this.currentFontSize);
-                    localStorage.setItem('theme', this.currentTheme);
+                    if (data.success) {
+                        console.log('[SettingsManager] サーバーから読み込み成功:', data.data);
+                        
+                        // サーバーの設定を適用
+                        this.currentFontSize = data.data.font_size || 'normal';
+                        this.currentTheme = data.data.theme || 'light';
+                        this.currentLineHeight = data.data.line_height || 'normal';
+                        
+                        this.applyFontSize(this.currentFontSize);
+                        this.applyTheme(this.currentTheme);
+                        this.applyLineHeight(this.currentLineHeight);
+                        
+                        // localStorageにも保存（オフライン時用）
+                        localStorage.setItem('fontSize', this.currentFontSize);
+                        localStorage.setItem('theme', this.currentTheme);
+                        localStorage.setItem('lineHeight', this.currentLineHeight);
+                    } else {
+                        console.warn('[SettingsManager] サーバー読み込みエラー:', data.error.message);
+                        this.loadFromLocalStorage();
+                    }
                 } else if (res.status === 404) {
                     // データが存在しない（初回ログイン）
                     console.log('[SettingsManager] サーバーにデータなし、localStorageから読み込み');
@@ -215,7 +223,7 @@ class SettingsManager {
      */
     async saveToServer(fontSize, theme, lineHeight) {
         try {
-            const res = await fetch('/api/user-settings', {
+            const res = await fetch('/api/v1/user-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
