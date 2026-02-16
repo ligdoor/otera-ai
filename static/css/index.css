@@ -1089,3 +1089,274 @@ body.dark-mode .field-value-display i {
 body.dark-mode .field-value-display u {
   text-decoration: underline !important;
 }
+
+/* ========================================
+ * 🔴 スマホUI改善 - タップしやすさ向上
+ * 実装日: 2026-02-15
+ * ======================================== */
+
+/* タップ領域を48x48pxに拡大（Apple/Google推奨） */
+button,
+.header-btn,
+.favorite-btn,
+.favorite-btn-detail,
+select,
+input[type="submit"],
+input[type="button"],
+.btn {
+  min-width: 48px !important;
+  min-height: 48px !important;
+  padding: 12px 16px;
+  font-size: 16px; /* iOSズーム防止 */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* セレクトボックスの最適化 */
+select {
+  font-size: 16px !important; /* iOSズーム防止 */
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* お気に入りボタンを大きく見やすく */
+.favorite-btn,
+.favorite-btn-detail {
+  font-size: 1.5rem !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.favorite-btn:active,
+.favorite-btn-detail:active {
+  transform: scale(0.9);
+}
+
+/* リンクのタップ領域確保 */
+a.header-btn,
+a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+ * 最小フォントサイズの確保（16px必須）
+ * ======================================== */
+
+@media (max-width: 600px) {
+  /* ベースフォントサイズ */
+  body {
+    font-size: 16px !important;
+  }
+  
+  /* ヘッダータイトル */
+  .header-content h1 {
+    font-size: 1rem !important; /* 16px */
+  }
+  
+  /* メッセージ */
+  .message {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* 小さすぎるテキストを修正 */
+  small,
+  .small {
+    font-size: 0.875rem !important; /* 14px - ギリギリ許容 */
+  }
+}
+
+/* 極小画面（iPhone SE など） */
+@media (max-width: 375px) {
+  .header-content h1 {
+    font-size: 1rem !important; /* 0.8rem → 1rem に変更 */
+  }
+  
+  .header-btn {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+}
+
+/* ========================================
+ * コントロールエリアの余白改善
+ * ======================================== */
+
+@media (max-width: 600px) {
+  #control-area {
+    padding: 20px 16px !important; /* 14px → 20px */
+  }
+  
+  /* セレクトボックス間の余白 */
+  #temple-select,
+  #sect-select {
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  
+  /* ボタン間の余白 */
+  button + button {
+    margin-top: 12px;
+  }
+}
+
+/* ========================================
+ * タップフィードバックの強化
+ * ======================================== */
+
+/* タップ時の視覚フィードバック */
+button:active,
+.header-btn:active,
+.favorite-btn:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* ホバー効果（タブレット・PC用） */
+@media (hover: hover) {
+  button:hover,
+  .header-btn:hover,
+  .favorite-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* ========================================
+ * アクセシビリティ向上
+ * ======================================== */
+
+/* フォーカス時の視認性向上 */
+button:focus,
+select:focus,
+input:focus,
+.header-btn:focus {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* タッチデバイスでのアウトライン除去 */
+@media (hover: none) {
+  button:focus,
+  select:focus,
+  input:focus,
+  .header-btn:focus {
+    outline: none;
+  }
+}
+
+/* ========================================
+ * 検索・入力フィールドの最適化
+ * ======================================== */
+
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+textarea {
+  font-size: 16px !important; /* iOSズーム防止 */
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  border-color: #667eea;
+}
+
+/* ========================================
+ * カード・リストアイテムのタップ領域
+ * ======================================== */
+
+.temple-card,
+.search-result-item {
+  min-height: 60px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.temple-card:active,
+.search-result-item:active {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+/* ========================================
+ * 余白の8dpグリッドシステム
+ * ======================================== */
+
+:root {
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+}
+
+@media (max-width: 600px) {
+  /* ヘッダー */
+  header {
+    padding: var(--space-md) !important;
+  }
+  
+  /* チャットウィンドウ */
+  #chat-window {
+    padding: calc(var(--space-2xl) * 2) var(--space-md) var(--space-md) !important;
+  }
+  
+  /* メッセージの余白 */
+  .message {
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+  }
+}
+
+/* ========================================
+ * ダークモード対応
+ * ======================================== */
+
+body.dark-mode select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.dark-mode button:focus,
+body.dark-mode select:focus,
+body.dark-mode input:focus {
+  outline-color: #82b1ff;
+}
+
+/* ========================================
+ * 横スクロール防止
+ * ======================================== */
+
+* {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ========================================
+ * スマホUI改善完了
+ * ======================================== */
+
