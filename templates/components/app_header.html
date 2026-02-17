@@ -1,10 +1,11 @@
 <header>
-    <div class="header-content">
-        <!-- タイトル（左側・伸縮する） -->
-        <h1>🏯 寺院情報<br class="mobile-break">データベース</h1>
-
-        <!-- 全ボタンを右側にまとめる -->
-        <div class="header-actions">
+    <div class="header-inner">
+        <!-- 上段: タイトルのみ（スマホ時） -->
+        <div class="header-title-row">
+            <h1>🏯 寺院情報データベース</h1>
+        </div>
+        <!-- 下段: ボタン群（スマホ時） -->
+        <div class="header-btn-row">
             <button class="header-btn" onclick="toggleDarkMode()" title="ダークモード">🌙</button>
             <button id="font-size-toggle" class="header-btn" title="文字サイズ切り替え">A</button>
             <button class="header-btn notification-btn" onclick="openNotifications()" style="position: relative;" title="通知">
@@ -20,11 +21,3 @@
 
 <!-- ヘッダー高さに合わせてボタン位置を自動調整 -->
 <script src="{{ url_for('static', filename='js/header-offset.js') }}"></script>
-
-<style>
-.mobile-break { display: none; }
-
-@media (max-width: 600px) {
-    .mobile-break { display: inline; }
-}
-</style>

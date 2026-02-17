@@ -103,27 +103,31 @@ body.font-large .temple-name {
 /* ==========================================
    フォントサイズ切り替えボタン
    ========================================== */
+/* ヘッダー内に馴染む見た目（他のheader-btnと統一） */
 #font-size-toggle {
-    background: white;
-    border: 2px solid #1a237e;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 8px;
+    width: auto;
+    height: auto;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 5px 6px;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
+    box-shadow: none;
+    transition: background 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1a237e;
+    color: white;
 }
 
 #font-size-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    background: #f5f5f5;
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 #font-size-toggle:active {
@@ -132,13 +136,13 @@ body.font-large .temple-name {
 
 /* ダークモード対応 */
 body.dark-mode #font-size-toggle {
-    background: #2c2c2c;
-    border-color: #90caf9;
-    color: #90caf9;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
 }
 
 body.dark-mode #font-size-toggle:hover {
-    background: #3c3c3c;
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* ==========================================
@@ -160,20 +164,20 @@ body.dark-mode #font-size-toggle:hover {
         font-size: 17px;
     }
     
-    /* ボタンサイズ調整 */
+    /* ボタンサイズ調整（header-btnと統一） */
     #font-size-toggle {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
+        width: auto;
+        height: auto;
+        font-size: 1rem;
     }
 }
 
 @media (max-width: 480px) {
     /* さらに小さい画面用 */
     #font-size-toggle {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: auto;
+        height: auto;
+        font-size: 0.95rem;
     }
 }
 

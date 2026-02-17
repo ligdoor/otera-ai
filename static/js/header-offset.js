@@ -1,36 +1,56 @@
 /**
  * header-offset.js
- * ヘッダーの実際の高さを取得し、
- * back-btn / clear-chat-btn の位置を動的に設定する
  *
- * 理由: ヘッダーはスマホで2行になる場合があり
- *      CSSのtop固定値だとボタンがヘッダーの後ろに隠れてしまう
+ * ヘッダー・コントロールエリアの実際の高さを取得して
+ * 関連要素の位置を動的に設定する
  */
 
-function adjustHeaderOffset() {
+function adjustAll() {
     const header = document.querySelector('header');
-    if (!header) return;
+    const chatWindow = document.getElementById('chat-window');
+    const controlArea = document.querySelector('.control-area');
 
-    // ヘッダーの実際の高さ（px）を取得
-    const headerHeight = header.getBoundingClientRect().height;
-    // 少し余白を加える（8px）
-    const offset = headerHeight + 8;
+    if (header) {
+        const headerHeight = header.getBoundingClientRect().height;
+        const topOffset = Math.ceil(headerHeight) + 8; // 余白8px
 
-    // back-btn の位置を更新
-    const backBtns = document.querySelectorAll('.back-btn');
-    backBtns.forEach(btn => {
-        btn.style.top = offset + 'px';
-    });
+        // back-btn / clear-chat-btn の top を更新
+        document.querySelectorAll('.back-btn, .clear-chat-btn').forEach(btn => {
+            btn.style.top = topOffset + 'px';
+        });
 
-    // clear-chat-btn の位置を更新
-    const clearBtns = document.querySelectorAll('.clear-chat-btn');
-    clearBtns.forEach(btn => {
-        btn.style.top = offset + 'px';
-    });
+        // chat-window の padding-top をヘッダー高さに合わせる
+        if (chatWindow) {
+            chatWindow.style.paddingTop = (Math.ceil(headerHeight) + 12) + 'px';
+        }
+    }
+
+    // chat-window の padding-bottom をコントロールエリア高さに合わせる
+    if (controlArea && chatWindow) {
+        if (!controlArea.classList.contains('minimized')) {
+            const controlHeight = controlArea.getBoundingClientRect().height;
+            chatWindow.style.paddingBottom = (controlHeight + 16) + 'px';
+        }
+    }
 }
 
-// ページ読み込み時に実行
-document.addEventListener('DOMContentLoaded', adjustHeaderOffset);
+// ページ読み込み時（複数タイミングで実行してレンダリング完了を待つ）
+document.addEventListener('DOMContentLoaded', () => {
+    adjustAll();
+    setTimeout(adjustAll, 100);
+    setTimeout(adjustAll, 300);
+});
 
-// 画面リサイズ時にも再計算（横→縦回転など）
-window.addEventListener('resize', adjustHeaderOffset);
+// 画面リサイズ・回転時
+window.addEventListener('resize', adjustAll);
+
+// コントロールエリアの開閉監視
+document.addEventListener('DOMContentLoaded', () => {
+    const controlArea = document.querySelector('.control-area');
+    if (controlArea) {
+        new MutationObserver(adjustAll).observe(controlArea, {
+            attributes: true,
+            attributeFilter: ['class']
+        });
+    }
+});

@@ -25,29 +25,32 @@ header {
   right: 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 10px 12px;
+  padding: 8px 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   z-index: 1000;
 }
 
-.header-content {
+/* PC: 1行（タイトル左・ボタン右） */
+.header-inner {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   max-width: 1200px;
   margin: 0 auto;
-  gap: 8px;
+  gap: 10px;
 }
 
-/* タイトル: 伸び縮みして余ったスペースを使う */
-.header-content h1 {
+.header-title-row h1 {
   font-size: 1.1rem;
   margin: 0;
-  flex: 1;        /* 余ったスペースを全部使う */
-  min-width: 0;   /* flexboxの縮小を許可 */
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.header-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 /* ボタン共通 */
@@ -55,83 +58,67 @@ header {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  padding: 8px 10px;
+  padding: 7px 9px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   transition: background 0.3s;
   text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;  /* ボタンは縮まない */
-  min-width: 38px;
-  min-height: 38px;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .header-btn:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* ボタングループ（右側） */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
 /* ========================================
- * スマホ対応（375px幅のiPhone Xs基準）
+ * スマホ: タイトル上・ボタン下の2行レイアウト
  * ======================================== */
 @media (max-width: 600px) {
   header {
-    padding: 8px 8px;
+    padding: 6px 10px 6px 10px;
   }
 
-  .header-content {
+  /* スマホ時は縦積み（flex-direction: column） */
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
   }
 
-  /* タイトルを2行表示・小さく */
-  .header-content h1 {
-    font-size: 0.8rem;
-    line-height: 1.3;
-    white-space: normal;   /* 折り返し許可 */
-    word-break: keep-all;
-    overflow: visible;
+  /* 上段: タイトル（全幅） */
+  .header-title-row {
+    width: 100%;
   }
 
-  /* ボタンをさらにコンパクトに */
+  .header-title-row h1 {
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 下段: ボタン群（左端揃え・下端） */
+  .header-btn-row {
+    width: 100%;
+    gap: 3px;
+    /* 青線（ヘッダー下端）に揃うよう下揃え */
+    align-items: flex-end;
+    padding-bottom: 2px;
+  }
+
   .header-btn {
-    padding: 5px 6px;
+    padding: 5px 7px;
     font-size: 1.05rem;
     min-width: 32px;
     min-height: 32px;
     border-radius: 6px;
-  }
-
-  .header-actions {
-    gap: 2px;
-  }
-
-  /* ユーザー名は非表示 */
-  .user-name-display {
-    display: none !important;
-  }
-}
-
-/* iPhone SE (320px) */
-@media (max-width: 375px) {
-  .header-content h1 {
-    font-size: 0.72rem;
-  }
-
-  .header-btn {
-    padding: 4px 5px;
-    font-size: 0.95rem;
-    min-width: 28px;
-    min-height: 28px;
   }
 }
 
@@ -139,7 +126,9 @@ header {
  * チャットウィンドウ
  * ======================================== */
 #chat-window {
-  padding: 80px 15px 15px 15px;
+  /* padding-topはJS(header-offset.js)でヘッダー高さに合わせて設定 */
+  /* padding-bottomはJS(header-offset.js)でコントロールエリア高さに合わせて設定 */
+  padding: 90px 15px 350px 15px;
   max-width: 900px;
   margin: 0 auto;
   min-height: calc(100vh - 80px);
@@ -147,7 +136,7 @@ header {
 
 @media (max-width: 600px) {
   #chat-window {
-    padding: 90px 10px 15px 10px;
+    padding: 100px 10px 350px 10px;
   }
 }
 
