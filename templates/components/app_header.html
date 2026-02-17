@@ -1,9 +1,9 @@
 <header>
     <div class="header-content">
-        <!-- タイトル（左側） -->
+        <!-- タイトル（左側・伸縮する） -->
         <h1>🏯 寺院情報<br class="mobile-break">データベース</h1>
 
-        <!-- ボタングループ（右側にまとめる） -->
+        <!-- 全ボタンを右側にまとめる -->
         <div class="header-actions">
             <button class="header-btn" onclick="toggleDarkMode()" title="ダークモード">🌙</button>
             <button id="font-size-toggle" class="header-btn" title="文字サイズ切り替え">A</button>
@@ -18,37 +18,13 @@
     </div>
 </header>
 
+<!-- ヘッダー高さに合わせてボタン位置を自動調整 -->
+<script src="{{ url_for('static', filename='js/header-offset.js') }}"></script>
+
 <style>
-.mobile-break {
-    display: none;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-/* ユーザー名（PC時のみ表示） */
-.user-name-display {
-    color: white;
-    font-size: 14px;
-    white-space: nowrap;
-}
+.mobile-break { display: none; }
 
 @media (max-width: 600px) {
-    .mobile-break {
-        display: inline;
-    }
-
-    /* ユーザー名は非表示 */
-    .user-name-display {
-        display: none !important;
-    }
-
-    .header-actions {
-        gap: 3px;
-    }
+    .mobile-break { display: inline; }
 }
 </style>
