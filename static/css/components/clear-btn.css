@@ -1,9 +1,9 @@
 /* === クリアボタン === */
 .clear-chat-btn {
   position: fixed;
-  top: 70px; /* ★ ヘッダーの下に配置 */
+  top: 70px;
   right: 10px;
-  z-index: 100; /* ★ z-indexを追加 */
+  z-index: 100;
   background: #ff4444;
   color: white;
   border: none;
@@ -20,7 +20,7 @@
   background: #dd2222;
 }
 
-/* 戻るボタン（仏具図鑑用） */
+/* 戻るボタン（仏具図鑑・サブページ用） */
 .back-btn {
   position: fixed;
   top: 70px;
@@ -33,12 +33,13 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 6px;
+  text-decoration: none;
 }
 
 .back-btn:hover {
@@ -49,4 +50,41 @@
 
 .back-btn:active {
   transform: translateY(0);
+}
+
+/* ========================================
+ * スマホ対応
+ * ヘッダーが2行になると高さが増えるため
+ * top値を増やしてボタンが隠れないようにする
+ * ======================================== */
+@media (max-width: 600px) {
+  /* スマホではヘッダーが約64px */
+  .clear-chat-btn {
+    top: 72px;
+    right: 8px;
+    padding: 7px 11px;
+    font-size: 13px;
+  }
+
+  .back-btn {
+    top: 72px;
+    left: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+/* iPhone SE など極小画面 */
+@media (max-width: 375px) {
+  .clear-chat-btn {
+    top: 68px;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .back-btn {
+    top: 68px;
+    font-size: 12px;
+    padding: 7px 12px;
+  }
 }

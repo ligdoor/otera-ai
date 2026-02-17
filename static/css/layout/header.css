@@ -34,7 +34,7 @@ header {
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
-  gap: 10px;
+  gap: 8px;
 }
 
 .header-content h1 {
@@ -67,74 +67,88 @@ header {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* スマホ対応 */
+/* ========================================
+ * スマホ対応（最重要修正）
+ * ======================================== */
 @media (max-width: 600px) {
   header {
     padding: 8px 10px;
   }
 
+  .header-content {
+    gap: 4px;
+  }
+
+  /* タイトルを小さく・省スペースに */
   .header-content h1 {
-    font-size: 0.9rem;
-    line-height: 1.2;
+    font-size: 0.82rem;
+    line-height: 1.25;
     white-space: normal;
     word-break: keep-all;
     overflow: visible;
+    flex: 1;
+    min-width: 0;
   }
 
+  /* ボタンをコンパクトに */
   .header-btn {
-    padding: 6px 8px;
-    font-size: 1rem;
+    padding: 6px 7px;
+    font-size: 1.1rem;
     min-width: 36px;
     min-height: 36px;
+    flex-shrink: 0;
   }
 
   .header-content > div {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     flex-shrink: 0;
   }
 
-  .header-content > div span {
-    display: none; /* ユーザー名を非表示 */
-  }
-
-  /* クリアボタンの位置調整 */
-  .clear-chat-btn {
-    top: 80px;
-    right: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
+  /* ユーザー名は非表示 */
+  .header-content > div span,
+  .user-name-display {
+    display: none !important;
   }
 }
 
-/* 極小画面（iPhone SE など）対応 */
+/* iPhone SE など極小画面 */
 @media (max-width: 375px) {
   .header-content h1 {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .header-btn {
-    padding: 4px 6px;
-    font-size: 0.9rem;
+    padding: 5px 6px;
+    font-size: 1rem;
     min-width: 32px;
     min-height: 32px;
   }
+
+  .header-content > div {
+    gap: 2px;
+  }
 }
 
+/* ========================================
+ * チャットウィンドウ
+ * ======================================== */
 #chat-window {
-  padding: 80px 15px 15px 15px; /* ★ 上部パディングを追加 */
+  padding: 80px 15px 15px 15px;
   max-width: 900px;
   margin: 0 auto;
   min-height: calc(100vh - 80px);
 }
 
-/* スマホ対応 */
 @media (max-width: 600px) {
   #chat-window {
-    padding: 90px 10px 15px 10px; /* ★ スマホではさらに余白を追加 */
+    padding: 90px 10px 15px 10px;
   }
 }
 
+/* ========================================
+ * メッセージスタイル
+ * ======================================== */
 .message {
   margin-bottom: 20px;
   line-height: 1.6;
