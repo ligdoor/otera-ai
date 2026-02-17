@@ -395,12 +395,21 @@ def get_user_settings():
         client = supabase_db.get_supabase_client()
         
         # user_idからusersテーブルのidを取得
-        user_result = client.table('users').select('id').eq('user_id', user_id).single().execute()
+        # ※ single()はデータが存在しない場合に例外を投げるためexecute()を使用
+        user_result = client.table('users').select('id').eq('user_id', user_id).execute()
         
-        if not user_result.data:
-            return APIResponse.not_found('ユーザー')
+        if not user_result.data or len(user_result.data) == 0:
+            # ユーザーが見つからない場合はデフォルト設定を返す（500エラー防止）
+            return APIResponse.success(
+                data={
+                    'font_size': 'normal',
+                    'theme': 'light',
+                    'line_height': 'normal'
+                },
+                message="デフォルト設定を返しました"
+            )
         
-        db_user_id = user_result.data['id']
+        db_user_id = user_result.data[0]['id']
         
         # user_settingsから設定を取得
         result = client.table('user_settings').select('*').eq('user_id', db_user_id).execute()
@@ -502,12 +511,21 @@ def save_user_settings():
         client = supabase_db.get_supabase_client()
         
         # user_idからusersテーブルのidを取得
-        user_result = client.table('users').select('id').eq('user_id', user_id).single().execute()
+        # ※ single()はデータが存在しない場合に例外を投げるためexecute()を使用
+        user_result = client.table('users').select('id').eq('user_id', user_id).execute()
         
-        if not user_result.data:
-            return APIResponse.not_found('ユーザー')
+        if not user_result.data or len(user_result.data) == 0:
+            # ユーザーが見つからない場合はデフォルト設定を返す（500エラー防止）
+            return APIResponse.success(
+                data={
+                    'font_size': 'normal',
+                    'theme': 'light',
+                    'line_height': 'normal'
+                },
+                message="デフォルト設定を返しました"
+            )
         
-        db_user_id = user_result.data['id']
+        db_user_id = user_result.data[0]['id']
         
         # upsert（存在すれば更新、なければ挿入）
         client.table('user_settings').upsert({
