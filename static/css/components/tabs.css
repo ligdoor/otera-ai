@@ -1,72 +1,26 @@
-/* ==========================================
-   3タブ対応のスタイル調整
-   ========================================== */
-
-/* 仏具図鑑タブのスタイル */
+/* === お気に入りタブ === */
 .favorites-toggle {
-    display: flex;
-    gap: var(--spacing-sm, 8px);
-    margin-bottom: var(--spacing-lg, 16px);
-    flex-wrap: wrap;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  background: #f5f5f5;
+  padding: 4px;
+  border-radius: 8px;
 }
-
 .fav-tab {
-    flex: 1;
-    min-width: 100px;
-    padding: var(--spacing-md, 12px) var(--spacing-lg, 16px);
-    background: white;
-    border: 2px solid var(--color-gray-200, #e2e8f0);
-    border-radius: var(--radius-lg, 12px);
-    font-size: var(--font-base, 1rem);
-    font-weight: var(--font-medium, 500);
-    cursor: pointer;
-    transition: var(--transition-base, 0.2s ease);
-    color: var(--color-gray-600, #4a5568);
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  color: #666;
 }
-
-.fav-tab:hover {
-    background: var(--color-gray-50, #f7fafc);
-    border-color: var(--color-primary, #667eea);
-}
-
 .fav-tab.active {
-    background: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
-    color: white;
-    border-color: var(--color-primary, #667eea);
-}
-
-/* ダークモード対応 */
-body.dark-mode .fav-tab {
-    background: var(--color-gray-800, #1a202c);
-    border-color: var(--color-gray-700, #2d3748);
-    color: var(--color-gray-300, #cbd5e0);
-}
-
-body.dark-mode .fav-tab:hover {
-    background: var(--color-gray-700, #2d3748);
-}
-
-body.dark-mode .fav-tab.active {
-    background: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
-    color: white;
-}
-
-/* スマホ対応 */
-@media (max-width: 600px) {
-    .favorites-toggle {
-        gap: var(--spacing-xs, 4px);
-    }
-    
-    .fav-tab {
-        padding: var(--spacing-sm, 8px) var(--spacing-md, 12px);
-        font-size: var(--font-sm, 0.875rem);
-        min-width: 80px;
-    }
-}
-
-/* タブレット対応 */
-@media (min-width: 601px) and (max-width: 1024px) {
-    .fav-tab {
-        padding: var(--spacing-md, 12px) var(--spacing-xl, 20px);
-    }
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #1a237e;
 }

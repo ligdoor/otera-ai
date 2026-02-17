@@ -1,188 +1,50 @@
-/* ==========================================
-   カード共通スタイル
-   ========================================== */
-
-/* === ベースカード === */
-.card {
-    background: white;
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-2xl);
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-slow);
+/* === 寺院カード === */
+.temple-card {
+  border: 2px solid #e0e0e0;
+  border-left: 5px solid #1a237e;
+  padding: 14px 50px 14px 14px;
+  margin-top: 10px;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-
-.card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+.temple-card:hover {
+  border-color: #1a237e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
-
-/* === カードヘッダー === */
-.card-header {
-    margin-bottom: var(--spacing-xl);
-    padding-bottom: var(--spacing-lg);
-    border-bottom: 2px solid var(--color-gray-200);
+.card-name {
+  font-weight: bold;
+  color: #1a237e;
+  font-size: 1.15rem;
+  margin-bottom: 6px;
 }
-
-.card-title {
-    font-size: var(--font-xl);
-    font-weight: var(--font-bold);
-    color: var(--color-gray-800);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+.card-addr {
+  font-size: 0.95rem;
+  color: #555;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-
-.card-subtitle {
-    font-size: var(--font-sm);
-    color: var(--color-gray-500);
-    margin-top: var(--spacing-xs);
+.favorite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s;
+  z-index: 10;
 }
-
-/* === カードボディ === */
-.card-body {
-    padding: 0;
+.favorite-btn:hover {
+  transform: scale(1.2);
 }
-
-/* === カードフッター === */
-.card-footer {
-    margin-top: var(--spacing-xl);
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--color-gray-200);
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-}
-
-/* === トップボーダーカード === */
-.card-bordered {
-    position: relative;
-}
-
-.card-bordered::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--card-gradient-start), var(--card-gradient-end));
-}
-
-/* カードテーマカラー */
-.card-admin {
-    --card-gradient-start: var(--color-accent-pink);
-    --card-gradient-end: var(--color-accent-red);
-}
-
-.card-editor {
-    --card-gradient-start: var(--color-secondary);
-    --card-gradient-end: var(--color-secondary-dark);
-}
-
-.card-viewer {
-    --card-gradient-start: var(--color-accent-green);
-    --card-gradient-end: var(--color-accent-cyan);
-}
-
-.card-warning {
-    --card-gradient-start: #fa709a;
-    --card-gradient-end: var(--color-accent-yellow);
-}
-
-/* === カードグリッド === */
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-3xl);
-}
-
-/* === カード内リスト === */
-.card ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.card li {
-    padding: var(--spacing-sm) 0;
-    color: var(--color-gray-600);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.card li::before {
-    content: '✓';
-    color: var(--card-gradient-start);
-    font-weight: var(--font-bold);
-    font-size: var(--font-lg);
-    flex-shrink: 0;
-}
-
-/* === ユーザーカード（承認待ち用） === */
-.user-card {
-    border: 2px solid var(--color-gray-200);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-    transition: all var(--transition-slow);
-}
-
-.user-card:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-}
-
-.user-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-lg);
-    flex-wrap: wrap;
-    gap: var(--spacing-md);
-}
-
-.user-card-info h3 {
-    color: var(--color-gray-900);
-    font-size: var(--font-2xl);
-    margin-bottom: var(--spacing-xs);
-}
-
-.user-card-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-}
-
-.user-card-detail-item {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-}
-
-.user-card-detail-label {
-    font-weight: var(--font-semibold);
-    color: var(--color-gray-600);
-    min-width: 80px;
-}
-
-.user-card-detail-value {
-    color: var(--color-gray-800);
-    word-break: break-word;
-}
-
-/* === レスポンシブ === */
-@media (max-width: 768px) {
-    .card-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .user-card-details {
-        grid-template-columns: 1fr;
-    }
+.favorite-btn:active {
+  transform: scale(0.9);
 }

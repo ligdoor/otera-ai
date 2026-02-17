@@ -1,0 +1,417 @@
+/* === アコーディオン（折りたたみ） === */
+.accordion-section {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.accordion-section:hover {
+  border-color: #bdbdbd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.accordion-header {
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.accordion-header:hover {
+  background: linear-gradient(135deg, #eeeeee 0%, #f5f5f5 100%);
+}
+
+.accordion-header.active {
+  background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+  border-bottom: 2px solid #1a237e;
+}
+
+.accordion-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1a237e;
+  font-size: 1rem;
+}
+
+.accordion-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.accordion-header.active .accordion-icon {
+  transform: rotate(90deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.accordion-content.active {
+  max-height: none;
+  transition: max-height 0.4s ease-in;
+}
+
+/* アコーディオンボディの余白調整 */
+.accordion-body {
+  padding: 6px 10px !important;
+  line-height: 1.4;
+}
+
+.accordion-body > div {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.accordion-body > div:last-child {
+  margin-bottom: 0;
+}
+
+.accordion-body strong {
+  color: #555;
+  font-size: 0.88rem;
+  display: block;
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.accordion-body span {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* 重要項目のスタイル */
+.accordion-body .important-text {
+  color: #c62828;
+  font-weight: 600;
+  background: #ffebee;
+  padding: 1px 4px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* 空の項目 */
+.accordion-body .empty-text {
+  color: #999;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* 長いテキスト */
+.accordion-body .long-text {
+  display: block;
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+/* スマホ対応 */
+@media (max-width: 600px) {
+  .accordion-body {
+    padding: 6px 10px;
+  }
+
+  .accordion-body > div {
+    margin-bottom: 6px;
+    padding: 0;
+  }
+
+  .accordion-body strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.82rem;
+    min-width: unset;
+    line-height: 1.2;
+  }
+
+  .accordion-body span {
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+}
+
+/* ダークモード対応 */
+body.dark-mode .accordion-section {
+  background-color: #2c2c2c;
+  border-color: #444;
+}
+
+body.dark-mode .accordion-header {
+  background: linear-gradient(135deg, #2c2c2c 0%, #3c3c3c 100%);
+}
+
+body.dark-mode .accordion-header.active {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  border-bottom-color: #82b1ff;
+}
+
+body.dark-mode .accordion-title {
+  color: #90caf9;
+}
+
+body.dark-mode .accordion-body {
+  background: #3c3c3c;
+}
+
+body.dark-mode .accordion-body strong {
+  color: #aaa;
+}
+/* 通知機能のスタイル */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.notification-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-modal.show {
+  display: flex;
+}
+
+.notification-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 2px solid #eee;
+}
+
+.notification-header h2 {
+  margin: 0;
+  color: #1a237e;
+  font-size: 1.3rem;
+}
+
+.mark-read-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.mark-read-btn:hover {
+  background: #5568d3;
+}
+
+.close-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: #d32f2f;
+}
+
+.notification-list {
+  overflow-y: auto;
+  padding: 10px;
+  flex: 1;
+}
+
+.notification-item {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-item:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notification-item.unread {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.notification-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notification-title {
+  font-weight: bold;
+  color: #1a237e;
+  font-size: 1rem;
+}
+
+.notification-time {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.notification-message {
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.notification-type-icon {
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.notification-empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+/* === 項目の区切り線とスペース === */
+.field-item {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.field-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.field-label-display {
+  font-weight: 600 !important;
+  color: #555 !important;
+  font-size: 0.88rem !important;
+  margin-bottom: 4px !important;
+}
+
+.field-value-display {
+  color: #333 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 0 !important;
+}
+
+/* ★ Quillエディタの装飾を残す */
+.field-value-display strong,
+.field-value-display b {
+  font-weight: bold !important;
+}
+
+.field-value-display em,
+.field-value-display i {
+  font-style: italic !important;
+}
+
+.field-value-display u {
+  text-decoration: underline !important;
+}
+
+/* 背景色は削除済みなので、透明を強制 */
+.field-value-display * {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+.field-value-display.empty {
+  color: #999 !important;
+  font-style: italic !important;
+  font-size: 0.85rem !important;
+}
+
+/* リストの装飾 */
+.field-value-display ul,
+.field-value-display ol {
+  margin: 8px 0 8px 20px !important;
+  padding: 0 !important;
+}
+
+.field-value-display li {
+  margin: 4px 0 !important;
+}
+
+/* === ダークモード対応 === */
+body.dark-mode .field-item {
+  border-bottom-color: #444;
+}
+
+body.dark-mode .field-label-display {
+  color: #bdbdbd !important;
+}
+
+body.dark-mode .field-value-display {
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .field-value-display.empty {
+  color: #999 !important;
+}
+
+/* ダークモードでも装飾は維持 */
+body.dark-mode .field-value-display strong,
+body.dark-mode .field-value-display b {
+  font-weight: bold !important;
+  color: #fff !important;
+}
+
+body.dark-mode .field-value-display em,
+body.dark-mode .field-value-display i {
+  font-style: italic !important;
+}
+
+body.dark-mode .field-value-display u {
+  text-decoration: underline !important;
+}

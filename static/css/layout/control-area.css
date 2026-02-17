@@ -1,0 +1,124 @@
+/* === コントロールエリア === */
+.control-area {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
+  border-top: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+.control-area.minimized {
+  transform: translateY(100%);
+}
+#show-menu-btn {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#show-menu-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+#show-menu-btn:hover {
+  transform: scale(1.1);
+}
+.close-handle {
+  width: 50px;
+  height: 5px;
+  background-color: #ccc;
+  border-radius: 3px;
+  margin: -8px auto 15px auto;
+  cursor: pointer;
+}
+.control-group {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.label-text {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.custom-select-wrapper {
+  position: relative;
+}
+select,
+input[type="text"] {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  height: 52px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: white;
+  color: #333;
+  font-weight: 500;
+  appearance: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+select:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: #1a237e;
+}
+.custom-select-wrapper::after {
+  content: "▼";
+  font-size: 12px;
+  color: #333;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.text-input-wrapper {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+button.send-btn {
+  padding: 0 22px;
+  height: 52px;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(26, 35, 126, 0.3);
+}
+button.send-btn:hover {
+  background: linear-gradient(135deg, #0d47a1 0%, #1a237e 100%);
+  transform: translateY(-2px);
+}

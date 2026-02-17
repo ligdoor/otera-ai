@@ -1,0 +1,28 @@
+/* === クイックQ&A === */
+#quick-qa-area {
+  display: none;
+  gap: 8px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 5px;
+}
+#quick-qa-area::-webkit-scrollbar {
+  display: none;
+}
+.qa-chip {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 2px solid #bbdefb;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.2s;
+}
+.qa-chip:hover {
+  background-color: #bbdefb;
+  transform: scale(1.05);
+}
