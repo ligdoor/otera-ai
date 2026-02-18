@@ -151,7 +151,7 @@ def register():
         if result.data:
             return jsonify({
                 'success': False,
-                'message': 'このユーザーIDは既に使用されています'
+                'message': 'このユーザーIDは既に申請が行われている可能性があります'
             }), 400
         
         # ユーザーID重複チェック（申請中）
