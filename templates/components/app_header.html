@@ -1,14 +1,12 @@
 <header>
     <div class="header-inner">
-        <!-- 上段: タイトルのみ（スマホ時） -->
         <div class="header-title-row">
             <h1>🏯 寺院情報データベース</h1>
         </div>
-        <!-- 下段: ボタン群（スマホ時） -->
         <div class="header-btn-row">
             <button class="header-btn" onclick="toggleDarkMode()" title="ダークモード">🌙</button>
             <button id="font-size-toggle" class="header-btn" title="文字サイズ切り替え">A</button>
-            <button class="header-btn notification-btn" onclick="openNotifications()" style="position: relative;" title="通知">
+            <button class="header-btn" onclick="openNotifications()" title="通知" style="position: relative;">
                 🔔
                 <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
             </button>
@@ -18,6 +16,4 @@
         </div>
     </div>
 </header>
-
-<!-- ヘッダー高さに合わせてボタン位置を自動調整 -->
 <script src="{{ url_for('static', filename='js/header-offset.js') }}"></script>

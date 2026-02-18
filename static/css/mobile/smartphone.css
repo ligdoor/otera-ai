@@ -18,10 +18,7 @@
   }
 
   /* ヘッダーボタン */
-  .header-btn {
-    min-width: 44px;
-    min-height: 44px;
-  }
+  /* .header-btn サイズは header.css で一元管理 */
 
   /* お気に入りボタン */
   .favorite-btn,
@@ -80,10 +77,7 @@
     font-size: 1rem !important; /* 0.8rem → 1rem に変更 */
   }
   
-  .header-btn {
-    min-width: 48px !important;
-    min-height: 48px !important;
-  }
+  /* .header-btn サイズは header.css で一元管理 */
 }
 
 /* ========================================

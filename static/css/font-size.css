@@ -108,11 +108,7 @@ body.font-large .temple-name {
     background: rgba(255, 255, 255, 0.2);
     border: none;
     border-radius: 8px;
-    width: auto;
-    height: auto;
-    min-width: 32px;
-    min-height: 32px;
-    padding: 5px 6px;
+
     font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
@@ -166,8 +162,6 @@ body.dark-mode #font-size-toggle:hover {
     
     /* ボタンサイズ調整（header-btnと統一） */
     #font-size-toggle {
-        width: auto;
-        height: auto;
         font-size: 1rem;
     }
 }
@@ -175,8 +169,6 @@ body.dark-mode #font-size-toggle:hover {
 @media (max-width: 480px) {
     /* さらに小さい画面用 */
     #font-size-toggle {
-        width: auto;
-        height: auto;
         font-size: 0.95rem;
     }
 }

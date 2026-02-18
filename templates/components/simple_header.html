@@ -1,19 +1,15 @@
 <header>
     <div class="header-inner">
-        <!-- 上段: タイトルのみ（スマホ時） -->
         <div class="header-title-row">
             <h1>🏯 寺院情報データベース</h1>
         </div>
-        <!-- 下段: ボタン群（スマホ時） -->
         <div class="header-btn-row">
             <button class="header-btn" onclick="toggleDarkMode()" title="ダークモード">🌙</button>
-            <a href="/" class="header-btn" title="寺院メイン">🏠</a>
+            <a href="/" class="header-btn" title="トップ">🏠</a>
             <a href="/items" class="header-btn" title="仏具図鑑">🙏</a>
             <a href="/admin" class="header-btn" title="管理画面">📊</a>
             <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')" title="ログアウト">🚪</a>
         </div>
     </div>
 </header>
-
-<!-- ヘッダー高さに合わせてボタン位置を自動調整 -->
 <script src="{{ url_for('static', filename='js/header-offset.js') }}"></script>

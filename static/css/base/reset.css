@@ -55,6 +55,8 @@ button {
     font-family: inherit;
     font-size: inherit;
     cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 /* フォーム要素のリセット */
