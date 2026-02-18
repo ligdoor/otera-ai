@@ -4,121 +4,147 @@
 
 /* === フォームグループ === */
 .form-group {
-    margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .form-label {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-    color: var(--color-gray-700);
-    font-weight: var(--font-semibold);
-    font-size: var(--font-sm);
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-gray-700);
+  font-weight: var(--font-semibold);
+  font-size: var(--font-sm);
 }
 
 .form-label .required {
-    color: var(--color-error);
-    margin-left: var(--spacing-xs);
+  color: var(--color-error);
+  margin-left: var(--spacing-xs);
 }
 
 .form-help {
-    display: block;
-    margin-top: var(--spacing-xs);
-    font-size: var(--font-sm);
-    color: var(--color-gray-500);
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-sm);
+  color: var(--color-gray-500);
 }
 
 /* === 入力フィールド === */
 .form-input,
 .form-textarea,
 .form-select {
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    border: 2px solid var(--color-gray-200);
-    border-radius: var(--radius-md);
-    font-size: var(--font-base);
-    transition: border-color var(--transition-base);
-    background: white;
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  font-size: var(--font-base);
+  transition: border-color var(--transition-base);
+  background: white;
 }
 
 .form-input:focus,
 .form-textarea:focus,
 .form-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .form-input:disabled,
 .form-textarea:disabled,
 .form-select:disabled {
-    background: var(--color-gray-50);
-    color: var(--color-gray-400);
-    cursor: not-allowed;
+  background: var(--color-gray-50);
+  color: var(--color-gray-400);
+  cursor: not-allowed;
 }
 
 /* テキストエリア */
 .form-textarea {
-    resize: vertical;
-    min-height: 100px;
+  resize: vertical;
+  min-height: 100px;
 }
 
 /* セレクト */
 .form-select {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 /* === バリデーション === */
 .form-input.error,
 .form-textarea.error,
 .form-select.error {
-    border-color: var(--color-error);
+  border-color: var(--color-error);
 }
 
 .form-input.success,
 .form-textarea.success,
 .form-select.success {
-    border-color: var(--color-success);
+  border-color: var(--color-success);
 }
 
 .form-error {
-    display: block;
-    margin-top: var(--spacing-xs);
-    font-size: var(--font-sm);
-    color: var(--color-error);
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-sm);
+  color: var(--color-error);
 }
 
 .form-success {
-    display: block;
-    margin-top: var(--spacing-xs);
-    font-size: var(--font-sm);
-    color: var(--color-success);
+  display: block;
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-sm);
+  color: var(--color-success);
 }
 
 /* === チェックボックス・ラジオボタン === */
 .form-check {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
 }
 
 .form-check-input {
-    width: auto;
-    margin: 0;
+  width: auto;
+  margin: 0;
 }
 
 .form-check-label {
-    margin: 0;
-    font-weight: var(--font-normal);
+  margin: 0;
+  font-weight: var(--font-normal);
 }
 
 /* === インラインフォーム === */
 .form-inline {
-    display: flex;
-    gap: var(--spacing-md);
-    align-items: flex-end;
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
 }
 
 .form-inline .form-group {
-    flex: 1;
-    margin-bottom: 0;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* === パスワード表示切り替えボタン === */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  color: var(--color-text-light, #666);
+}
+
+.toggle-password:hover {
+  color: var(--color-primary);
+}
+
+/* 入力欄右側に余白を追加（ボタン分） */
+.form-input {
+  padding-right: 2.5em;
 }
