@@ -1,158 +1,232 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>新規登録 - 寺院情報管理システム</title>
-    
+
     <!-- 新CSS構成 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/reset.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/buttons.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components/forms.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/auth.css') }}">
-    
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/base/variables.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/base/reset.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/buttons.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/forms.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/pages/auth.css') }}"
+    />
+
     <style>
-        .register-container {
-            max-width: 500px;
-        }
-        .notice {
-            background: var(--color-primary-light);
-            padding: var(--spacing-lg);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-xl);
-            border-left: 4px solid var(--color-primary);
-            font-size: var(--font-sm);
-            line-height: 1.6;
-        }
+      .register-container {
+        max-width: 500px;
+      }
+      .notice {
+        background: var(--color-primary-light);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-xl);
+        border-left: 4px solid var(--color-primary);
+        font-size: var(--font-sm);
+        line-height: 1.6;
+      }
     </style>
-</head>
-<body class="auth-page">
+  </head>
+  <body class="auth-page">
     <div class="auth-container register-container">
-        <h2>✍️ 新規登録申請</h2>
-        <p class="subtitle">管理者の承認後、ご利用いただけます</p>
-        
-        <div class="notice">
-            <strong>📌 登録の流れ</strong><br>
-            1. 下記フォームに入力して送信<br>
-            2. 管理者が内容を確認<br>
-            3. 承認後、メールでお知らせ
+      <h2>✍️ 新規登録申請</h2>
+      <p class="subtitle">管理者の承認後、ご利用いただけます</p>
+
+      <div class="notice">
+        <strong>📌 登録の流れ</strong><br />
+        1. 下記フォームに入力して送信<br />
+        2. 管理者が内容を確認<br />
+        3. 承認後、メールでお知らせ
+      </div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label"
+            >ユーザーID <span class="required">*</span></label
+          >
+          <input
+            type="text"
+            id="user_id"
+            class="form-input"
+            required
+            placeholder="例: tanaka_taro"
+          />
+          <div class="form-help">ログイン時に使用します（半角英数字）</div>
         </div>
-        
-        <form id="register-form">
-            <div class="form-group">
-                <label class="form-label">ユーザーID <span class="required">*</span></label>
-                <input type="text" id="user_id" class="form-input" required placeholder="例: tanaka_taro">
-                <div class="form-help">ログイン時に使用します（半角英数字）</div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">お名前 <span class="required">*</span></label>
-                <input type="text" id="name" class="form-input" required placeholder="例: 田中太郎">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">メールアドレス <span class="required">*</span></label>
-                <input type="email" id="email" class="form-input" required placeholder="例: tanaka@example.com">
-                <div class="form-help">承認通知を受け取るアドレス</div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">パスワード <span class="required">*</span></label>
-                <input type="password" id="password" class="form-input" required minlength="8">
-                <div class="form-help">8文字以上、英字と数字を含む</div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">パスワード（確認） <span class="required">*</span></label>
-                <input type="password" id="password_confirm" class="form-input" required minlength="8">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">所属</label>
-                <input type="text" id="department" class="form-input" placeholder="例: 総務部">
-                <div class="form-help">任意項目</div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">申請理由・備考</label>
-                <textarea id="notes" class="form-textarea" rows="4" placeholder="例: 寺院データの管理業務を担当しています"></textarea>
-                <div class="form-help">管理者が承認の参考にします</div>
-            </div>
-            
-            <button type="submit" class="btn btn-primary btn-full">
-                ✉️ 申請を送信
-            </button>
-            
-            <a href="/admin" class="btn btn-text btn-full" style="margin-top: var(--spacing-md); justify-content: center;">
-                ← ログイン画面に戻る
-            </a>
-        </form>
+
+        <div class="form-group">
+          <label class="form-label"
+            >お名前 <span class="required">*</span></label
+          >
+          <input
+            type="text"
+            id="name"
+            class="form-input"
+            required
+            placeholder="例: 田中太郎"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"
+            >メールアドレス <span class="required">*</span></label
+          >
+          <input
+            type="email"
+            id="email"
+            class="form-input"
+            required
+            placeholder="例: tanaka@example.com"
+          />
+          <div class="form-help">承認通知を受け取るアドレス</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"
+            >パスワード <span class="required">*</span></label
+          >
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            required
+            minlength="8"
+          />
+          <div class="form-help">8文字以上、英字と数字を含む</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"
+            >パスワード（確認） <span class="required">*</span></label
+          >
+          <input
+            type="password"
+            id="password_confirm"
+            class="form-input"
+            required
+            minlength="8"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">所属</label>
+          <input
+            type="text"
+            id="department"
+            class="form-input"
+            placeholder="例: 総務部"
+          />
+          <div class="form-help">任意項目</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">申請理由・備考</label>
+          <textarea
+            id="notes"
+            class="form-textarea"
+            rows="4"
+            placeholder="例: 寺院データの管理業務を担当しています"
+          ></textarea>
+          <div class="form-help">管理者が承認の参考にします</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          ✉️ 申請を送信
+        </button>
+
+        <a
+          href="/admin"
+          class="btn btn-text btn-full"
+          style="margin-top: var(--spacing-md); justify-content: center"
+        >
+          ← ログイン画面に戻る
+        </a>
+      </form>
     </div>
-    
+
     <script>
-        document.getElementById('register-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const userId = document.getElementById('user_id').value.trim();
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const passwordConfirm = document.getElementById('password_confirm').value;
-            const department = document.getElementById('department').value.trim();
-            const notes = document.getElementById('notes').value.trim();
-            
-            if (password !== passwordConfirm) {
-                alert('❌ パスワードが一致しません');
-                return;
+      document
+        .getElementById("register-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const userId = document.getElementById("user_id").value.trim();
+          const name = document.getElementById("name").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value;
+          const passwordConfirm =
+            document.getElementById("password_confirm").value;
+          const department = document.getElementById("department").value.trim();
+          const notes = document.getElementById("notes").value.trim();
+
+          if (password !== passwordConfirm) {
+            alert("❌ パスワードが一致しません");
+            return;
+          }
+
+          if (password.length < 8) {
+            alert("❌ パスワードは8文字以上で入力してください");
+            return;
+          }
+
+          if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+            alert("❌ パスワードには英字と数字の両方を含めてください");
+            return;
+          }
+
+          const submitButton = e.target.querySelector('button[type="submit"]');
+          submitButton.disabled = true;
+          submitButton.textContent = "送信中...";
+
+          try {
+            const response = await fetch("/register", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: userId,
+                name: name,
+                email: email,
+                password: password,
+                department: department,
+                notes: notes,
+              }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              alert(
+                "✅ 登録申請を送信しました！\n管理者の承認をお待ちください。",
+              );
+              window.location.href = "/admin";
+            } else {
+              alert("❌ " + data.message);
+              submitButton.disabled = false;
+              submitButton.textContent = "✉️ 申請を送信";
             }
-            
-            if (password.length < 8) {
-                alert('❌ パスワードは8文字以上で入力してください');
-                return;
-            }
-            
-            if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-                alert('❌ パスワードには英字と数字の両方を含めてください');
-                return;
-            }
-            
-            const submitButton = e.target.querySelector('button[type="submit"]');
-            submitButton.disabled = true;
-            submitButton.textContent = '送信中...';
-            
-            try {
-                const response = await fetch('/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        name: name,
-                        email: email,
-                        password: password,
-                        department: department,
-                        notes: notes
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    alert('✅ 登録申請を送信しました！\n管理者の承認をお待ちください。');
-                    window.location.href = '/login';
-                } else {
-                    alert('❌ エラー: ' + data.message);
-                    submitButton.disabled = false;
-                    submitButton.textContent = '✉️ 申請を送信';
-                }
-            } catch (error) {
-                alert('❌ 通信エラーが発生しました');
-                submitButton.disabled = false;
-                submitButton.textContent = '✉️ 申請を送信';
-            }
+          } catch (error) {
+            alert("❌ 通信エラーが発生しました");
+            submitButton.disabled = false;
+            submitButton.textContent = "✉️ 申請を送信";
+          }
         });
     </script>
-</body>
+  </body>
 </html>
