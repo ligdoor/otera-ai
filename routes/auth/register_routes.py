@@ -174,6 +174,20 @@ def register():
                 'success': False,
                 'message': 'このメールアドレスでは既に申請が行われている可能性があります'
             }), 200
+
+            # メールアドレス重複チェック（申請中ユーザー）
+        result = client.table('pending_users')\
+            .select('email')\
+            .eq('email', email)\
+            .eq('status', 'pending')\
+            .execute()
+
+        if result.data:
+            return jsonify({
+                'success': False,
+                'message': 'このメールアドレスではすでに申請中のリクエストがあります'
+            }), 200
+
         
         # ============================================
         # パスワードハッシュ化
