@@ -6,7 +6,7 @@ CRUD操作、カテゴリ管理、画像アップロードを含みます。
 """
 
 from flask import Blueprint, render_template, jsonify, request, session
-from utils.decorators import login_required
+from utils.decorators import login_required, role_required, admin_required
 from services.database import get_supabase_client
 from PIL import Image
 import io
@@ -24,6 +24,7 @@ admin_items_bp = Blueprint('admin_items', __name__)
 
 @admin_items_bp.route('/admin/items')
 @login_required
+@role_required(['admin', 'editor'])  # ★修正: デコレータで権限チェック（DB問い合わせ不要に）
 def admin_items():
     """
     仏具管理画面を表示
@@ -39,55 +40,22 @@ def admin_items():
     
     Authentication:
         @login_required: ログイン必須
-    
-    Permissions:
-        admin または editor 権限が必要
+        @role_required(['admin', 'editor']): admin または editor 権限が必要
     
     Template Variables:
         user_name: ユーザー名
         user_role: ユーザーの権限
     """
-    try:
-        # セッションからユーザー情報を取得
-        user_id = session.get('user_id')
-        user_name = session.get('user_name', 'ゲスト')
-        
-        # データベースクライアントを取得
-        supabase = get_supabase_client()
-        
-        # DBから権限を取得
-        user_result = supabase.table('users')\
-            .select('role')\
-            .eq('user_id', user_id)\
-            .single()\
-            .execute()
-        
-        if not user_result.data:
-            return jsonify({
-                "message": "ユーザー情報が見つかりません"
-            }), 404
-        
-        user_role = user_result.data.get('role', 'viewer')
-        
-        # 権限チェック（admin または editor）
-        if user_role not in ['admin', 'editor']:
-            return jsonify({
-                "message": "この操作を行う権限がありません"
-            }), 403
-        
-        print(f"✅ 仏具管理画面表示: {user_name} ({user_role})")
-        
-        return render_template(
-            'admin_items.html',
-            user_name=user_name,
-            user_role=user_role
-        )
+    user_name = session.get('user_name', 'ゲスト')
+    user_role = session.get('role', 'viewer')
     
-    except Exception as e:
-        print(f"❌ 仏具管理画面エラー: {e}")
-        return jsonify({
-            "message": "エラーが発生しました"
-        }), 500
+    print(f"✅ 仏具管理画面表示: {user_name} ({user_role})")
+    
+    return render_template(
+        'admin_items.html',
+        user_name=user_name,
+        user_role=user_role
+    )
 
 
 # ============================================
@@ -235,6 +203,7 @@ def get_admin_item(item_id):
 
 @admin_items_bp.route('/api/admin/items', methods=['POST'])
 @login_required
+@role_required(['admin', 'editor'])  # ★修正: デコレータで権限チェック（DB問い合わせ不要に）
 def create_admin_item():
     """
     仏具を作成
@@ -267,9 +236,7 @@ def create_admin_item():
     
     Authentication:
         @login_required: ログイン必須
-    
-    Permissions:
-        admin または editor 権限が必要
+        @role_required(['admin', 'editor']): admin または editor 権限が必要
     
     Example Request:
         POST /api/admin/items
@@ -291,25 +258,6 @@ def create_admin_item():
     """
     try:
         # ============================================
-        # 権限チェック
-        # ============================================
-        
-        user_id = session.get('user_id')
-        supabase = get_supabase_client()
-        
-        user_result = supabase.table('users')\
-            .select('role')\
-            .eq('user_id', user_id)\
-            .single()\
-            .execute()
-        
-        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
-            return jsonify({
-                'success': False,
-                'error': '権限がありません'
-            }), 403
-        
-        # ============================================
         # バリデーション
         # ============================================
         
@@ -324,6 +272,8 @@ def create_admin_item():
         # ============================================
         # データ作成
         # ============================================
+        
+        supabase = get_supabase_client()
         
         item_data = {
             'name': data.get('name'),
@@ -371,6 +321,7 @@ def create_admin_item():
 
 @admin_items_bp.route('/api/admin/items/<item_id>', methods=['PUT'])
 @login_required
+@role_required(['admin', 'editor'])  # ★修正: デコレータで権限チェック（DB問い合わせ不要に）
 def update_admin_item(item_id):
     """
     仏具を更新
@@ -399,9 +350,7 @@ def update_admin_item(item_id):
     
     Authentication:
         @login_required: ログイン必須
-    
-    Permissions:
-        admin または editor 権限が必要
+        @role_required(['admin', 'editor']): admin または editor 権限が必要
     
     Example Request:
         PUT /api/admin/items/123
@@ -422,29 +371,7 @@ def update_admin_item(item_id):
         }
     """
     try:
-        # ============================================
-        # 権限チェック
-        # ============================================
-        
-        user_id = session.get('user_id')
         supabase = get_supabase_client()
-        
-        user_result = supabase.table('users')\
-            .select('role')\
-            .eq('user_id', user_id)\
-            .single()\
-            .execute()
-        
-        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
-            return jsonify({
-                'success': False,
-                'error': '権限がありません'
-            }), 403
-        
-        # ============================================
-        # データ更新
-        # ============================================
-        
         data = request.json
         
         # Noneでないフィールドのみ更新対象とする
@@ -497,6 +424,7 @@ def update_admin_item(item_id):
 
 @admin_items_bp.route('/api/admin/items/<item_id>', methods=['DELETE'])
 @login_required
+@admin_required  # ★修正: デコレータで権限チェック（DB問い合わせ不要に）
 def delete_admin_item(item_id):
     """
     仏具を削除
@@ -516,9 +444,7 @@ def delete_admin_item(item_id):
     
     Authentication:
         @login_required: ログイン必須
-    
-    Permissions:
-        管理者（admin）権限が必要
+        @admin_required: 管理者（admin）権限が必要
     
     Example Response:
         {
@@ -526,28 +452,7 @@ def delete_admin_item(item_id):
         }
     """
     try:
-        # ============================================
-        # 権限チェック（管理者のみ）
-        # ============================================
-        
-        user_id = session.get('user_id')
         supabase = get_supabase_client()
-        
-        user_result = supabase.table('users')\
-            .select('role')\
-            .eq('user_id', user_id)\
-            .single()\
-            .execute()
-        
-        if not user_result.data or user_result.data.get('role') != 'admin':
-            return jsonify({
-                'success': False,
-                'error': '管理者権限が必要です'
-            }), 403
-        
-        # ============================================
-        # データ削除
-        # ============================================
         
         supabase.table('buddhist_items')\
             .delete()\
@@ -637,6 +542,7 @@ def get_admin_categories():
 
 @admin_items_bp.route('/api/admin/upload-image', methods=['POST'])
 @login_required
+@role_required(['admin', 'editor'])  # ★修正: デコレータで権限チェック（DB問い合わせ不要に）
 def upload_image():
     """
     画像をアップロード（WebP圧縮）
@@ -659,9 +565,7 @@ def upload_image():
     
     Authentication:
         @login_required: ログイン必須
-    
-    Permissions:
-        admin または editor 権限が必要
+        @role_required(['admin', 'editor']): admin または editor 権限が必要
     
     Image Processing:
         - WebP形式に変換
@@ -676,24 +580,7 @@ def upload_image():
         }
     """
     try:
-        # ============================================
-        # 権限チェック
-        # ============================================
-        
-        user_id = session.get('user_id')
         supabase = get_supabase_client()
-        
-        user_result = supabase.table('users')\
-            .select('role')\
-            .eq('user_id', user_id)\
-            .single()\
-            .execute()
-        
-        if not user_result.data or user_result.data.get('role') not in ['admin', 'editor']:
-            return jsonify({
-                'success': False,
-                'error': '権限がありません'
-            }), 403
         
         # ============================================
         # ファイルチェック

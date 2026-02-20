@@ -3,11 +3,48 @@ from google.genai import types
 from config import Config
 import re
 import time
+import html as html_module  # ★追加: HTMLエスケープ用
 
 # Gemini クライアント初期化
 gemini_client = None
 if Config.GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
+
+
+def _sanitize_text(text: str) -> str:
+    """
+    テキストの危険なHTMLタグ・スクリプトを除去するサニタイズ関数
+    
+    ★修正(重要度:中): Geminiの出力やDBデータをHTMLに埋め込む前に
+    サニタイズしてXSS攻撃を防ぐ。
+    
+    許可タグ: <br> <strong> <em> <div> <span>（スタイル付き）
+    禁止タグ: <script> <iframe> <object> その他実行系タグ
+    
+    Args:
+        text: サニタイズするテキスト
+    
+    Returns:
+        str: サニタイズ済みテキスト
+    """
+    if not text:
+        return ''
+    
+    # 1. <script>タグと中身を削除
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    
+    # 2. イベントハンドラ属性を削除（onclick, onerror等）
+    text = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s+on\w+\s*=\s*[^\s>]+', '', text, flags=re.IGNORECASE)
+    
+    # 3. javascript: href/src を削除
+    text = re.sub(r'(href|src)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', '', text, flags=re.IGNORECASE)
+    
+    # 4. 危険なタグ（iframe, object, embed, form等）を削除
+    dangerous_tags = r'<(iframe|object|embed|form|input|button|select|textarea|link|base|meta)[^>]*/?>'
+    text = re.sub(dangerous_tags, '', text, flags=re.IGNORECASE)
+    
+    return text
 
 def generate_answer_with_ai(temple_info, question, field_config):
     """
@@ -22,14 +59,16 @@ def generate_answer_with_ai(temple_info, question, field_config):
     
     # ★★★ 通夜の質問の場合、専用フォーマットで応答 ★★★
     if is_tsuya_question:
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name}の通夜</div>"]
+        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
+        temple_name_safe = html_module.escape(temple_name)
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name_safe}の通夜</div>"]
         
-        # 通夜関連の項目を取得
-        narimono = temple_info.get('tsuya_narimono', '').strip()
-        ippan = temple_info.get('tsuya_ippan_shoko', '').strip()
-        shinzoku = temple_info.get('tsuya_shinzoku_shoko', '').strip()
-        dokyo = temple_info.get('tsuya_dokyo_length', '').strip()
-        notes = temple_info.get('tsuya_notes', '').strip()
+        # 通夜関連の項目を取得（★修正: エスケープ処理）
+        narimono = html_module.escape(temple_info.get('tsuya_narimono', '') or '')
+        ippan    = html_module.escape(temple_info.get('tsuya_ippan_shoko', '') or '')
+        shinzoku = html_module.escape(temple_info.get('tsuya_shinzoku_shoko', '') or '')
+        dokyo    = html_module.escape(temple_info.get('tsuya_dokyo_length', '') or '')
+        notes    = html_module.escape(temple_info.get('tsuya_notes', '') or '')
         
         response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
         response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
@@ -43,14 +82,16 @@ def generate_answer_with_ai(temple_info, question, field_config):
     
     # ★★★ 葬儀の質問の場合、専用フォーマットで応答 ★★★
     if is_sougi_question:
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name}の葬儀</div>"]
+        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
+        temple_name_safe = html_module.escape(temple_name)
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name_safe}の葬儀</div>"]
         
-        # 葬儀関連の項目を取得
-        narimono = temple_info.get('sougi_narimono', '').strip()
-        ippan = temple_info.get('sougi_ippan_shoko', '').strip()
-        shinzoku = temple_info.get('sougi_shinzoku_shoko', '').strip()
-        dokyo = temple_info.get('sougi_dokyo_length', '').strip()
-        notes = temple_info.get('sougi_notes', '').strip()
+        # 葬儀関連の項目を取得（★修正: エスケープ処理）
+        narimono = html_module.escape(temple_info.get('sougi_narimono', '') or '')
+        ippan    = html_module.escape(temple_info.get('sougi_ippan_shoko', '') or '')
+        shinzoku = html_module.escape(temple_info.get('sougi_shinzoku_shoko', '') or '')
+        dokyo    = html_module.escape(temple_info.get('sougi_dokyo_length', '') or '')
+        notes    = html_module.escape(temple_info.get('sougi_notes', '') or '')
         
         response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
         response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
@@ -105,6 +146,8 @@ def generate_answer_with_ai(temple_info, question, field_config):
         
         response_text = response.text
         
+        # ★修正: Geminiの出力をサニタイズ（XSS対策）
+        response_text = _sanitize_text(response_text)
         # 住所のリンクを実際に生成
         address = temple_info.get('address', '')
         if address and '📍' in response_text:
@@ -160,15 +203,17 @@ def generate_static_summary(temple_info, field_config):
         return text
     
     temple_name = get('name')
+    # ★修正: テンプレートへの埋め込み前にエスケープ（XSS対策）
+    temple_name_safe = html_module.escape(temple_name)
     temple_name_escaped = temple_name.replace("'", "\\'")
     timestamp = int(time.time() * 1000)
     
     # ヘッダー部分
     html = f"""
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
-        <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {temple_name} 情報</div>
+        <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {temple_name_safe} 情報</div>
         <button class='favorite-btn-detail' onclick='toggleFavoriteDetail("{temple_name_escaped}")' 
-                data-temple='{temple_name}' 
+                data-temple='{html_module.escape(temple_name)}' 
                 style='background:none; border:2px solid #ddd; border-radius:50%; 
                     width:40px; height:40px; font-size:20px; cursor:pointer; 
                     transition:all 0.2s;'>
