@@ -30,18 +30,18 @@ header {
   z-index: 1000;
 }
 
-/*
- * 【根本修正】常に縦積み2段固定
- * メディアクエリで横↔縦を切り替える設計を廃止。
- * どんな幅でもタイトル上・ボタン下の2段構成で崩れない。
- */
+/* ========================================
+ * ヘッダーレイアウト（PCは1段・スマホは2段）
+ * ======================================== */
 .header-inner {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-direction: row; /* PCでは横並びにする */
+  justify-content: space-between; /* 左にタイトル、右にボタンを配置 */
+  align-items: center; /* 縦方向の中央揃え */
   max-width: 1200px;
   margin: 0 auto;
-  gap: 4px;
+  width: 100%;
+  gap: 10px;
 }
 
 .header-title-row h1 {
@@ -53,9 +53,24 @@ header {
 .header-btn-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px; /* ボタン同士の間隔 */
   flex-wrap: nowrap;
-  width: 100%;
+  width: auto; /* 右寄せにするために auto に変更 */
+}
+
+/* ▼ スマホなど狭い画面の時のレイアウト (縦2段配置) */
+@media screen and (max-width: 768px) {
+  .header-inner {
+    flex-direction: column; /* 縦並びにする */
+    align-items: flex-start; /* 左寄せ */
+    gap: 8px; /* タイトルとボタン群の間隔 */
+  }
+
+  .header-btn-row {
+    width: 100%;
+    /* スマホ画面でボタンが多すぎる場合は折り返す設定 */
+    flex-wrap: wrap;
+  }
 }
 
 /*
