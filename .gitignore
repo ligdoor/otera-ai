@@ -145,6 +145,7 @@ instance/
 *.key
 secrets/
 credentials/
+credentials.json
 
 # ========================================
 # Project specific - データファイル
