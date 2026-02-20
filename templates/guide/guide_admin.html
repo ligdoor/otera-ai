@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使い方ガイド - 寺院データ管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        .guide-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .guide-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .guide-hero h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .guide-hero p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .guide-section {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8edf5;
+        }
+
+        .guide-section h3 {
+            margin: 0 0 18px 0;
+            font-size: 1.2rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e8edf5;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        .guide-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            margin: 0 0 6px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #4a5568;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 4px solid #1976d2;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #1565c0;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .guide-warning {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-left: 4px solid #f57c00;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #e65100;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-warning strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .btn-group-guide {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn-demo {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border: none;
+            cursor: default;
+        }
+
+        .btn-demo.preview {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .btn-demo.edit {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .btn-demo.delete {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .btn-demo.add {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .permission-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .permission-table th {
+            background: #f7fafc;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+            color: #4a5568;
+        }
+
+        .permission-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f0f4f8;
+            color: #2d3748;
+        }
+
+        .check-yes { color: #2e7d32; font-size: 1.1rem; }
+        .check-no  { color: #bdbdbd; font-size: 1.1rem; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f4ff;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .guide-hero { padding: 22px 18px; }
+            .guide-hero h2 { font-size: 1.4rem; }
+            .guide-section { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'components/admin_header.html' %}
+
+<main class="guide-container">
+
+    <a href="/admin" class="back-btn">← 管理画面に戻る</a>
+
+    <!-- ヒーローバナー -->
+    <div class="guide-hero">
+        <div style="font-size:3rem; margin-bottom:12px;">🏯</div>
+        <h2>寺院データ管理 — 使い方ガイド</h2>
+        <p>寺院情報の閲覧・編集・追加の操作方法をわかりやすく説明します</p>
+    </div>
+
+    <!-- 基本の流れ -->
+    <div class="guide-section">
+        <h3>📋 基本の操作の流れ</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>寺院をプルダウンから選択する</h4>
+                <p>ページ上部にある「🏯 寺院を選択」のプルダウンメニューから、編集したい寺院を選んでください。寺院名の一覧が表示されます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>寺院の情報が表示される</h4>
+                <p>寺院を選ぶと、その寺院の詳細情報がカードとして表示されます。住所・電話番号・アクセス方法などが一覧で確認できます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>操作ボタンで編集・確認する</h4>
+                <div class="btn-group-guide" style="margin-top:10px;">
+                    <span class="btn-demo preview">👁 プレビュー</span>
+                    <span class="btn-demo edit">✏️ 編集</span>
+                </div>
+                <p>「プレビュー」で公開画面のイメージを確認、「編集」で情報を修正できます。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新規追加の方法 -->
+    <div class="guide-section">
+        <h3>➕ 新しい寺院を追加する</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「新規寺院を追加」ボタンをクリック</h4>
+                <p>ページ上部にある <span class="btn-demo add" style="display:inline-flex; padding:4px 10px; font-size:0.82rem;">➕ 新規寺院を追加</span> ボタンをクリックすると、入力フォームが開きます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>必要事項を入力する</h4>
+                <p>寺院名（必須）、住所、電話番号、アクセス方法などを入力します。入力項目は「項目設定」で追加・変更できます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>「保存」ボタンで登録完了</h4>
+                <p>入力が終わったら「保存」をクリックしてください。プルダウンに新しい寺院が追加されます。</p>
+            </div>
+        </div>
+
+        <div class="guide-tip">
+            <strong>💡 ヒント</strong>
+            寺院名は検索でよく使われます。正式名称で登録するとユーザーが見つけやすくなります。
+        </div>
+    </div>
+
+    <!-- CSV機能 -->
+    <div class="guide-section">
+        <h3>📥 CSVエクスポート・インポートについて</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>CSVエクスポート</h4>
+                <p>「📥 CSVエクスポート」ボタンを押すと、現在登録されている全寺院のデータをCSVファイルとしてダウンロードできます。Excelで開いて確認・編集する際に便利です。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>CSVインポート（管理者のみ）</h4>
+                <p>「📤 CSVインポート」ボタンからCSVファイルを選択すると、まとめてデータを登録・更新できます。エクスポートしたCSVと同じ形式で作成してください。</p>
+            </div>
+        </div>
+
+        <div class="guide-warning">
+            <strong>⚠️ 注意</strong>
+            CSVインポートは既存データに上書きされる場合があります。必ず事前にエクスポートしてバックアップを取っておきましょう。
+        </div>
+    </div>
+
+    <!-- アクセス統計 -->
+    <div class="guide-section">
+        <h3>📊 アクセス統計の見方</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「📊 アクセス統計」ボタンをクリック</h4>
+                <p>どの寺院が何回閲覧されたか、アクセス数のランキングをグラフで確認できます。人気の寺院や注目度の低い寺院を把握するのに役立ちます。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 権限別できること一覧 -->
+    <div class="guide-section">
+        <h3>🔐 権限別にできること</h3>
+        <table class="permission-table">
+            <thead>
+                <tr>
+                    <th>操作</th>
+                    <th>閲覧者</th>
+                    <th>編集者</th>
+                    <th>管理者</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>寺院情報の閲覧・プレビュー</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+                <tr>
+                    <td>寺院情報の編集</td>
+                    <td class="check-no">—</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+                <tr>
+                    <td>新規寺院の追加</td>
+                    <td class="check-no">—</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+                <tr>
+                    <td>CSVエクスポート</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+                <tr>
+                    <td>CSVインポート</td>
+                    <td class="check-no">—</td>
+                    <td class="check-no">—</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+                <tr>
+                    <td>メンテナンスモード切替</td>
+                    <td class="check-no">—</td>
+                    <td class="check-no">—</td>
+                    <td class="check-yes">✅</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+</body>
+</html>

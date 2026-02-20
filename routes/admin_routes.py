@@ -82,6 +82,31 @@ def admin_fields():
     """項目設定画面"""
     return render_template("admin_fields.html")
 
+# ============================================================
+# 使い方ガイドページ（編集者・管理者のみ）
+# ============================================================
+
+@admin_bp.route("/admin/guide/admin")
+@login_required
+@role_required(['admin', 'editor'])
+def guide_admin():
+    """寺院データ管理の使い方ガイド"""
+    return render_template("guide/guide_admin.html")
+
+@admin_bp.route("/admin/guide/fields")
+@login_required
+@role_required(['admin', 'editor'])
+def guide_fields():
+    """項目設定の使い方ガイド"""
+    return render_template("guide/guide_fields.html")
+
+@admin_bp.route("/admin/guide/items")
+@login_required
+@role_required(['admin', 'editor'])
+def guide_items():
+    """仏具管理の使い方ガイド"""
+    return render_template("guide/guide_items.html")
+
 @admin_bp.route("/get_logs")
 @login_required
 def get_logs():

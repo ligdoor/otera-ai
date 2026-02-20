@@ -128,8 +128,8 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
             
-            # ★修正: alert()廃止 → フォームにエラーメッセージを表示
-            return render_template('login.html', error=error_msg), 429
+            # エラーメッセージを表示してリダイレクト
+            return f"""<script>alert('{error_msg}'); window.location.href='/admin';</script>"""
         
         # ============================================
         # 認証実行
@@ -207,8 +207,8 @@ def admin():
             
             print(f"❌ ログイン失敗: {user_id}")
             
-            # ★修正: alert()廃止 → フォームにエラーメッセージを表示
-            return render_template('login.html', error='IDまたはパスワードが違います'), 401
+            # エラーメッセージを表示してリダイレクト
+            return """<script>alert('IDまたはパスワードが違います'); window.location.href='/admin';</script>"""
     
     # ============================================
     # GET: ログインフォーム表示

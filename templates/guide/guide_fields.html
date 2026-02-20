@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使い方ガイド - 項目設定</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        .guide-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .guide-hero {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(17, 153, 142, 0.3);
+        }
+
+        .guide-hero h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .guide-hero p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .guide-section {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8edf5;
+        }
+
+        .guide-section h3 {
+            margin: 0 0 18px 0;
+            font-size: 1.2rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e8edf5;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        .guide-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            margin: 0 0 6px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #4a5568;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 4px solid #1976d2;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #1565c0;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .guide-warning {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-left: 4px solid #f57c00;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #e65100;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-warning strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .guide-danger {
+            background: linear-gradient(135deg, #ffebee, #ffcdd2);
+            border-left: 4px solid #c62828;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #b71c1c;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-danger strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .code-box {
+            background: #2d3748;
+            color: #a8daff;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .code-label {
+            color: #68d391;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .field-example {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .field-drag-icon {
+            color: #a0aec0;
+            font-size: 1.3rem;
+            cursor: grab;
+        }
+
+        .field-inputs {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            flex-wrap: wrap;
+        }
+
+        .field-input-demo {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 6px 10px;
+            background: white;
+            color: #4a5568;
+            font-size: 0.88rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0fff4;
+            color: #11998e;
+            border: 2px solid #11998e;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #11998e;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .guide-hero { padding: 22px 18px; }
+            .guide-hero h2 { font-size: 1.4rem; }
+            .guide-section { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'components/admin_header.html' %}
+
+<main class="guide-container">
+
+    <a href="/admin/fields" class="back-btn">← 項目設定に戻る</a>
+
+    <!-- ヒーローバナー -->
+    <div class="guide-hero">
+        <div style="font-size:3rem; margin-bottom:12px;">⚙️</div>
+        <h2>項目設定 — 使い方ガイド</h2>
+        <p>寺院情報の表示項目を追加・削除・並び替える方法をわかりやすく説明します</p>
+    </div>
+
+    <!-- 項目設定とは -->
+    <div class="guide-section">
+        <h3>📌 「項目設定」とは何をする機能？</h3>
+        <p style="color:#4a5568; line-height:1.8; margin:0;">
+            公開サイトや管理画面に表示される寺院情報の<strong>項目（フィールド）</strong>を自由にカスタマイズできる機能です。
+            例えば「駐車場」「拝観料」「公式サイトURL」などの項目を追加したり、
+            不要な項目を非表示にしたりできます。<br><br>
+            ここで設定した項目が、寺院の編集フォームや一覧表示に反映されます。
+        </p>
+    </div>
+
+    <!-- 項目の並び替え -->
+    <div class="guide-section">
+        <h3>↕️ 項目の順番を変える（ドラッグ&ドロップ）</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「☰」マークをドラッグする</h4>
+                <p>各項目の左端にある「☰」マークをつかんでドラッグすると、順番を入れ替えられます。</p>
+                <div class="field-example">
+                    <span class="field-drag-icon">☰</span>
+                    <div class="field-inputs">
+                        <span class="field-input-demo">parking</span>
+                        <span class="field-input-demo">駐車場</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>好きな位置に移動して離す</h4>
+                <p>移動したい場所でマウスのボタンを離すと、その位置に項目が移動します。スマートフォンでも指でドラッグして操作できます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>「設定を保存する」で確定</h4>
+                <p>並び替えが完了したら、必ずページ下部の「💾 設定を保存する」ボタンを押してください。保存しないと変更が反映されません。</p>
+            </div>
+        </div>
+
+        <div class="guide-tip">
+            <strong>💡 ヒント</strong>
+            よく使う項目を上位に配置すると、編集時に入力しやすくなります。「寺院名（name）」は最上部に固定されており、移動・削除はできません。
+        </div>
+    </div>
+
+    <!-- 新規項目の追加 -->
+    <div class="guide-section">
+        <h3>➕ 新しい項目を追加する</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「ID」を入力する</h4>
+                <p>IDは項目の識別に使う<strong>半角英数字のみ</strong>の文字列です。一度設定すると変更が難しいため、わかりやすい名前にしましょう。</p>
+                <div class="code-box">
+                    <span class="code-label">例：</span>
+                    <span>parking（駐車場）　fee（拝観料）　website（公式サイト）</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>「表示名」を入力する</h4>
+                <p>管理画面や公開サイトに表示される日本語の名前です。わかりやすい名前を付けてください。</p>
+                <div class="code-box">
+                    <span class="code-label">例：</span>
+                    <span>駐車場　拝観料（大人）　公式ウェブサイト</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>「➕ 項目を追加」ボタンをクリック</h4>
+                <p>ボタンを押すと項目の一覧に追加されます。続けて「💾 設定を保存する」で確定してください。</p>
+            </div>
+        </div>
+
+        <div class="guide-warning">
+            <strong>⚠️ IDに使える文字について</strong>
+            IDは <code>a〜z、A〜Z、0〜9、_（アンダースコア）</code> のみ使用可能です。スペースや日本語は使えません。
+        </div>
+    </div>
+
+    <!-- 項目の削除 -->
+    <div class="guide-section">
+        <h3>🗑️ 項目を削除する</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>削除ボタン（🗑️）をクリック</h4>
+                <p>各項目の右側にある削除ボタンをクリックすると、その項目が一覧から消えます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>「💾 設定を保存する」で確定</h4>
+                <p>削除後も必ず保存ボタンを押してください。押さない場合は削除が反映されません。</p>
+            </div>
+        </div>
+
+        <div class="guide-danger">
+            <strong>🚨 重要な注意</strong>
+            項目を削除しても、<strong>すでに入力されていたデータ（内容）は残ります</strong>が、管理画面や公開サイトには表示されなくなります。誤って削除した場合は同じIDで再追加すると表示が復活します。
+        </div>
+    </div>
+
+    <!-- IDを変更した場合 -->
+    <div class="guide-section">
+        <h3>⚠️ IDの変更には注意が必要</h3>
+        <p style="color:#4a5568; line-height:1.8; margin:0 0 12px 0;">
+            IDは既存データとの紐付けに使われています。IDを変更すると、それまで入力されていたデータが表示されなくなります（データ自体は削除されません）。
+        </p>
+        <div class="guide-warning">
+            <strong>⚠️ 推奨する対処法</strong>
+            IDを変更したい場合は、①古い項目を削除 → ②新しいIDで項目を追加 → ③各寺院のデータを再入力、という順序で対応してください。
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

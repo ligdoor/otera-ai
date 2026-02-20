@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使い方ガイド - 仏具管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        .guide-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .guide-hero {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            color: #3d2c00;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(247, 151, 30, 0.3);
+        }
+
+        .guide-hero h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+        }
+
+        .guide-hero p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        .guide-section {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e8edf5;
+        }
+
+        .guide-section h3 {
+            margin: 0 0 18px 0;
+            font-size: 1.2rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e8edf5;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+
+        .guide-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #3d2c00;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            margin: 0 0 6px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .step-content p {
+            margin: 0;
+            color: #4a5568;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 4px solid #1976d2;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #1565c0;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-tip strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .guide-warning {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-left: 4px solid #f57c00;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            color: #e65100;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .guide-warning strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .field-list {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 12px;
+        }
+
+        .field-list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.92rem;
+            color: #2d3748;
+            line-height: 1.5;
+        }
+
+        .field-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .field-required {
+            color: #e53e3e;
+            font-size: 0.8rem;
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 4px;
+            padding: 1px 6px;
+            white-space: nowrap;
+            margin-top: 1px;
+        }
+
+        .field-optional {
+            color: #718096;
+            font-size: 0.8rem;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 1px 6px;
+            white-space: nowrap;
+            margin-top: 1px;
+        }
+
+        .field-name {
+            font-weight: 600;
+        }
+
+        .field-desc {
+            color: #718096;
+        }
+
+        .image-info-box {
+            background: #f0fff4;
+            border: 1px solid #c6f6d5;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 12px;
+        }
+
+        .image-info-box p {
+            margin: 4px 0;
+            color: #276749;
+            font-size: 0.92rem;
+            line-height: 1.7;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fffde7;
+            color: #b45309;
+            border: 2px solid #f7971e;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f7971e;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .guide-hero { padding: 22px 18px; }
+            .guide-hero h2 { font-size: 1.4rem; }
+            .guide-section { padding: 20px 16px; }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'components/admin_header.html' %}
+
+<main class="guide-container">
+
+    <a href="/admin/items" class="back-btn">← 仏具管理に戻る</a>
+
+    <!-- ヒーローバナー -->
+    <div class="guide-hero">
+        <div style="font-size:3rem; margin-bottom:12px;">🙏</div>
+        <h2>仏具管理 — 使い方ガイド</h2>
+        <p>仏具図鑑への登録・編集・画像アップロードの操作方法をわかりやすく説明します</p>
+    </div>
+
+    <!-- 仏具管理とは -->
+    <div class="guide-section">
+        <h3>📌 「仏具管理」とは何をする機能？</h3>
+        <p style="color:#4a5568; line-height:1.8; margin:0;">
+            公開サイトの「仏具図鑑」に掲載する仏具の情報を管理する機能です。
+            仏具の名前・読み方・説明・画像・カテゴリなどを登録・編集できます。
+            登録した内容はリアルタイムで仏具図鑑に反映されます。
+        </p>
+    </div>
+
+    <!-- 新規登録 -->
+    <div class="guide-section">
+        <h3>➕ 新しい仏具を登録する</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「➕ 新規登録」ボタンをクリック</h4>
+                <p>ページ右上にある「➕ 新規登録」ボタンを押すと、登録フォームが開きます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>各項目を入力する</h4>
+                <p>以下の項目を入力してください：</p>
+                <div class="field-list">
+                    <div class="field-list-item">
+                        <span class="field-required">必須</span>
+                        <div>
+                            <span class="field-name">仏具名（日本語）</span>
+                            <span class="field-desc"> — 表示される名前。例：「仏壇」「数珠」</span>
+                        </div>
+                    </div>
+                    <div class="field-list-item">
+                        <span class="field-optional">任意</span>
+                        <div>
+                            <span class="field-name">読み方（ふりがな）</span>
+                            <span class="field-desc"> — ひらがなで入力。例：「ぶつだん」</span>
+                        </div>
+                    </div>
+                    <div class="field-list-item">
+                        <span class="field-optional">任意</span>
+                        <div>
+                            <span class="field-name">英語名</span>
+                            <span class="field-desc"> — 英語での名称。例：「Buddhist altar」</span>
+                        </div>
+                    </div>
+                    <div class="field-list-item">
+                        <span class="field-optional">任意</span>
+                        <div>
+                            <span class="field-name">カテゴリ</span>
+                            <span class="field-desc"> — 仏具の種類。プルダウンから選択</span>
+                        </div>
+                    </div>
+                    <div class="field-list-item">
+                        <span class="field-optional">任意</span>
+                        <div>
+                            <span class="field-name">説明文</span>
+                            <span class="field-desc"> — 仏具の用途・歴史・使い方の解説</span>
+                        </div>
+                    </div>
+                    <div class="field-list-item">
+                        <span class="field-optional">任意</span>
+                        <div>
+                            <span class="field-name">画像</span>
+                            <span class="field-desc"> — JPG・PNG形式の画像をアップロード</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>「保存」ボタンで登録完了</h4>
+                <p>入力が終わったら「保存」をクリックすると、仏具図鑑に掲載されます。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 画像のアップロード -->
+    <div class="guide-section">
+        <h3>🖼️ 画像をアップロードする</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>「画像を選択」ボタンをクリック</h4>
+                <p>フォーム内の画像エリアをクリックするか、「画像を選択」ボタンでファイルを選びます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>対応形式の画像を選ぶ</h4>
+                <div class="image-info-box">
+                    <p>✅ 対応形式：JPG / PNG / WebP</p>
+                    <p>✅ 推奨サイズ：1MB 以下</p>
+                    <p>✅ 自動でWebP形式に変換・圧縮されてサーバーに保存されます</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>プレビューを確認して保存</h4>
+                <p>アップロード後にプレビュー画像が表示されます。問題がなければそのまま保存してください。</p>
+            </div>
+        </div>
+
+        <div class="guide-tip">
+            <strong>💡 ヒント</strong>
+            画像は正方形に近い比率（1:1）で用意すると一覧表示がきれいに見えます。
+            背景が白か透明のものが図鑑らしく見えておすすめです。
+        </div>
+    </div>
+
+    <!-- 編集・削除 -->
+    <div class="guide-section">
+        <h3>✏️ 仏具情報を編集・削除する</h3>
+
+        <div class="guide-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h4>一覧から対象の仏具を見つける</h4>
+                <p>仏具管理ページには登録済みの仏具が一覧で表示されます。スクロールして対象を探してください。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h4>右端の操作ボタンを使う</h4>
+                <p>各行の右端に「✏️ 編集」「🗑️ 削除」ボタンがあります。編集をクリックするとフォームが開き、内容を修正できます。</p>
+            </div>
+        </div>
+
+        <div class="guide-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h4>削除は確認ダイアログが表示される</h4>
+                <p>「削除」ボタンを押すと確認メッセージが表示されます。「OK」を押すと削除が確定します。</p>
+            </div>
+        </div>
+
+        <div class="guide-warning">
+            <strong>⚠️ 削除したデータは復元できません</strong>
+            削除すると仏具図鑑からも即座に非表示になります。誤って削除した場合は再度登録が必要です。
+        </div>
+    </div>
+
+    <!-- カテゴリについて -->
+    <div class="guide-section">
+        <h3>🗂️ カテゴリの活用方法</h3>
+
+        <p style="color:#4a5568; line-height:1.8; margin:0 0 12px 0;">
+            カテゴリを設定すると、仏具図鑑でカテゴリ別の絞り込みができるようになります。
+            類似する仏具をまとめることで、ユーザーが探しやすくなります。
+        </p>
+
+        <div class="guide-tip">
+            <strong>💡 カテゴリ設定のコツ</strong>
+            「法具」「荘厳具」「礼拝具」のような仏教的な分類だけでなく、
+            「初心者向け」「お参り用」など用途別のカテゴリも検討してみてください。
+            ユーザーが直感的に探せるカテゴリ名がおすすめです。
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
