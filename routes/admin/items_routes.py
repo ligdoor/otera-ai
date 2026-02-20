@@ -5,6 +5,7 @@
 CRUD操作、カテゴリ管理、画像アップロードを含みます。
 """
 
+import logging
 from flask import Blueprint, render_template, jsonify, request, session
 from utils.decorators import login_required, role_required, admin_required
 from services.database import get_supabase_client
@@ -16,6 +17,8 @@ import io
 # ============================================
 
 admin_items_bp = Blueprint('admin_items', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -49,7 +52,7 @@ def admin_items():
     user_name = session.get('user_name', 'ゲスト')
     user_role = session.get('role', 'viewer')
     
-    print(f"✅ 仏具管理画面表示: {user_name} ({user_role})")
+    logger.info(f"✅ 仏具管理画面表示: {user_name} ({user_role})")
     
     return render_template(
         'admin_items.html',
@@ -115,7 +118,7 @@ def get_admin_items():
         })
     
     except Exception as e:
-        print(f"❌ 仏具一覧取得エラー: {e}")
+        logger.error(f"❌ 仏具一覧取得エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -190,7 +193,7 @@ def get_admin_item(item_id):
         })
     
     except Exception as e:
-        print(f"❌ 仏具詳細取得エラー: {e}")
+        logger.error(f"❌ 仏具詳細取得エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -300,7 +303,7 @@ def create_admin_item():
                 'error': '作成に失敗しました'
             }), 500
         
-        print(f"✅ 仏具作成: {data.get('name')}")
+        logger.info(f"✅ 仏具作成: {data.get('name')}")
         
         return jsonify({
             'success': True,
@@ -308,7 +311,7 @@ def create_admin_item():
         })
     
     except Exception as e:
-        print(f"❌ 仏具作成エラー: {e}")
+        logger.error(f"❌ 仏具作成エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -403,7 +406,7 @@ def update_admin_item(item_id):
                 'error': '更新に失敗しました'
             }), 500
         
-        print(f"✅ 仏具更新: ID={item_id}")
+        logger.info(f"✅ 仏具更新: ID={item_id}")
         
         return jsonify({
             'success': True,
@@ -411,7 +414,7 @@ def update_admin_item(item_id):
         })
     
     except Exception as e:
-        print(f"❌ 仏具更新エラー: {e}")
+        logger.error(f"❌ 仏具更新エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -459,12 +462,12 @@ def delete_admin_item(item_id):
             .eq('id', item_id)\
             .execute()
         
-        print(f"🗑️ 仏具削除: ID={item_id}")
+        logger.debug(f"🗑️ 仏具削除: ID={item_id}")
         
         return jsonify({'success': True})
     
     except Exception as e:
-        print(f"❌ 仏具削除エラー: {e}")
+        logger.error(f"❌ 仏具削除エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -529,7 +532,7 @@ def get_admin_categories():
         })
     
     except Exception as e:
-        print(f"❌ カテゴリ一覧取得エラー: {e}")
+        logger.error(f"❌ カテゴリ一覧取得エラー: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -663,9 +666,9 @@ def upload_image():
         
         if original_size > 0:
             compression_ratio = (1 - compressed_size / original_size) * 100
-            print(f"📸 画像アップロード: {original_size:,} bytes → {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
+            logger.debug(f"📸 画像アップロード: {original_size:,} bytes → {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
         else:
-            print(f"📸 画像アップロード: {compressed_size:,} bytes")
+            logger.debug(f"📸 画像アップロード: {compressed_size:,} bytes")
         
         return jsonify({
             'success': True,
@@ -673,7 +676,7 @@ def upload_image():
         })
     
     except Exception as e:
-        print(f"❌ 画像アップロードエラー: {e}")
+        logger.error(f"❌ 画像アップロードエラー: {e}")
         import traceback
         traceback.print_exc()
         

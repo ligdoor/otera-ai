@@ -5,8 +5,11 @@
 お気に入り機能、通知機能を提供します。
 """
 
+import logging
 from typing import Dict, List, Optional
 from .base import get_supabase_client, retry_on_failure
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -35,7 +38,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict]:
     Example:
         user = get_user_by_id("user001")
         if user:
-            print(user['name'])
+            logger.debug(user['name'])
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -73,7 +76,7 @@ def get_user_by_email(email: str) -> Optional[Dict]:
     Example:
         user = get_user_by_email("user@example.com")
         if user:
-            print(user['name'])
+            logger.debug(user['name'])
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -106,7 +109,7 @@ def get_all_users() -> List[Dict]:
     Example:
         users = get_all_users()
         for user in users:
-            print(user['name'])
+            logger.debug(user['name'])
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -197,7 +200,7 @@ def delete_user(user_id: str) -> bool:
     Example:
         success = delete_user("user003")
         if success:
-            print("削除成功")
+            logger.debug("削除成功")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -228,7 +231,7 @@ def get_user_favorites(user_id: str) -> List[str]:
     
     Example:
         favorites = get_user_favorites("user001")
-        print(f"お気に入り数: {len(favorites)}")
+        logger.debug(f"お気に入り数: {len(favorites)}")
     """
     try:
         # Supabaseクライアントを取得
@@ -241,7 +244,7 @@ def get_user_favorites(user_id: str) -> List[str]:
         return [item['temple_name'] for item in response.data]
     
     except Exception as e:
-        print(f"❌ お気に入り取得エラー: {e}")
+        logger.error(f"❌ お気に入り取得エラー: {e}")
         return []
 
 
@@ -262,7 +265,7 @@ def add_favorite(user_id: str, temple_name: str) -> bool:
     Example:
         success = add_favorite("user001", "東大寺")
         if success:
-            print("お気に入りに追加しました")
+            logger.debug("お気に入りに追加しました")
     """
     try:
         # Supabaseクライアントを取得
@@ -274,11 +277,11 @@ def add_favorite(user_id: str, temple_name: str) -> bool:
             'temple_name': temple_name
         }).execute()
         
-        print(f"⭐ お気に入り追加: {temple_name} (ユーザー: {user_id})")
+        logger.debug(f"⭐ お気に入り追加: {temple_name} (ユーザー: {user_id})")
         return True
     
     except Exception as e:
-        print(f"❌ お気に入り追加エラー: {e}")
+        logger.error(f"❌ お気に入り追加エラー: {e}")
         return False
 
 
@@ -299,7 +302,7 @@ def remove_favorite(user_id: str, temple_name: str) -> bool:
     Example:
         success = remove_favorite("user001", "東大寺")
         if success:
-            print("お気に入りから削除しました")
+            logger.debug("お気に入りから削除しました")
     """
     try:
         # Supabaseクライアントを取得
@@ -308,11 +311,11 @@ def remove_favorite(user_id: str, temple_name: str) -> bool:
         # ユーザーIDと寺院名が一致するレコードを削除
         client.table('favorites').delete().eq('user_id', user_id).eq('temple_name', temple_name).execute()
         
-        print(f"☆ お気に入り削除: {temple_name} (ユーザー: {user_id})")
+        logger.debug(f"☆ お気に入り削除: {temple_name} (ユーザー: {user_id})")
         return True
     
     except Exception as e:
-        print(f"❌ お気に入り削除エラー: {e}")
+        logger.error(f"❌ お気に入り削除エラー: {e}")
         return False
 
 
@@ -346,7 +349,7 @@ def get_user_notifications(user_id: str, unread_only: bool = False) -> List[Dict
     
     Example:
         notifications = get_user_notifications("user001", unread_only=True)
-        print(f"未読通知: {len(notifications)}件")
+        logger.debug(f"未読通知: {len(notifications)}件")
     """
     try:
         # Supabaseクライアントを取得
@@ -368,7 +371,7 @@ def get_user_notifications(user_id: str, unread_only: bool = False) -> List[Dict
         return response.data
     
     except Exception as e:
-        print(f"❌ 通知取得エラー: {e}")
+        logger.error(f"❌ 通知取得エラー: {e}")
         return []
 
 
@@ -387,7 +390,7 @@ def get_unread_count(user_id: str) -> int:
     
     Example:
         count = get_unread_count("user001")
-        print(f"未読通知: {count}件")
+        logger.debug(f"未読通知: {count}件")
     """
     try:
         # Supabaseクライアントを取得
@@ -407,7 +410,7 @@ def get_unread_count(user_id: str) -> int:
         return response.count
     
     except Exception as e:
-        print(f"❌ 未読数取得エラー: {e}")
+        logger.error(f"❌ 未読数取得エラー: {e}")
         return 0
 
 
@@ -439,7 +442,7 @@ def mark_notification_read(notification_id: int) -> bool:
         return True
     
     except Exception as e:
-        print(f"❌ 通知既読エラー: {e}")
+        logger.error(f"❌ 通知既読エラー: {e}")
         return False
 
 
@@ -476,7 +479,7 @@ def mark_all_notifications_read(user_id: str) -> bool:
         return True
     
     except Exception as e:
-        print(f"❌ 一括既読エラー: {e}")
+        logger.error(f"❌ 一括既読エラー: {e}")
         return False
 
 
@@ -535,9 +538,9 @@ def create_notification(
         # データベースに追加
         client.table('notifications').insert(notification_data).execute()
         
-        print(f"✅ 通知作成: {title}")
+        logger.info(f"✅ 通知作成: {title}")
         return True
     
     except Exception as e:
-        print(f"❌ 通知作成エラー: {e}")
+        logger.error(f"❌ 通知作成エラー: {e}")
         return False

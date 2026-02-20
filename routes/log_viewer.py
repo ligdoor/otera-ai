@@ -4,7 +4,7 @@
 管理画面からログを確認できるようにします
 """
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, session, redirect, url_for
 from pathlib import Path
 import json
 from datetime import datetime, timedelta
@@ -13,9 +13,22 @@ from typing import List, Dict, Any
 log_viewer_bp = Blueprint('log_viewer', __name__, url_prefix='/admin/logs')
 
 
+def _require_admin():
+    """管理者権限チェック（デコレータ代わり）"""
+    if not session.get('is_admin'):
+        return redirect(url_for('auth.admin'))
+    if session.get('role') not in ('admin',):
+        return redirect('/')
+    return None
+
+
 @log_viewer_bp.route('/')
 def index():
     """ログビューア画面"""
+    # ★修正: 認証なしアクセスを防止
+    redirect_response = _require_admin()
+    if redirect_response:
+        return redirect_response
     return render_template('admin/log_viewer.html')
 
 
@@ -29,6 +42,9 @@ def get_logs():
         lines: 取得する行数 (default: 100)
         search: 検索キーワード
     """
+    # ★修正: API にも認証チェック追加
+    if not session.get('is_admin') or session.get('role') != 'admin':
+        return jsonify({'error': '権限がありません'}), 403
     log_type = request.args.get('log_type', 'all')
     lines = int(request.args.get('lines', 100))
     search = request.args.get('search', '')

@@ -1,9 +1,13 @@
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
 from config import Config
 from utils.helpers import get_jst_timestamp
+
+logger = logging.getLogger(__name__)
+
 
 def send_slack_notification(message, emoji=":bell:"):
     """Slack通知を送信"""
@@ -18,11 +22,11 @@ def send_slack_notification(message, emoji=":bell:"):
         }
         response = requests.post(Config.SLACK_WEBHOOK_URL, json=payload, timeout=5)
         if response.status_code == 200:
-            print(f"✅ Slack通知送信成功: {message}")
+            logger.info(f"✅ Slack通知送信成功: {message}")
         else:
-            print(f"❌ Slack通知失敗: {response.status_code}")
+            logger.error(f"❌ Slack通知失敗: {response.status_code}")
     except Exception as e:
-        print(f"❌ Slack通知エラー: {e}")
+        logger.error(f"❌ Slack通知エラー: {e}")
 
 def send_email_alert(subject, body, to_email=None):
     """メール通知を送信"""
@@ -44,9 +48,9 @@ def send_email_alert(subject, body, to_email=None):
             server.login(Config.SMTP_USER, Config.SMTP_PASSWORD)
             server.send_message(msg)
         
-        print(f"✅ メール送信成功: {subject}")
+        logger.info(f"✅ メール送信成功: {subject}")
     except Exception as e:
-        print(f"❌ メール送信エラー: {e}")
+        logger.error(f"❌ メール送信エラー: {e}")
 
 def notify_suspicious_login(user_id, ip_address, reason):
     """異常ログイン時の通知"""

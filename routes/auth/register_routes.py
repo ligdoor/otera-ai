@@ -5,6 +5,7 @@
 承認待ちユーザーの管理機能を含みます。
 """
 
+import logging
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
 import bcrypt
 from services.database import get_supabase_client
@@ -16,6 +17,8 @@ from datetime import datetime
 # ============================================
 
 auth_register_bp = Blueprint('auth_register', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -234,7 +237,7 @@ def register():
             'notes': notes
         })
         
-        print(f"✅ 新規登録申請: {user_id} ({name})")
+        logger.info(f"✅ 新規登録申請: {user_id} ({name})")
         
         return jsonify({
             'success': True,
@@ -242,7 +245,7 @@ def register():
         }), 200
     
     except Exception as e:
-        print(f"❌ 登録エラー: {e}")
+        logger.error(f"❌ 登録エラー: {e}")
         return jsonify({
             'success': False,
             'message': '登録処理中にエラーが発生しました'
@@ -300,7 +303,7 @@ def pending_users_page():
         return render_template('pending_users.html', pending_users=pending_users)
     
     except Exception as e:
-        print(f"❌ 承認待ちユーザー一覧取得エラー: {e}")
+        logger.error(f"❌ 承認待ちユーザー一覧取得エラー: {e}")
         return render_template('pending_users.html', pending_users=[])
 
 
@@ -432,7 +435,7 @@ def approve_user(pending_id):
             pending_user['name']
         )
         
-        print(f"✅ ユーザー承認: {pending_user['user_id']} ({pending_user['name']}) - 権限: {role}")
+        logger.info(f"✅ ユーザー承認: {pending_user['user_id']} ({pending_user['name']}) - 権限: {role}")
         
         return jsonify({
             'success': True,
@@ -440,7 +443,7 @@ def approve_user(pending_id):
         }), 200
     
     except Exception as e:
-        print(f"❌ 承認処理エラー: {e}")
+        logger.error(f"❌ 承認処理エラー: {e}")
         return jsonify({
             'success': False,
             'message': '承認処理中にエラーが発生しました'
@@ -551,7 +554,7 @@ def reject_user(pending_id):
             reason
         )
         
-        print(f"⛔ ユーザー却下: {pending_user['user_id']} ({pending_user['name']})")
+        logger.error(f"⛔ ユーザー却下: {pending_user['user_id']} ({pending_user['name']})")
         
         return jsonify({
             'success': True,
@@ -559,7 +562,7 @@ def reject_user(pending_id):
         }), 200
     
     except Exception as e:
-        print(f"❌ 却下処理エラー: {e}")
+        logger.error(f"❌ 却下処理エラー: {e}")
         return jsonify({
             'success': False,
             'message': '却下処理中にエラーが発生しました'
@@ -615,5 +618,5 @@ def get_pending_users_count():
         return jsonify({'count': count}), 200
     
     except Exception as e:
-        print(f"❌ 承認待ち件数取得エラー: {e}")
+        logger.error(f"❌ 承認待ち件数取得エラー: {e}")
         return jsonify({'count': 0}), 200

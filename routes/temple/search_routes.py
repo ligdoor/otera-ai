@@ -5,12 +5,16 @@
 完全一致検索、曖昧検索、スコアベースのサジェスト機能を含みます。
 """
 
+import logging
 from flask import Blueprint, jsonify, request
 from .common import get_otera_database
 
 # ============================================
 # Blueprintの定義
 # ============================================
+
+
+logger = logging.getLogger(__name__)
 
 temple_search_bp = Blueprint('temple_search', __name__)
 
@@ -138,12 +142,12 @@ def search_temple_by_name():
     data = request.json
     query = data.get('name', '').strip()
     
-    print("========== /search_temple_by_name 検索開始 ==========")
-    print(f"検索クエリ: {query}")
+    logger.debug("========== /search_temple_by_name 検索開始 ==========")
+    logger.debug(f"検索クエリ: {query}")
     
     # 空のクエリの場合は空の結果を返す
     if not query:
-        print("クエリが空です")
+        logger.debug("クエリが空です")
         return jsonify({'exact_match': None, 'suggestions': []})
     
     # data_managerから寺院データを取得
@@ -154,10 +158,10 @@ def search_temple_by_name():
     # ============================================
     
     exact_match = data_manager.get_temple_by_name(query)
-    print(f"完全一致検索結果: {exact_match is not None}")
+    logger.debug(f"完全一致検索結果: {exact_match is not None}")
     
     if exact_match:
-        print(f"完全一致: {exact_match.get('name')}")
+        logger.debug(f"完全一致: {exact_match.get('name')}")
         return jsonify({
             'exact_match': exact_match,
             'suggestions': []
@@ -167,7 +171,7 @@ def search_temple_by_name():
     # 曖昧検索
     # ============================================
     
-    print("完全一致なし、曖昧検索を開始")
+    logger.debug("完全一致なし、曖昧検索を開始")
     
     # 全寺院データを取得
     all_temples = data_manager.get_all_temples()
@@ -178,7 +182,7 @@ def search_temple_by_name():
     else:
         temples_list = all_temples
     
-    print(f"全寺院数: {len(temples_list)}")
+    logger.debug(f"全寺院数: {len(temples_list)}")
     
     # スコアベースで候補を抽出
     scored_suggestions = []
@@ -201,7 +205,7 @@ def search_temple_by_name():
                 'temple': temple,
                 'score': score
             })
-            print(f"  候補追加: {temple_name} (スコア: {score})")
+            logger.debug(f"  候補追加: {temple_name} (スコア: {score})")
     
     # スコア順にソート（降順）
     scored_suggestions.sort(key=lambda x: x['score'], reverse=True)
@@ -209,12 +213,12 @@ def search_temple_by_name():
     # 上位5件を返す
     suggestions = [item['temple'] for item in scored_suggestions[:5]]
     
-    print(f"見つかった候補数: {len(suggestions)}")
+    logger.debug(f"見つかった候補数: {len(suggestions)}")
     for i, s in enumerate(suggestions, 1):
         score = scored_suggestions[i-1]['score'] if i <= len(scored_suggestions) else 0
-        print(f"  候補{i}: {s.get('name', '')} (スコア: {score})")
+        logger.debug(f"  候補{i}: {s.get('name', '')} (スコア: {score})")
     
-    print("========== 検索終了 ==========")
+    logger.debug("========== 検索終了 ==========")
     
     return jsonify({
         'exact_match': None,
@@ -243,7 +247,7 @@ def find_best_match(query: str, min_score: int = 20):
     Example:
         temple_name, score = find_best_match("東大")
         if temple_name:
-            print(f"見つかった寺院: {temple_name} (スコア: {score})")
+            logger.debug(f"見つかった寺院: {temple_name} (スコア: {score})")
     """
     from services.data_manager import data_manager
     

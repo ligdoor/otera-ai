@@ -5,6 +5,7 @@
 管理者のみがアクセスできます。
 """
 
+import logging
 from flask import Blueprint, render_template, jsonify, request, session
 from utils.decorators import login_required, role_required
 from services.database import get_supabase_client, get_recent_logs, add_log
@@ -18,6 +19,8 @@ from datetime import datetime
 # ============================================
 
 admin_system_bp = Blueprint('admin_system', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -53,7 +56,7 @@ def get_maintenance_status():
         return jsonify({'enabled': enabled})
     
     except Exception as e:
-        print(f"❌ メンテナンス状態取得エラー: {e}")
+        logger.error(f"❌ メンテナンス状態取得エラー: {e}")
         return jsonify({'enabled': False})
 
 
@@ -159,7 +162,7 @@ def toggle_maintenance():
             'timestamp': datetime.now().isoformat()
         }).execute()
         
-        print(f"✅ {action}: {user_name}")
+        logger.info(f"✅ {action}: {user_name}")
         
         return jsonify({
             'success': True,
@@ -168,7 +171,7 @@ def toggle_maintenance():
         })
     
     except Exception as e:
-        print(f"❌ メンテナンスモード切り替えエラー: {e}")
+        logger.error(f"❌ メンテナンスモード切り替えエラー: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -222,7 +225,7 @@ def get_logs():
             return jsonify(logs)
         
         except Exception as e:
-            print(f"❌ ログ取得エラー: {e}")
+            logger.error(f"❌ ログ取得エラー: {e}")
             return jsonify([])
     
     else:
@@ -246,7 +249,7 @@ def get_logs():
             return jsonify(logs)
         
         except Exception as e:
-            print(f"❌ ログ取得エラー: {e}")
+            logger.error(f"❌ ログ取得エラー: {e}")
             return jsonify([])
 
 
@@ -318,7 +321,7 @@ def get_fields():
             return jsonify(fields)
         
         except Exception as e:
-            print(f"❌ フィールド設定取得エラー: {e}")
+            logger.error(f"❌ フィールド設定取得エラー: {e}")
             return jsonify([])
     
     else:
@@ -331,7 +334,7 @@ def get_fields():
             return jsonify(field_config)
         
         except Exception as e:
-            print(f"❌ フィールド設定取得エラー: {e}")
+            logger.error(f"❌ フィールド設定取得エラー: {e}")
             return jsonify([])
 
 

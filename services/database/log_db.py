@@ -5,8 +5,11 @@
 統計情報の集計機能を提供します。
 """
 
+import logging
 from typing import List, Dict, Optional
 from .base import get_supabase_client, get_jst_timestamp, retry_on_failure
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -73,11 +76,11 @@ def add_log(
         # logsテーブルに挿入
         client.table('logs').insert(log_data).execute()
         
-        print(f"✅ ログ記録: {user_name} ({user_id}) - {action}")
+        logger.info(f"✅ ログ記録: {user_name} ({user_id}) - {action}")
         return True
     
     except Exception as e:
-        print(f"❌ ログ記録エラー: {e}")
+        logger.error(f"❌ ログ記録エラー: {e}")
         return False
 
 
@@ -106,7 +109,7 @@ def get_recent_logs(limit: int = 100) -> List[Dict]:
     Example:
         logs = get_recent_logs(limit=50)
         for log in logs:
-            print(f"{log['timestamp']}: {log['action']}")
+            logger.debug(f"{log['timestamp']}: {log['action']}")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -166,7 +169,7 @@ def add_access_log(temple_name: str, question: str = "", user_name: str = "") ->
         return True
     
     except Exception as e:
-        print(f"❌ アクセスログ記録エラー: {e}")
+        logger.error(f"❌ アクセスログ記録エラー: {e}")
         return False
 
 
@@ -241,7 +244,7 @@ def get_access_statistics(limit: int = 1000) -> Dict[str, int]:
         
         # トップ10を表示
         for temple, count in sorted_stats[:10]:
-            print(f"{temple}: {count}回")
+            logger.debug(f"{temple}: {count}回")
     """
     # 最新のアクセスログを取得
     logs = get_access_logs(limit=limit)
@@ -283,7 +286,7 @@ def get_top_accessed_temples(top_n: int = 10, days: int = 30) -> List[Dict]:
         ranking = get_top_accessed_temples(top_n=10)
         
         for item in ranking:
-            print(f"{item['rank']}位: {item['temple_name']} - {item['access_count']}回")
+            logger.debug(f"{item['rank']}位: {item['temple_name']} - {item['access_count']}回")
     """
     # 統計を取得（多めに取得して確実にカバー）
     stats = get_access_statistics(limit=days * 100)

@@ -1,10 +1,13 @@
 # routes/items_routes.py - 仏具図鑑のルート
 
+import logging
 from flask import Blueprint, render_template, request, jsonify, session
 from services.supabase_db import get_supabase_client
 from functools import wraps
 
 items_bp = Blueprint('items', __name__)
+
+logger = logging.getLogger(__name__)
 
 def login_required(f):
     """ログイン必須デコレータ"""
@@ -51,7 +54,7 @@ def items_index():
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in items_index: {e}")
+        logger.debug(f"Error in items_index: {e}")
         return render_template('items/index.html',
                              total_count=0,
                              categories=[],
@@ -114,7 +117,7 @@ def items_gallery():
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in items_gallery: {e}")
+        logger.debug(f"Error in items_gallery: {e}")
         return render_template('items/gallery.html',
                              items=[],
                              categories=[],
@@ -181,7 +184,7 @@ def items_search():
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in items_search: {e}")
+        logger.debug(f"Error in items_search: {e}")
         import traceback
         traceback.print_exc()
         return render_template('items/search.html',
@@ -221,7 +224,7 @@ def items_categories():
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in items_categories: {e}")
+        logger.debug(f"Error in items_categories: {e}")
         return render_template('items/categories.html',
                              categories=[],
                              user_name=session.get('user_name', 'ゲスト'))
@@ -251,7 +254,7 @@ def items_category(category_name):
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in items_category: {e}")
+        logger.debug(f"Error in items_category: {e}")
         return render_template('items/category.html',
                              items=[],
                              category_name=category_name,
@@ -292,7 +295,7 @@ def item_detail(item_id):
                              user_name=user_name)
     
     except Exception as e:
-        print(f"Error in item_detail: {e}")
+        logger.debug(f"Error in item_detail: {e}")
         return render_template('items/detail.html',
                              item=None,
                              images=[],

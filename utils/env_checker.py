@@ -2,7 +2,11 @@
 環境変数チェックツール
 起動時に必要な環境変数が設定されているか確認
 """
+import logging
 from config import Config
+
+
+logger = logging.getLogger(__name__)
 
 def check_required_env():
     """必須環境変数のチェック"""
@@ -31,15 +35,15 @@ def check_required_env():
     
     # 結果表示
     if errors:
-        print("\n❌ 必須環境変数が不足しています:")
+        logger.error("\n❌ 必須環境変数が不足しています:")
         for err in errors:
-            print(f"  • {err}")
+            logger.debug(f"  • {err}")
         return False
     
     if warnings:
-        print("\n⚠️ 推奨環境変数が未設定です:")
+        logger.error("\n⚠️ 推奨環境変数が未設定です:")
         for warn in warnings:
-            print(f"  • {warn}")
+            logger.debug(f"  • {warn}")
     
-    print("\n✅ 環境変数チェック完了")
+    logger.info("\n✅ 環境変数チェック完了")
     return True

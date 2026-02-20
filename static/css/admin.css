@@ -7,12 +7,26 @@
     box-sizing: border-box; 
 }
 
+/* === 和風テーマ CSS変数 === */
+:root {
+    --wa-bg:       #f5f0e8;
+    --wa-surface:  #faf7f2;
+    --wa-border:   #ddd5c0;
+    --wa-primary:  #8c4b16;
+    --wa-text:     #2c2017;
+    --wa-text-sub: #6b5b45;
+    --wa-danger:   #9b2335;
+    --wa-success:  #2d6a4f;
+    --font-serif:  'Noto Serif JP', 'ヒラギノ明朝 ProN', serif;
+    --font-sans:   'Noto Sans JP', -apple-system, sans-serif;
+}
+
 body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+    font-family: var(--font-sans);
     margin: 0; 
     padding: 0; 
-    background-color: #f4f6f8; 
-    color: #333; 
+    background-color: var(--wa-bg);
+    color: var(--wa-text);
 }
 
 /* === ヘッダー === */

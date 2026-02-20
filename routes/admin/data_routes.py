@@ -5,6 +5,7 @@
 データのインポート・エクスポートを担当します。
 """
 
+import logging
 from flask import Blueprint, jsonify, request, session, make_response
 from utils.decorators import login_required, role_required
 from config import Config
@@ -16,6 +17,8 @@ import io
 # ============================================
 
 admin_data_bp = Blueprint('admin_data', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -193,7 +196,7 @@ def import_csv():
             except Exception as e:
                 # エラーを記録
                 errors.append(f"行{row_num}: {str(e)}")
-                print(f"❌ 行{row_num}のインポートエラー: {e}")
+                logger.error(f"❌ 行{row_num}のインポートエラー: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
@@ -207,7 +210,7 @@ def import_csv():
         from services.cache import cache_manager
         cache_manager.clear_cache()
         
-        print(f"✅ CSVインポート完了: 新規{imported}件、更新{updated}件")
+        logger.info(f"✅ CSVインポート完了: 新規{imported}件、更新{updated}件")
         
         return jsonify({
             'success': True,
@@ -217,7 +220,7 @@ def import_csv():
         })
     
     except Exception as e:
-        print(f"❌ CSVインポートエラー: {e}")
+        logger.error(f"❌ CSVインポートエラー: {e}")
         import traceback
         traceback.print_exc()
         
@@ -304,12 +307,12 @@ def export_csv():
         response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'
         response.headers['Content-Disposition'] = 'attachment; filename=temples_export.csv'
         
-        print(f"📤 CSVエクスポート: {len(temple_list)}件")
+        logger.debug(f"📤 CSVエクスポート: {len(temple_list)}件")
         
         return response
     
     except Exception as e:
-        print(f"❌ CSVエクスポートエラー: {e}")
+        logger.error(f"❌ CSVエクスポートエラー: {e}")
         import traceback
         traceback.print_exc()
         

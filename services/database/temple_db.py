@@ -5,8 +5,11 @@
 項目設定（フィールド定義）の管理を提供します。
 """
 
+import logging
 from typing import Dict, List, Optional
 from .base import get_supabase_client, retry_on_failure
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -64,7 +67,7 @@ def get_temple_by_name(name: str) -> Optional[Dict]:
     Example:
         temple = get_temple_by_name("東大寺")
         if temple:
-            print(temple['address'])
+            logger.debug(temple['address'])
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -188,7 +191,7 @@ def delete_temple(name: str) -> bool:
     Example:
         success = delete_temple("削除対象寺")
         if success:
-            print("削除成功")
+            logger.debug("削除成功")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -223,7 +226,7 @@ def get_fields_config() -> List[Dict]:
     Example:
         fields = get_fields_config()
         for field in fields:
-            print(f"{field['label']}: {field['key']}")
+            logger.debug(f"{field['label']}: {field['key']}")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -284,5 +287,5 @@ def update_fields_config(fields: List[Dict]) -> bool:
         return True
     
     except Exception as e:
-        print(f"❌ 項目設定の更新エラー: {e}")
+        logger.error(f"❌ 項目設定の更新エラー: {e}")
         return False

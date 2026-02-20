@@ -5,6 +5,7 @@
 グローバル変数の管理、データ初期化などを担当します。
 """
 
+import logging
 from services.data_source import load_data_from_sheet, load_fields_config
 from services.cache import cache_manager
 
@@ -24,6 +25,9 @@ field_config = []
 # ============================================
 # キャッシュ取得ヘルパー
 # ============================================
+
+logger = logging.getLogger(__name__)
+
 
 def get_cache():
     """
@@ -74,7 +78,7 @@ def init_temple_data():
     # フィールド設定を読み込み
     field_config = load_fields_config(cache_manager)
     
-    print(f"✅ 寺院データ初期化完了: {len(otera_database)}件")
+    logger.info(f"✅ 寺院データ初期化完了: {len(otera_database)}件")
 
 
 # ============================================
@@ -91,7 +95,7 @@ def get_otera_database():
     Example:
         database = get_otera_database()
         for name, temple in database.items():
-            print(f"{name}: {temple.get('address')}")
+            logger.debug(f"{name}: {temple.get('address')}")
     """
     return otera_database
 
@@ -106,7 +110,7 @@ def get_field_config():
     Example:
         fields = get_field_config()
         for field in fields:
-            print(f"{field['label']}: {field['key']}")
+            logger.debug(f"{field['label']}: {field['key']}")
     """
     return field_config
 
@@ -124,7 +128,7 @@ def reload_temple_data():
     Example:
         success = reload_temple_data()
         if success:
-            print("データを更新しました")
+            logger.debug("データを更新しました")
     """
     try:
         # キャッシュをクリア
@@ -137,5 +141,5 @@ def reload_temple_data():
         return True
     
     except Exception as e:
-        print(f"❌ データ再読み込みエラー: {e}")
+        logger.error(f"❌ データ再読み込みエラー: {e}")
         return False

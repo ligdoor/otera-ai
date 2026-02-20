@@ -5,6 +5,7 @@ Supabaseへの接続、共通ユーティリティ関数を提供します。
 他のデータベースモジュールはこのモジュールを基盤として使用します。
 """
 
+import logging
 from supabase import create_client, Client
 from config import Config
 from typing import Optional
@@ -24,6 +25,9 @@ _supabase_client: Optional[Client] = None
 # ============================================
 # デコレーター関数
 # ============================================
+
+
+logger = logging.getLogger(__name__)
 
 def retry_on_failure(max_retries: int = 3, delay: int = 1):
     """
@@ -64,21 +68,26 @@ def retry_on_failure(max_retries: int = 3, delay: int = 1):
                     error_message = str(e).lower()
                     
                     # 接続エラーの場合はクライアントをリセット
-                    if 'disconnected' in error_message or 'connection' in error_message or 'timeout' in error_message:
-                        print(f"🔄 接続エラーを検出、クライアントをリセット中... ({e})")
+                    # ★ Server disconnected / connection reset / timeout を全て捕捉
+                    is_connection_error = any(kw in error_message for kw in [
+                        'disconnected', 'connection', 'timeout', 'reset', 'eof',
+                        'broken pipe', 'remote end closed', 'httpx'
+                    ])
+                    if is_connection_error:
+                        logger.debug(f"🔄 接続エラーを検出、クライアントをリセット中... ({e})")
                         _supabase_client = None  # グローバルクライアントをリセット
                     
                     # 最後の試行で失敗した場合は例外を再発生
                     if attempt == max_retries - 1:
-                        print(f"❌ 最大リトライ回数到達 ({max_retries}回): {e}")
+                        logger.error(f"❌ 最大リトライ回数到達 ({max_retries}回): {e}")
                         raise
                     
                     # リトライメッセージを表示
-                    print(f"⚠️ リトライ {attempt + 1}/{max_retries}: {e}")
+                    logger.error(f"⚠️ リトライ {attempt + 1}/{max_retries}: {e}")
                     
                     # 指数バックオフで待機（1秒、2秒、3秒...）
                     wait_time = delay * (attempt + 1)
-                    print(f"⏳ {wait_time}秒待機してから再試行...")
+                    logger.debug(f"⏳ {wait_time}秒待機してから再試行...")
                     time.sleep(wait_time)
         return wrapper
     return decorator
@@ -116,12 +125,18 @@ def get_supabase_client() -> Client:
                 "環境変数 SUPABASE_URL と SUPABASE_SERVICE_KEY を設定してください。"
             )
         
-        # Supabaseクライアントを作成
+        # ★ Supabaseクライアントを作成（タイムアウト設定付き）
+        from supabase.lib.client_options import ClientOptions
+        options = ClientOptions(
+            postgrest_client_timeout=10,  # クエリタイムアウト: 10秒
+            storage_client_timeout=30,    # ストレージタイムアウト: 30秒
+        )
         _supabase_client = create_client(
             Config.SUPABASE_URL,
-            Config.SUPABASE_SERVICE_KEY
+            Config.SUPABASE_SERVICE_KEY,
+            options=options
         )
-        print("✅ Supabase接続完了")
+        logger.info("✅ Supabase接続完了")
     
     return _supabase_client
 
@@ -167,4 +182,4 @@ def reset_client():
     """
     global _supabase_client
     _supabase_client = None
-    print("🔄 Supabaseクライアントをリセットしました")
+    logger.debug("🔄 Supabaseクライアントをリセットしました")

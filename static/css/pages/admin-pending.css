@@ -14,7 +14,7 @@
 
 /* === ページタイトル === */
 .pending-title {
-    color: var(--color-gray-900);
+    color: #1a237e;  /* ★ 管理画面と同じ紺色 */
     margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;

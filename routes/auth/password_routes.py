@@ -5,6 +5,7 @@
 セキュリティを重視した実装になっています。
 """
 
+import logging
 from flask import Blueprint, render_template, request, session, jsonify, url_for
 import bcrypt
 from utils.decorators import login_required
@@ -20,6 +21,8 @@ import secrets
 # ============================================
 
 auth_password_bp = Blueprint('auth_password', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -120,7 +123,7 @@ def change_password():
             return _change_password_sheets(user_id, current_pass, new_pass)
     
     except Exception as e:
-        print(f"❌ パスワード変更エラー: {e}")
+        logger.error(f"❌ パスワード変更エラー: {e}")
         return jsonify({"message": str(e)}), 500
 
 
@@ -182,7 +185,7 @@ def _change_password_supabase(user_id: str, current_pass: str, new_pass: str):
             details='自身のパスワードを変更しました'
         )
         
-        print(f"✅ パスワード変更成功: {user_id}")
+        logger.info(f"✅ パスワード変更成功: {user_id}")
         
         return jsonify({"status": "success"})
     
@@ -197,7 +200,7 @@ def _change_password_supabase(user_id: str, current_pass: str, new_pass: str):
             details='現在のパスワードが間違っています'
         )
         
-        print(f"❌ パスワード変更失敗: {user_id} - 現在のパスワードが不正")
+        logger.error(f"❌ パスワード変更失敗: {user_id} - 現在のパスワードが不正")
         
         return jsonify({
             "message": "現在のパスワードが間違っています"
@@ -379,7 +382,7 @@ def password_reset_request():
                     user_name=user.get('name')
                 )
                 
-                print(f"📧 パスワードリセットメール送信: {email}")
+                logger.debug(f"📧 パスワードリセットメール送信: {email}")
             
             # 成功メッセージ（ユーザーの存在に関わらず同じメッセージ）
             return render_template(
@@ -388,7 +391,7 @@ def password_reset_request():
             )
         
         except Exception as e:
-            print(f"❌ パスワードリセットリクエストエラー: {str(e)}")
+            logger.error(f"❌ パスワードリセットリクエストエラー: {str(e)}")
             return render_template(
                 'password_reset_request.html',
                 error='エラーが発生しました。もう一度お試しください。'
@@ -547,7 +550,7 @@ def password_reset(token):
                 'used': True
             }).eq('id', token_data['id']).execute()
             
-            print(f"✅ パスワードリセット成功: user_id={token_data['user_id']}")
+            logger.info(f"✅ パスワードリセット成功: user_id={token_data['user_id']}")
             
             # ログイン画面にリダイレクト（成功メッセージ付き）
             return render_template(
@@ -562,7 +565,7 @@ def password_reset(token):
         return render_template('password_reset.html', token=token)
     
     except Exception as e:
-        print(f"❌ パスワードリセットエラー: {str(e)}")
+        logger.error(f"❌ パスワードリセットエラー: {str(e)}")
         return render_template(
             'password_reset.html',
             token=token,

@@ -5,7 +5,11 @@ Supabaseのデータ取得を統一的に管理します。
 キャッシュ機能も統合しています。
 """
 
+import logging
 from config import Config
+
+logger = logging.getLogger(__name__)
+
 
 class DataManager:
     """データ管理クラス"""
@@ -23,14 +27,14 @@ class DataManager:
         """
         # 簡易キャッシュをチェック
         if 'all_temples' in self._internal_cache:
-            print("✅ 内部キャッシュから取得: temples")
+            logger.info("✅ 内部キャッシュから取得: temples")
             return self._internal_cache['all_temples']
         
         if self.use_supabase:
             from services import supabase_db
             
             # データベースから取得
-            print("✅ データベースから取得: temples")
+            logger.info("✅ データベースから取得: temples")
             temples = supabase_db.get_all_temples()
             
             # 内部キャッシュに保存
@@ -131,7 +135,7 @@ class DataManager:
     def clear_cache(self):
         """キャッシュをクリア"""
         self._internal_cache.clear()
-        print("✅ DataManagerキャッシュをクリア")
+        logger.info("✅ DataManagerキャッシュをクリア")
     
     def clear_all(self):
         """全キャッシュをクリア（別名）"""

@@ -180,8 +180,16 @@ function copyToClipboard(text) {
 function clearAllChat() {
   if (!confirm("会話履歴をクリアしますか？")) return;
 
+  // ★ 修正: ページ読み込み時と同じ時間帯挨拶を再表示
+  const hour = new Date().getHours();
+  const greetingEl = document.getElementById('greeting-text');
+  const greetMsg = greetingEl ? greetingEl.textContent : 'ようこそ！';
+  const icon = hour >= 5 && hour < 11 ? '🌅'
+              : hour >= 11 && hour < 17 ? '☀️'
+              : hour >= 17 && hour < 21 ? '🌆' : '🌙';
+
   chatWindow.innerHTML =
-    '<div class="message ai-message"><p>👋 <strong>ようこそ！</strong><br>寺院名を選択して詳細情報を確認できます。</p></div>';
+    `<div class="message ai-message"><p>${icon} <strong>${greetMsg}</strong><br>寺院名を選択して詳細情報を確認できます。</p></div>`;
   currentTempleName = "";
 
   const quickQaArea = document.getElementById("quick-qa-area");

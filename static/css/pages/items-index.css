@@ -13,7 +13,9 @@
     text-align: center;
     margin-bottom: var(--spacing-3xl, 32px);
     padding: var(--spacing-2xl, 24px);
-    background: white;
+    /* ★ 管理画面と同じ紺グラデーション */
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    color: white;
     border-radius: var(--radius-xl, 16px);
     box-shadow: var(--shadow-sm, 0 2px 4px -1px rgba(0, 0, 0, 0.06));
 }
@@ -30,7 +32,7 @@ body.dark-mode .items-header {
 .items-header h1 {
     font-size: var(--font-4xl, 2.25rem);
     margin: var(--spacing-sm, 8px) 0;
-    color: var(--color-gray-700, #2d3748);
+    color: white;  /* ★ 紺背景に合わせて白 */
     font-weight: var(--font-bold, 700);
 }
 
@@ -40,7 +42,7 @@ body.dark-mode .items-header h1 {
 
 .items-header .items-subtitle {
     font-size: var(--font-base, 1rem);
-    color: var(--color-gray-500, #718096);
+    color: rgba(255,255,255,0.85);  /* ★ 紺背景に合わせて白系 */
     margin: var(--spacing-sm, 8px) 0 var(--spacing-lg, 16px);
 }
 

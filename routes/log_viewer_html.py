@@ -4,7 +4,7 @@
 日付別・グラフ表示付きのログ閲覧機能
 """
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
 from pathlib import Path
 from datetime import datetime, timedelta
 import re
@@ -14,9 +14,22 @@ from modules.api_response import APIResponse
 log_viewer_html_bp = Blueprint('log_viewer_html', __name__, url_prefix='/admin/logs')
 
 
+def _require_admin():
+    """管理者権限チェック"""
+    if not session.get('is_admin'):
+        return redirect(url_for('auth.admin'))
+    if session.get('role') != 'admin':
+        return redirect('/')
+    return None
+
+
 @log_viewer_html_bp.route('/')
 def index():
     """ログビューアーHTMLを表示"""
+    # ★修正: 認証なしアクセスを防止
+    redirect_response = _require_admin()
+    if redirect_response:
+        return redirect_response
     return render_template('log_viewer.html')
 
 
@@ -33,6 +46,9 @@ def get_logs():
     Returns:
         200: ログデータとグラフ用統計
     """
+    # ★修正: API にも認証チェック追加
+    if not session.get('is_admin') or session.get('role') != 'admin':
+        return jsonify({'error': '権限がありません'}), 403
     log_type = request.args.get('type', 'app')
     date_filter = request.args.get('date', '')
     level_filter = request.args.get('level', '')

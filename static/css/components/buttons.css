@@ -134,15 +134,19 @@
 
 /* 戻るボタン */
 .btn-back {
-    color: var(--color-primary);
+    /* ★ 紺ヘッダー上でも見えるように白枠ボタンに変更 */
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    border: 1.5px solid rgba(255, 255, 255, 0.5);
     padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-md);
     transition: all var(--transition-base);
 }
 
 .btn-back:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
     transform: translateX(-4px);
-    background: var(--color-primary-light);
 }
 
 /* ヘッダーボタン */

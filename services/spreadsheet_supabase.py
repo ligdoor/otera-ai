@@ -5,12 +5,16 @@ Supabase対応版 スプレッドシートサービス
 バックエンドをSupabaseに切り替えます。
 """
 
+import logging
 from flask import request, session
 from config import Config
 from utils.helpers import get_jst_timestamp
 from services.notification import notify_data_update
 from services import supabase_db
 
+
+
+logger = logging.getLogger(__name__)
 
 def add_log(action, details, ip_address=None):
     """
@@ -40,7 +44,7 @@ def add_log(action, details, ip_address=None):
             notify_data_update(user_name, action, details)
             
     except Exception as e:
-        print(f"ログ記録エラー: {e}")
+        logger.debug(f"ログ記録エラー: {e}")
 
 
 def load_fields_config(cache_manager):
@@ -61,7 +65,7 @@ def load_fields_config(cache_manager):
                 fields = [{'key': 'name', 'label': '寺院名', 'order': 1}]
             return fields
         except Exception as e:
-            print(f"項目設定読み込みエラー: {e}")
+            logger.debug(f"項目設定読み込みエラー: {e}")
             return [{'key': 'name', 'label': '寺院名', 'order': 1}]
     
     return cache_manager.get_cached_or_fetch('fields', fetch)
@@ -80,10 +84,10 @@ def load_data_from_sheet(cache_manager):
     def fetch():
         try:
             data = supabase_db.get_all_temples()
-            print(f"★データ更新完了: {len(data)}件")
+            logger.debug(f"★データ更新完了: {len(data)}件")
             return data
         except Exception as e:
-            print(f"読み込みエラー: {e}")
+            logger.debug(f"読み込みエラー: {e}")
             return {}
     
     return cache_manager.get_cached_or_fetch('temples', fetch)
@@ -106,7 +110,7 @@ def get_data_sheet_and_headers():
         headers = [field['key'] for field in fields]
         return None, headers
     except Exception as e:
-        print(f"ヘッダー取得エラー: {e}")
+        logger.debug(f"ヘッダー取得エラー: {e}")
         # デフォルトヘッダー
         return None, ['name', 'sect', 'address', 'nokanshiyo', 'kakimono', 
                       'flow', 'caution', 'transport']

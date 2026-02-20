@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
 import bcrypt
 from services.auth import check_login_attempts, record_login_attempt, authenticate_user
@@ -13,6 +14,13 @@ import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
+logger = logging.getLogger(__name__)
+
+def render_login_page():
+    """ログインページのHTMLを返す"""
+    return render_template('login.html')
+
+
 @auth_bp.route("/admin", methods=["GET", "POST"], strict_slashes=False)
 @limiter.limit("10 per minute")
 def admin():
@@ -21,7 +29,7 @@ def admin():
         user_id = request.form.get("user_id")
         password = request.form.get("password")
         
-        print(f"📝 ログイン試行: user_id={user_id}")
+        logger.debug(f"📝 ログイン試行: user_id={user_id}")
         
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
@@ -34,13 +42,17 @@ def admin():
                     details=error_msg,
                     ip_address=request.remote_addr or ''
                 )
-            return f"""<script>alert('{error_msg}'); window.location.href='/admin';</script>"""
+            # ★修正: XSS脆弱性のあるalert()を廃止 → テンプレートにエラーメッセージを渡す
+            return render_template('login.html', error=error_msg), 429
         
         user_name, role = authenticate_user(user_id, password)
         
         if user_name:
             record_login_attempt(user_id, True)
+            # ★修正: セッション固定攻撃対策 - ログイン前後でセッションIDを切り替え
+            old_session_data = dict(session)
             session.clear()
+            # セッションIDを再生成（Flaskはclear後に新IDが発行される）
             session['is_admin'] = True
             session['user_name'] = user_name
             session['user_id'] = user_id
@@ -64,12 +76,12 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
                 
-                print(f"✅ {user_name} の最終ログイン時刻を更新しました（Supabase）")
+                logger.info(f"✅ {user_name} の最終ログイン時刻を更新しました（Supabase）")
                 supabase_db.update_user(user_id, {
                     'last_login': supabase_db.get_jst_timestamp()
                 })
             
-            print(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
+            logger.info(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
             
             # ★ 修正: メイン画面にリダイレクト
             return redirect('/')
@@ -86,8 +98,9 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
             
-            print(f"❌ ログイン失敗: {user_id}")
-            return """<script>alert('IDまたはパスワードが違います'); window.location.href='/admin';</script>"""
+            logger.error(f"❌ ログイン失敗: {user_id}")
+            # ★修正: XSS脆弱性のあるalert()を廃止 → テンプレートにエラーメッセージを渡す
+            return render_template('login.html', error='IDまたはパスワードが違います'), 401
     
     if session.get('is_admin'):
         if not check_session_timeout():
@@ -201,7 +214,7 @@ def register():
         }), 200
         
     except Exception as e:
-        print(f"Registration error: {e}")
+        logger.debug(f"Registration error: {e}")
         return jsonify({'success': False, 'message': '登録処理中にエラーが発生しました'}), 500
     
 
@@ -232,7 +245,7 @@ def pending_users_page():
         return render_template('pending_users.html', pending_users=pending_users)
         
     except Exception as e:
-        print(f"Pending users page error: {e}")
+        logger.debug(f"Pending users page error: {e}")
         return render_template('pending_users.html', pending_users=[])
 
 
@@ -297,7 +310,7 @@ def approve_user(pending_id):
         }), 200
         
     except Exception as e:
-        print(f"Approve user error: {e}")
+        logger.debug(f"Approve user error: {e}")
         return jsonify({'success': False, 'message': '承認処理中にエラーが発生しました'}), 500
 
 
@@ -345,7 +358,7 @@ def reject_user(pending_id):
         }), 200
         
     except Exception as e:
-        print(f"Reject user error: {e}")
+        logger.debug(f"Reject user error: {e}")
         return jsonify({'success': False, 'message': '却下処理中にエラーが発生しました'}), 500
     
 
@@ -369,7 +382,7 @@ def get_pending_users_count():
         return jsonify({'count': count}), 200
         
     except Exception as e:
-        print(f"Get pending users count error: {e}")
+        logger.debug(f"Get pending users count error: {e}")
         return jsonify({'count': 0}), 200
             
 @auth_bp.route("/change_password", methods=["POST"])
@@ -394,7 +407,7 @@ def change_password():
         else:
             return _change_password_sheets(user_id, current_pass, new_pass)
     except Exception as e:
-        print(f"❌ パスワード変更エラー: {e}")
+        logger.error(f"❌ パスワード変更エラー: {e}")
         return jsonify({"message": str(e)}), 500
 
 def _change_password_supabase(user_id, current_pass, new_pass):
@@ -521,7 +534,7 @@ def password_reset_request():
                                  success='パスワードリセット用のメールを送信しました。メールをご確認ください。')
             
         except Exception as e:
-            print(f"パスワードリセットリクエストエラー: {str(e)}")
+            logger.debug(f"パスワードリセットリクエストエラー: {str(e)}")
             return render_template('password_reset_request.html', 
                                  error='エラーが発生しました。もう一度お試しください。')
     
@@ -603,7 +616,7 @@ def password_reset(token):
         return render_template('password_reset.html', token=token)
         
     except Exception as e:
-        print(f"パスワードリセットエラー: {str(e)}")
+        logger.debug(f"パスワードリセットエラー: {str(e)}")
         return render_template('password_reset.html', 
                              token=token,
                              error='エラーが発生しました。もう一度お試しください。')

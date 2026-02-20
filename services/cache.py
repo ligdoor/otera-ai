@@ -1,5 +1,9 @@
+import logging
 import datetime
 from config import Config
+
+
+logger = logging.getLogger(__name__)
 
 class CacheManager:
     """キャッシュ管理クラス"""
@@ -22,20 +26,20 @@ class CacheManager:
     def get_cached_or_fetch(self, cache_key, fetch_function):
         """キャッシュから取得、期限切れなら再取得"""
         if self.is_cache_valid(cache_key):
-            print(f"✅ キャッシュから取得: {cache_key}")
+            logger.info(f"✅ キャッシュから取得: {cache_key}")
             return self.cache_data[cache_key]['data']
         
         try:
             data = fetch_function()
             self.cache_data[cache_key]['data'] = data
             self.cache_data[cache_key]['timestamp'] = datetime.datetime.now().timestamp()
-            print(f"✅ データ取得成功: {cache_key}")
+            logger.info(f"✅ データ取得成功: {cache_key}")
             return data
         except Exception as e:
-            print(f"❌ データ取得失敗: {cache_key} - {e}")
+            logger.error(f"❌ データ取得失敗: {cache_key} - {e}")
             # キャッシュがあれば古いデータでも返す
             if cache_key in self.cache_data and self.cache_data[cache_key]['data'] is not None:
-                print(f"⚠️ 古いキャッシュを返却: {cache_key}")
+                logger.error(f"⚠️ 古いキャッシュを返却: {cache_key}")
                 return self.cache_data[cache_key]['data']
             raise e
     

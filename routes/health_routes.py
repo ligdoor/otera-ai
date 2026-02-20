@@ -1,12 +1,20 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, session, redirect, url_for
 from config import Config
 from utils.helpers import get_jst_timestamp
 
 health_bp = Blueprint('health', __name__)
 
+@health_bp.route("/health")
+def health_simple():
+    """簡易ヘルスチェック（認証不要・公開用）"""
+    return jsonify({'status': 'ok'})
+
 @health_bp.route("/health/detailed")
 def health_detailed():
-    """詳細なヘルスチェック"""
+    """詳細なヘルスチェック（★修正: 管理者のみアクセス可能）"""
+    # ★修正: 認証なしで内部構成が外部に漏れないようにする
+    if not session.get('is_admin') or session.get('role') != 'admin':
+        return jsonify({'error': '権限がありません'}), 403
     checks = {}
     
     # データベース接続チェック

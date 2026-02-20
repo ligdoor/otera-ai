@@ -1,3 +1,4 @@
+import logging
 from google import genai
 from google.genai import types
 from config import Config
@@ -10,6 +11,9 @@ gemini_client = None
 if Config.GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
 
+
+
+logger = logging.getLogger(__name__)
 
 def _sanitize_text(text: str) -> str:
     """
@@ -162,7 +166,7 @@ def generate_answer_with_ai(temple_info, question, field_config):
         return response_text
         
     except Exception as e:
-        print(f"AI応答生成エラー: {e}")
+        logger.debug(f"AI応答生成エラー: {e}")
         return f"申し訳ございません。回答の生成中にエラーが発生しました: {str(e)}"
 
 

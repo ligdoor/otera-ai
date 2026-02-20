@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, render_template, jsonify, request, session, make_response
 from utils.decorators import login_required, role_required
 from services.data_source import add_log
@@ -11,6 +12,8 @@ import io
 
 admin_bp = Blueprint('admin_routes', __name__)
 
+logger = logging.getLogger(__name__)
+
 # ============================================================
 # メンテナンスモード管理API
 # ============================================================
@@ -23,7 +26,7 @@ def get_maintenance_status():
         return jsonify({'enabled': enabled})
         
     except Exception as e:
-        print(f"メンテナンス状態取得エラー: {e}")
+        logger.debug(f"メンテナンス状態取得エラー: {e}")
         return jsonify({'enabled': False})
 
 
@@ -74,7 +77,7 @@ def toggle_maintenance():
         })
         
     except Exception as e:
-        print(f"メンテナンスモード切り替えエラー: {e}")
+        logger.debug(f"メンテナンスモード切り替えエラー: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500            
 @admin_bp.route("/admin/fields")
 @login_required
@@ -93,7 +96,7 @@ def get_logs():
             logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
             return jsonify(logs)
         except Exception as e:
-            print(f"ログ取得エラー: {e}")
+            logger.debug(f"ログ取得エラー: {e}")
             return jsonify([])
     else:
         from services.spreadsheet import get_spreadsheet_client
@@ -202,7 +205,7 @@ def import_csv():
                 
             except Exception as e:
                 errors.append(f"行{row_num}: {str(e)}")
-                print(f"行{row_num}のインポートエラー: {e}")
+                logger.debug(f"行{row_num}のインポートエラー: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
@@ -220,7 +223,7 @@ def import_csv():
         })
         
     except Exception as e:
-        print(f"CSVインポートエラー: {e}")
+        logger.debug(f"CSVインポートエラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': f'インポート処理中にエラーが発生しました: {str(e)}'}), 500
@@ -255,7 +258,7 @@ def export_csv():
         return response
         
     except Exception as e:
-        print(f"CSVエクスポートエラー: {e}")
+        logger.debug(f"CSVエクスポートエラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -284,11 +287,11 @@ def admin_items():
         if user_role not in ['admin', 'editor']:
             return jsonify({"message": "この操作を行う権限がありません"}), 403
         
-        print(f"[DEBUG] admin_items: user_name={user_name}, user_role={user_role}")
+        logger.debug(f"[DEBUG] admin_items: user_name={user_name}, user_role={user_role}")
         return render_template('admin_items.html', user_name=user_name, user_role=user_role)
     
     except Exception as e:
-        print(f"Error in admin_items: {e}")
+        logger.debug(f"Error in admin_items: {e}")
         return jsonify({"message": "エラーが発生しました"}), 500
 
 @admin_bp.route('/api/admin/items', methods=['GET'])
@@ -301,7 +304,7 @@ def get_admin_items():
         items = items_response.data if items_response.data else []
         return jsonify({'success': True, 'items': items})
     except Exception as e:
-        print(f"Error in get_admin_items: {e}")
+        logger.debug(f"Error in get_admin_items: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/items/<item_id>', methods=['GET'])
@@ -315,7 +318,7 @@ def get_admin_item(item_id):
             return jsonify({'success': False, 'error': '仏具が見つかりません'}), 404
         return jsonify({'success': True, 'item': item_response.data})
     except Exception as e:
-        print(f"Error in get_admin_item: {e}")
+        logger.debug(f"Error in get_admin_item: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/items', methods=['POST'])
@@ -348,7 +351,7 @@ def create_admin_item():
             return jsonify({'success': False, 'error': '作成に失敗しました'}), 500
         return jsonify({'success': True, 'item': item_response.data[0]})
     except Exception as e:
-        print(f"Error in create_admin_item: {e}")
+        logger.debug(f"Error in create_admin_item: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/items/<item_id>', methods=['PUT'])
@@ -379,7 +382,7 @@ def update_admin_item(item_id):
             return jsonify({'success': False, 'error': '更新に失敗しました'}), 500
         return jsonify({'success': True, 'item': item_response.data[0]})
     except Exception as e:
-        print(f"Error in update_admin_item: {e}")
+        logger.debug(f"Error in update_admin_item: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/items/<item_id>', methods=['DELETE'])
@@ -398,7 +401,7 @@ def delete_admin_item(item_id):
         supabase.table('buddhist_items').delete().eq('id', item_id).execute()
         return jsonify({'success': True})
     except Exception as e:
-        print(f"Error in delete_admin_item: {e}")
+        logger.debug(f"Error in delete_admin_item: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/categories', methods=['GET'])
@@ -411,7 +414,7 @@ def get_admin_categories():
         categories = categories_response.data if categories_response.data else []
         return jsonify({'success': True, 'categories': categories})
     except Exception as e:
-        print(f"Error in get_admin_categories: {e}")
+        logger.debug(f"Error in get_admin_categories: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/api/admin/upload-image', methods=['POST'])
@@ -483,14 +486,14 @@ def upload_image():
         compressed_size = len(webp_bytes)
         if original_size > 0:
             compression_ratio = (1 - compressed_size / original_size) * 100
-            print(f"[Image Upload] Original: {original_size:,} bytes → WebP: {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
+            logger.debug(f"[Image Upload] Original: {original_size:,} bytes → WebP: {compressed_size:,} bytes (圧縮率: {compression_ratio:.1f}%)")
         else:
-            print(f"[Image Upload] WebP: {compressed_size:,} bytes")
+            logger.debug(f"[Image Upload] WebP: {compressed_size:,} bytes")
         
         return jsonify({'success': True, 'url': public_url})
     
     except Exception as e:
-        print(f"Error in upload_image: {e}")
+        logger.debug(f"Error in upload_image: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500

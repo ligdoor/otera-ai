@@ -31,6 +31,8 @@
         {% endif %}
         
         <form method="post" id="login-form">
+            <!-- ★ CSRF対策トークン（偽リクエスト攻撃防止） -->
+            {{ csrf_token_field()|safe }}
             <h2>セキュアログイン</h2>
             
             <div class="form-group">

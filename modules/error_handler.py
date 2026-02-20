@@ -16,6 +16,7 @@
     ErrorHandler.register_flask_handlers(app)
 """
 
+import logging
 from modules.error_logger import ErrorLogger
 from modules.error_messages import ErrorMessages
 from modules.error_responses import ErrorResponse, ErrorPageRenderer
@@ -192,7 +193,7 @@ class ErrorHandler:
                     )
             except Exception as e:
                 # ログ記録に失敗してもアプリは止めない
-                print(f"ログ記録エラー: {e}")
+                logger.debug(f"ログ記録エラー: {e}")
             
             return response
 

@@ -84,22 +84,56 @@ async function loadList() {
 }
 
 async function deleteTemple(name) {
-    if (!confirm(`🗑️ 本当に「${name}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`)) return;
-    
+    // ★ 修正: ブラウザ標準confirm → カスタム確認モーダルに変更
+    const confirmed = await new Promise(resolve => {
+        // temple-admin.js の ConfirmModal があれば使用、なければ標準confirmにフォールバック
+        if (window.ConfirmModal) {
+            ConfirmModal.show({
+                title: '寺院データの削除',
+                message: `「${name}」を削除してもよろしいですか？\nこの操作は取り消せません。`,
+                okLabel: '削除する',
+                onOk: () => resolve(true),
+            });
+            // キャンセル時
+            setTimeout(() => resolve(false), 60000);
+        } else {
+            resolve(confirm(`🗑️ 本当に「${name}」を削除してもよろしいですか？\n\nこの操作は取り消せません。`));
+        }
+    });
+
+    if (!confirmed) return;
+
     try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         const res = await fetch('/delete_temple', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
             body: JSON.stringify({ name: name })
         });
-        
-        if (res.ok) { 
-            alert("✅ 削除しました"); 
-            await loadList(); 
-        } else { 
-            alert("❌ 削除に失敗しました"); 
+
+        if (res.ok) {
+            // ★ 修正: alert → トースト通知
+            if (window.Toast) {
+                Toast.success(`「${name}」を削除しました`);
+            } else {
+                alert("✅ 削除しました");
+            }
+            await loadList();
+        } else {
+            if (window.Toast) {
+                Toast.error("削除に失敗しました");
+            } else {
+                alert("❌ 削除に失敗しました");
+            }
         }
     } catch (e) {
-        alert("❌ 通信エラーが発生しました");
+        if (window.Toast) {
+            Toast.error("通信エラーが発生しました");
+        } else {
+            alert("❌ 通信エラーが発生しました");
+        }
     }
 }

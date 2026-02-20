@@ -5,6 +5,7 @@
 Config.USE_SUPABASE で切り替え
 """
 
+import logging
 import datetime
 import bcrypt
 from flask import request
@@ -14,6 +15,9 @@ from utils.helpers import get_jst_now, get_jst_timestamp
 
 # ログイン試行管理
 login_attempts = {}
+
+logger = logging.getLogger(__name__)
+
 
 def check_login_attempts(user_id):
     """ログイン試行回数をチェック"""
@@ -93,14 +97,14 @@ def _authenticate_user_supabase(user_id, password):
         user = supabase_db.get_user_by_id(user_id)
         
         if not user:
-            print(f"⚠️ ユーザーが見つかりません: {user_id}")
+            logger.error(f"⚠️ ユーザーが見つかりません: {user_id}")
             return None, None
         
         # パスワードハッシュを取得
         stored_hash = user.get('password_hash', '')
         
         if not stored_hash:
-            print(f"⚠️ パスワードハッシュが存在しません: {user_id}")
+            logger.error(f"⚠️ パスワードハッシュが存在しません: {user_id}")
             return None, None
         
         authenticated = False
@@ -116,7 +120,7 @@ def _authenticate_user_supabase(user_id, password):
                 # bcryptハッシュに変換して更新
                 hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
                 supabase_db.update_user(user_id, {'password_hash': hashed})
-                print(f"✅ {user_id} のパスワードをbcryptハッシュに更新しました")
+                logger.info(f"✅ {user_id} のパスワードをbcryptハッシュに更新しました")
                 authenticated = True
         
         # 認証成功時の処理
@@ -124,9 +128,9 @@ def _authenticate_user_supabase(user_id, password):
             try:
                 # 最終ログイン時刻を更新
                 supabase_db.update_user(user_id, {'last_login': get_jst_timestamp()})
-                print(f"✅ {user_id} の最終ログイン時刻を更新しました（Supabase）")
+                logger.info(f"✅ {user_id} の最終ログイン時刻を更新しました（Supabase）")
             except Exception as e:
-                print(f"⚠️ 最終ログイン時刻の更新に失敗: {e}")
+                logger.error(f"⚠️ 最終ログイン時刻の更新に失敗: {e}")
             
             # ★重要: Google Sheetsと同じ列名を返す
             # name と role を返す（user_nameではなくname）
@@ -135,12 +139,12 @@ def _authenticate_user_supabase(user_id, password):
             
             return user_name, role
         else:
-            print(f"⚠️ パスワードが一致しません: {user_id}")
+            logger.error(f"⚠️ パスワードが一致しません: {user_id}")
         
         return None, None
         
     except Exception as e:
-        print(f"❌ 認証エラー（Supabase）: {e}")
+        logger.error(f"❌ 認証エラー（Supabase）: {e}")
         import traceback
         traceback.print_exc()
         return None, None
@@ -170,7 +174,7 @@ def _authenticate_user_sheets(user_id, password):
                 stored_hash = user.get('password_hash', user.get('password', ''))
                 
                 if not stored_hash:
-                    print(f"⚠️ パスワードハッシュが存在しません: {user_id}")
+                    logger.error(f"⚠️ パスワードハッシュが存在しません: {user_id}")
                     continue
                 
                 authenticated = False
@@ -188,7 +192,7 @@ def _authenticate_user_sheets(user_id, password):
                         cell = sheet.find(user_id, in_column=1)
                         if cell:
                             sheet.update_cell(cell.row, 2, hashed)
-                            print(f"✅ {user_id} のパスワードをbcryptハッシュに更新しました")
+                            logger.info(f"✅ {user_id} のパスワードをbcryptハッシュに更新しました")
                         authenticated = True
                 
                 # 認証成功時の処理
@@ -198,9 +202,9 @@ def _authenticate_user_sheets(user_id, password):
                     if cell:
                         try:
                             sheet.update_cell(cell.row, 6, get_jst_timestamp())
-                            print(f"✅ {user_id} の最終ログイン時刻を更新しました（Google Sheets）")
+                            logger.info(f"✅ {user_id} の最終ログイン時刻を更新しました（Google Sheets）")
                         except Exception as e:
-                            print(f"⚠️ 最終ログイン時刻の更新に失敗: {e}")
+                            logger.error(f"⚠️ 最終ログイン時刻の更新に失敗: {e}")
                     
                     # name と role を返す
                     user_name = user.get('name', '')
@@ -208,13 +212,13 @@ def _authenticate_user_sheets(user_id, password):
                     
                     return user_name, role
                 else:
-                    print(f"⚠️ パスワードが一致しません: {user_id}")
+                    logger.error(f"⚠️ パスワードが一致しません: {user_id}")
         
-        print(f"⚠️ ユーザーが見つかりません: {user_id}")
+        logger.error(f"⚠️ ユーザーが見つかりません: {user_id}")
         return None, None
         
     except Exception as e:
-        print(f"❌ 認証エラー（Google Sheets）: {e}")
+        logger.error(f"❌ 認証エラー（Google Sheets）: {e}")
         import traceback
         traceback.print_exc()
         return None, None

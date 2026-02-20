@@ -4,8 +4,11 @@
 寺院に対するユーザーコメントの追加、取得、削除機能を提供します。
 """
 
+import logging
 from typing import List, Dict
 from .base import get_supabase_client, get_jst_timestamp, retry_on_failure
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -35,7 +38,7 @@ def add_comment(temple_name: str, user_name: str, comment: str) -> bool:
             comment="とても美しいお寺でした"
         )
         if success:
-            print("コメントを投稿しました")
+            logger.debug("コメントを投稿しました")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -53,11 +56,11 @@ def add_comment(temple_name: str, user_name: str, comment: str) -> bool:
         # commentsテーブルに挿入
         client.table('comments').insert(comment_data).execute()
         
-        print(f"✅ コメント追加: {temple_name} - {user_name}")
+        logger.info(f"✅ コメント追加: {temple_name} - {user_name}")
         return True
     
     except Exception as e:
-        print(f"❌ コメント追加エラー: {e}")
+        logger.error(f"❌ コメント追加エラー: {e}")
         return False
 
 
@@ -88,9 +91,9 @@ def get_comments(temple_name: str) -> List[Dict]:
     Example:
         comments = get_comments("東大寺")
         
-        print(f"コメント数: {len(comments)}件")
+        logger.debug(f"コメント数: {len(comments)}件")
         for comment in comments:
-            print(f"{comment['user_name']}: {comment['comment']}")
+            logger.debug(f"{comment['user_name']}: {comment['comment']}")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -118,7 +121,7 @@ def get_all_comments(limit: int = 100) -> List[Dict]:
     Example:
         all_comments = get_all_comments(limit=50)
         for comment in all_comments:
-            print(f"{comment['temple_name']} - {comment['user_name']}")
+            logger.debug(f"{comment['temple_name']} - {comment['user_name']}")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -146,7 +149,7 @@ def delete_comment(comment_id: int) -> bool:
     Example:
         success = delete_comment(123)
         if success:
-            print("コメントを削除しました")
+            logger.debug("コメントを削除しました")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -157,14 +160,14 @@ def delete_comment(comment_id: int) -> bool:
         
         # 削除されたレコード数を確認
         if len(response.data) > 0:
-            print(f"✅ コメント削除: ID {comment_id}")
+            logger.info(f"✅ コメント削除: ID {comment_id}")
             return True
         else:
-            print(f"⚠️ コメントが見つかりませんでした: ID {comment_id}")
+            logger.error(f"⚠️ コメントが見つかりませんでした: ID {comment_id}")
             return False
     
     except Exception as e:
-        print(f"❌ コメント削除エラー: {e}")
+        logger.error(f"❌ コメント削除エラー: {e}")
         return False
 
 
@@ -184,7 +187,7 @@ def delete_temple_comments(temple_name: str) -> int:
     
     Example:
         deleted_count = delete_temple_comments("削除対象寺")
-        print(f"{deleted_count}件のコメントを削除しました")
+        logger.debug(f"{deleted_count}件のコメントを削除しました")
     """
     # Supabaseクライアントを取得
     client = get_supabase_client()
@@ -196,11 +199,11 @@ def delete_temple_comments(temple_name: str) -> int:
         # 削除されたレコード数
         deleted_count = len(response.data)
         
-        print(f"✅ {temple_name}のコメント削除: {deleted_count}件")
+        logger.info(f"✅ {temple_name}のコメント削除: {deleted_count}件")
         return deleted_count
     
     except Exception as e:
-        print(f"❌ コメント一括削除エラー: {e}")
+        logger.error(f"❌ コメント一括削除エラー: {e}")
         return 0
 
 
@@ -225,9 +228,9 @@ def get_comment_statistics() -> Dict[str, int]:
         sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
         
         # トップ10を表示
-        print("コメントが多い寺院トップ10:")
+        logger.debug("コメントが多い寺院トップ10:")
         for temple, count in sorted_stats[:10]:
-            print(f"{temple}: {count}件")
+            logger.debug(f"{temple}: {count}件")
     """
     # 全コメントを取得（多めに取得）
     all_comments = get_all_comments(limit=10000)
@@ -261,8 +264,8 @@ def get_recent_comments_all_temples(limit: int = 10) -> List[Dict]:
     Example:
         recent = get_recent_comments_all_temples(limit=5)
         
-        print("最新のコメント:")
+        logger.debug("最新のコメント:")
         for comment in recent:
-            print(f"{comment['temple_name']} - {comment['user_name']}: {comment['comment'][:30]}...")
+            logger.debug(f"{comment['temple_name']} - {comment['user_name']}: {comment['comment'][:30]}...")
     """
     return get_all_comments(limit=limit)

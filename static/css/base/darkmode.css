@@ -178,3 +178,33 @@ body.dark-mode .important-text {
   color: #ff8a80 !important; /* 重要テキスト：明るい赤 */
   background: rgba(198, 40, 40, 0.2) !important; /* 背景：半透明の赤 */
 }
+
+
+/* ============================================================
+   ★ ダークモード セレクトボックス修正
+   （矢印が繰り返し表示される問題を解消）
+   ============================================================ */
+body.dark-mode select {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border-color: #555;
+  /* ブラウザのデフォルト矢印を無効化して自前の矢印を使う */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* 右側に矢印アイコンを1つだけ表示 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e0e0e0' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.2rem;
+}
+
+body.dark-mode select option {
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+}
+
+/* カスタムセレクトラッパーが使われている場合も対応 */
+body.dark-mode .custom-select-wrapper select {
+  background-image: none; /* ラッパーが矢印を担当する場合は除外 */
+}

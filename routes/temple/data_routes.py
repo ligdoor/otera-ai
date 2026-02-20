@@ -5,6 +5,7 @@ CSV入出力、アクセス統計、コメント機能を提供します。
 データのインポート/エクスポートと統計情報の取得を担当します。
 """
 
+import logging
 from flask import Blueprint, jsonify, request, send_file, session
 import csv
 import io
@@ -20,6 +21,8 @@ from config import Config
 # ============================================
 
 temple_data_bp = Blueprint('temple_data', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -97,7 +100,7 @@ def export_csv():
         )
     
     except Exception as e:
-        print(f"❌ CSVエクスポートエラー: {e}")
+        logger.error(f"❌ CSVエクスポートエラー: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -229,7 +232,7 @@ def import_csv():
         })
     
     except Exception as e:
-        print(f"❌ CSVインポートエラー: {e}")
+        logger.error(f"❌ CSVインポートエラー: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -304,7 +307,7 @@ def get_access_stats():
         return jsonify({"stats": stats})
     
     except Exception as e:
-        print(f"❌ 統計取得エラー: {e}")
+        logger.error(f"❌ 統計取得エラー: {e}")
         return jsonify({"stats": []})
 
 
@@ -373,7 +376,7 @@ def get_comments(temple_name):
         return jsonify({"comments": comments})
     
     except Exception as e:
-        print(f"❌ コメント取得エラー: {e}")
+        logger.error(f"❌ コメント取得エラー: {e}")
         return jsonify({"comments": []})
 
 
@@ -447,7 +450,7 @@ def add_comment():
         return jsonify({"status": "success"})
     
     except Exception as e:
-        print(f"❌ コメント追加エラー: {e}")
+        logger.error(f"❌ コメント追加エラー: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -508,7 +511,7 @@ def delete_comment():
             return jsonify({"status": "success"})
         
         except Exception as e:
-            print(f"❌ コメント削除エラー: {e}")
+            logger.error(f"❌ コメント削除エラー: {e}")
             return jsonify({
                 "status": "error",
                 "message": str(e)
@@ -532,7 +535,7 @@ def delete_comment():
             return jsonify({"status": "success"})
         
         except Exception as e:
-            print(f"❌ コメント削除エラー: {e}")
+            logger.error(f"❌ コメント削除エラー: {e}")
             return jsonify({
                 "status": "error",
                 "message": str(e)

@@ -1,3 +1,4 @@
+import logging
 import json
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -8,6 +9,9 @@ from services.notification import notify_data_update
 
 # グローバルクライアント
 gc = None
+
+
+logger = logging.getLogger(__name__)
 
 def get_spreadsheet_client():
     """Google Sheetsクライアントを取得"""
@@ -39,7 +43,7 @@ def add_log(action, details, ip_address=None):
             notify_data_update(user_name, action, details)
             
     except Exception as e:
-        print(f"ログ記録エラー: {e}")
+        logger.debug(f"ログ記録エラー: {e}")
 
 def load_fields_config(cache_manager):
     """項目設定を読み込み（キャッシュ対応）"""
@@ -52,7 +56,7 @@ def load_fields_config(cache_manager):
             records.sort(key=lambda x: x['order'])
             fields = records
         except Exception as e:
-            print(f"項目設定読み込みエラー: {e}")
+            logger.debug(f"項目設定読み込みエラー: {e}")
             fields = [{'key': 'name', 'label': '寺院名', 'order': 1}]
         return fields
     
@@ -77,9 +81,9 @@ def load_data_from_sheet(cache_manager):
                                 row_dict[header] = str(row[i]).strip()
                         if 'name' in row_dict and row_dict['name']:
                             data[row_dict['name']] = row_dict
-            print(f"★データ更新完了: {len(data)}件")
+            logger.debug(f"★データ更新完了: {len(data)}件")
         except Exception as e:
-            print(f"読み込みエラー: {e}")
+            logger.debug(f"読み込みエラー: {e}")
         return data
     
     return cache_manager.get_cached_or_fetch('temples', fetch)

@@ -24,6 +24,12 @@ from maintenance import MaintenanceMode
 from routes.log_viewer_html import log_viewer_html_bp
 
 # ============================================
+# セキュリティミドルウェア
+# ============================================
+from middleware.security_headers import init_security_headers
+from middleware.csrf_protection import init_csrf
+
+# ============================================
 # エラーハンドリングシステムの初期化（NEW!）
 # ============================================
 
@@ -106,6 +112,12 @@ app = Flask(__name__,
             static_url_path='/static')
 app.config.from_object(Config)
 limiter.init_app(app)
+
+# ============================================
+# ★ セキュリティミドルウェアを有効化
+# ============================================
+init_security_headers(app)  # X-Frame-Options, X-Content-Type-Options 等
+init_csrf(app)               # CSRFトークン（テンプレートで {{ csrf_token() }} が使える）
 
 # Flask拡張機能の初期化
 compress = Compress(app)
@@ -329,18 +341,9 @@ def health_check():
 
 # ============================================
 # セキュリティヘッダー設定
+# ★ middleware/security_headers.py で統合管理
+#   (init_security_headers(app) 呼び出し済み)
 # ============================================
-
-@app.after_request
-def set_security_headers(response):
-    """
-    セキュリティヘッダーを設定
-    """
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-    return response
 
 # ============================================
 # アプリケーション起動
@@ -363,10 +366,13 @@ if __name__ == "__main__":
     logger.info("="*60)
     
     try:
+        # ★ debug は環境変数 FLASK_DEBUG で制御（本番では 0 を設定）
+        _debug = os.environ.get("FLASK_ENV") == "development" and \
+                 os.environ.get("FLASK_DEBUG", "0") == "1"
         app.run(
             host="0.0.0.0",
             port=int(os.environ.get("PORT", 5001)),
-            debug=os.environ.get("FLASK_ENV") == "development",
+            debug=_debug,
             use_reloader=False,
             threaded=True
         )

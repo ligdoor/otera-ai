@@ -5,6 +5,7 @@
 メイン画面、寺院詳細画面などの表示を処理します。
 """
 
+import logging
 from flask import Blueprint, render_template, session, jsonify
 from utils.decorators import login_required
 from .common import get_otera_database, get_field_config, reload_temple_data
@@ -16,6 +17,8 @@ from config import Config
 
 # 画面表示用のBlueprint
 temple_view_bp = Blueprint('temple_view', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -113,7 +116,7 @@ def reload_data():
             }), 500
     
     except Exception as e:
-        print(f"❌ データ再読み込みエラー: {e}")
+        logger.error(f"❌ データ再読み込みエラー: {e}")
         return jsonify({
             "success": False,
             "message": f"エラー: {str(e)}"

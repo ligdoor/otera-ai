@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, jsonify, request, send_file, render_template, session
 import csv
 import io
@@ -18,6 +19,8 @@ from utils.helpers import get_jst_now, get_jst_timestamp
 from config import Config
 
 temple_bp = Blueprint('temple', __name__)
+
+logger = logging.getLogger(__name__)
 
 # グローバルデータ（main.pyから移行）
 otera_database = {}
@@ -58,27 +61,27 @@ def search_temple_by_name():
     data = request.json
     query = data.get('name', '').strip()
     
-    print("========== /search_temple_by_name デバッグ開始 ==========")
-    print(f"1. 検索クエリ: {query}")
+    logger.debug("========== /search_temple_by_name デバッグ開始 ==========")
+    logger.debug(f"1. 検索クエリ: {query}")
     
     if not query:
-        print("2. クエリが空です")
+        logger.debug("2. クエリが空です")
         return jsonify({'exact_match': None, 'suggestions': []})
     
     from services.data_manager import data_manager
     
     # 完全一致を探す
     exact_match = data_manager.get_temple_by_name(query)
-    print(f"2. 完全一致検索結果: {exact_match}")
+    logger.debug(f"2. 完全一致検索結果: {exact_match}")
     
     if exact_match:
-        print("3. 完全一致が見つかりました")
+        logger.debug("3. 完全一致が見つかりました")
         return jsonify({
             'exact_match': exact_match,
             'suggestions': []
         })
     
-    print("3. 完全一致なし、曖昧検索を開始")
+    logger.debug("3. 完全一致なし、曖昧検索を開始")
     
     # 完全一致がない場合、似た名前を探す
     all_temples = data_manager.get_all_temples()
@@ -88,7 +91,7 @@ def search_temple_by_name():
     else:
         temples_list = all_temples
     
-    print(f"4. 全寺院数: {len(temples_list)}")
+    logger.debug(f"4. 全寺院数: {len(temples_list)}")
     
     # スコアベースで候補を抽出
     scored_suggestions = []
@@ -131,7 +134,7 @@ def search_temple_by_name():
                 'temple': temple,
                 'score': score
             })
-            print(f"   候補追加: {temple_name} (スコア: {score})")
+            logger.debug(f"   候補追加: {temple_name} (スコア: {score})")
     
     # スコア順にソート
     scored_suggestions.sort(key=lambda x: x['score'], reverse=True)
@@ -139,11 +142,11 @@ def search_temple_by_name():
     # 上位5件を返す
     suggestions = [item['temple'] for item in scored_suggestions[:5]]
     
-    print(f"5. 見つかった候補数: {len(suggestions)}")
+    logger.debug(f"5. 見つかった候補数: {len(suggestions)}")
     for i, s in enumerate(suggestions, 1):
-        print(f"   候補{i}: {s.get('name', '')} (スコア: {scored_suggestions[i-1]['score']})")
+        logger.debug(f"   候補{i}: {s.get('name', '')} (スコア: {scored_suggestions[i-1]['score']})")
     
-    print("========== /search_temple_by_name デバッグ終了 ==========")
+    logger.debug("========== /search_temple_by_name デバッグ終了 ==========")
     
     return jsonify({
         'exact_match': None,
@@ -163,27 +166,27 @@ def ask():
     question = request.json.get("question", "")
     mode = request.json.get("mode", "qa")
     
-    print("========== /ask エンドポイント デバッグ開始 ==========")
-    print(f"1. 受信した質問: {question}")
+    logger.debug("========== /ask エンドポイント デバッグ開始 ==========")
+    logger.debug(f"1. 受信した質問: {question}")
     
     # 寺院名を抽出（完全一致を試す）
     temple_name = None
     for name in otera_database.keys():
         if name in question:
             temple_name = name
-            print(f"2. 完全一致で見つかりました: {temple_name}")
+            logger.debug(f"2. 完全一致で見つかりました: {temple_name}")
             break
     
     # 完全一致しない場合、曖昧検索を試す
     if not temple_name:
-        print("3. 完全一致なし、曖昧検索を開始")
+        logger.debug("3. 完全一致なし、曖昧検索を開始")
         
         match = re.search(r'([^のは？\s]+)の', question)
-        print(f"4. 正規表現マッチ結果: {match}")
+        logger.debug(f"4. 正規表現マッチ結果: {match}")
         
         if match:
             candidate = match.group(1)
-            print(f"5. 抽出された候補: {candidate}")
+            logger.debug(f"5. 抽出された候補: {candidate}")
             
             all_temples = data_manager.get_all_temples()
             if isinstance(all_temples, dict):
@@ -191,7 +194,7 @@ def ask():
             else:
                 temples_list = all_temples
             
-            print(f"6. 全寺院数: {len(temples_list)}")
+            logger.debug(f"6. 全寺院数: {len(temples_list)}")
             
             # 候補を探す - スコアベース検索
             best_match = None
@@ -221,21 +224,21 @@ def ask():
                 if score > best_score:
                     best_score = score
                     best_match = temple_name_db
-                    print(f"   新しいベストマッチ: {temple_name_db} (スコア: {score})")
+                    logger.debug(f"   新しいベストマッチ: {temple_name_db} (スコア: {score})")
             
-            print(f"7. 最終的なベストマッチ: {best_match} (スコア: {best_score})")
+            logger.debug(f"7. 最終的なベストマッチ: {best_match} (スコア: {best_score})")
             
             # ★★★ 修正: スコア20以上なら採用 ★★★
             if best_match and best_score >= 20:
                 temple_name = best_match
                 question = question.replace(candidate, temple_name)
-                print(f"8. 寺院名確定: {temple_name}")
+                logger.debug(f"8. 寺院名確定: {temple_name}")
     
     if not temple_name:
-        print("9. 寺院名が見つかりませんでした")
+        logger.debug("9. 寺院名が見つかりませんでした")
         return jsonify({"answer": "⚠️ 寺院名が見つかりませんでした。正確な寺院名を入力してください。"})
     
-    print(f"10. 最終的な寺院名: {temple_name}")
+    logger.debug(f"10. 最終的な寺院名: {temple_name}")
     
     temple_info = otera_database.get(temple_name)
     
@@ -253,8 +256,8 @@ def ask():
     else:
         answer = generate_answer_with_ai(temple_info, question, field_config)
     
-    print(f"11. 回答生成完了")
-    print("========== /ask エンドポイント デバッグ終了 ==========")
+    logger.debug(f"11. 回答生成完了")
+    logger.debug("========== /ask エンドポイント デバッグ終了 ==========")
     
     return jsonify({"answer": answer})
 
@@ -293,14 +296,14 @@ def get_all_data():
     # キャッシュから取得を試みる
     @cache.cached(timeout=300, key_prefix='all_temples_data')
     def fetch_data():
-        print("✅ データベースから取得（キャッシュなし）")
+        logger.info("✅ データベースから取得（キャッシュなし）")
         return load_data_from_sheet(cache_manager)
     
     try:
         data = fetch_data()
         return jsonify(data)
     except Exception as e:
-        print(f"データ取得エラー: {e}")
+        logger.debug(f"データ取得エラー: {e}")
         return jsonify({"error": "データの読み込みに失敗しました"}), 500
 
 @temple_bp.route("/get_fields")
@@ -310,7 +313,7 @@ def get_fields():
     
     @cache.cached(timeout=300, key_prefix='temple_fields')
     def fetch_fields():
-        print("✅ 項目設定を取得（キャッシュなし）")
+        logger.info("✅ 項目設定を取得（キャッシュなし）")
         global field_config
         return field_config
     
@@ -610,7 +613,7 @@ def get_access_stats():
             "stats": [{"name": name, "count": count} for name, count in sorted_stats]
         })
     except Exception as e:
-        print(f"統計取得エラー: {e}")
+        logger.debug(f"統計取得エラー: {e}")
         return jsonify({"stats": []})
 
 @temple_bp.route("/get_comments/<temple_name>")
@@ -633,7 +636,7 @@ def get_comments(temple_name):
         
         return jsonify({"comments": comments})
     except Exception as e:
-        print(f"コメント取得エラー: {e}")
+        logger.debug(f"コメント取得エラー: {e}")
         return jsonify({"comments": []})
 
 @temple_bp.route("/add_comment", methods=["POST"])
@@ -666,7 +669,7 @@ def add_comment():
         
         return jsonify({"status": "success"})
     except Exception as e:
-        print(f"コメント追加エラー: {e}")
+        logger.debug(f"コメント追加エラー: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @temple_bp.route("/delete_comment", methods=["POST"])
@@ -687,7 +690,7 @@ def delete_comment():
             add_log("コメント削除", f"コメントID {comment_id} を削除")
             return jsonify({"status": "success"})
         except Exception as e:
-            print(f"コメント削除エラー: {e}")
+            logger.debug(f"コメント削除エラー: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
     else:
         # Google Sheets版
@@ -703,5 +706,5 @@ def delete_comment():
             
             return jsonify({"status": "success"})
         except Exception as e:
-            print(f"コメント削除エラー: {e}")
+            logger.debug(f"コメント削除エラー: {e}")
             return jsonify({"status": "error", "message": str(e)}), 500

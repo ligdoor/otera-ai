@@ -4,6 +4,7 @@
 データソースを自動切り替えするユーザー管理
 """
 
+import logging
 from flask import Blueprint, render_template, jsonify, request, session
 import bcrypt
 from utils.decorators import login_required, role_required
@@ -11,6 +12,8 @@ from utils.helpers import get_jst_timestamp
 from config import Config
 
 user_bp = Blueprint('user', __name__)
+
+logger = logging.getLogger(__name__)
 
 def add_log(action, details):
     """ログ記録（データソース自動切り替え）"""
@@ -53,7 +56,7 @@ def get_users():
         else:
             return _get_users_sheets()
     except Exception as e:
-        print(f"❌ ユーザー一覧取得エラー: {e}")
+        logger.error(f"❌ ユーザー一覧取得エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
@@ -91,7 +94,7 @@ def _get_users_supabase():
             'last_login': user.get('last_login', '')
         })
     
-    print(f"✅ Supabaseからユーザー取得: {len(users)}件")
+    logger.info(f"✅ Supabaseからユーザー取得: {len(users)}件")
     return jsonify({"users": users})
 
 def _get_users_sheets():
@@ -123,7 +126,7 @@ def _get_users_sheets():
             'last_login': user.get('last_login', '')
         })
     
-    print(f"✅ Google Sheetsからユーザー取得: {len(users)}件")
+    logger.info(f"✅ Google Sheetsからユーザー取得: {len(users)}件")
     return jsonify({"users": users})
 
 @user_bp.route("/add_user", methods=["POST"])
@@ -153,7 +156,7 @@ def add_user():
         else:
             return _add_user_sheets(user_id, name, password, role)
     except Exception as e:
-        print(f"❌ ユーザー追加エラー: {e}")
+        logger.error(f"❌ ユーザー追加エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"message": str(e)}), 500
@@ -184,7 +187,7 @@ def _add_user_supabase(user_id, name, password, role):
     supabase_db.create_user(user_data)
     add_log("ユーザー追加", f"{name}（{role}）を追加")
     
-    print(f"✅ Supabaseにユーザー追加: {user_id} ({name})")
+    logger.info(f"✅ Supabaseにユーザー追加: {user_id} ({name})")
     return jsonify({"status": "success"})
 
 def _add_user_sheets(user_id, name, password, role):
@@ -209,7 +212,7 @@ def _add_user_sheets(user_id, name, password, role):
     
     add_log("ユーザー追加", f"{name}（{role}）を追加")
     
-    print(f"✅ Google Sheetsにユーザー追加: {user_id} ({name})")
+    logger.info(f"✅ Google Sheetsにユーザー追加: {user_id} ({name})")
     return jsonify({"status": "success"})
 
 @user_bp.route("/update_user_role", methods=["POST"])
@@ -253,7 +256,7 @@ def update_user_role():
         else:
             return _update_user_sheets(user_id, updates)
     except Exception as e:
-        print(f"❌ ユーザー更新エラー: {e}")
+        logger.error(f"❌ ユーザー更新エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"message": str(e)}), 500
@@ -272,7 +275,7 @@ def _update_user_supabase(user_id, updates):
     details = ', '.join([f"{k}={v}" for k, v in updates.items()])
     add_log("ユーザー情報更新", f"{user_id} の情報を更新: {details}")
     
-    print(f"✅ Supabaseでユーザー更新: {user_id} → {updates}")
+    logger.info(f"✅ Supabaseでユーザー更新: {user_id} → {updates}")
     return jsonify({"status": "success"})
 
 def _update_user_sheets(user_id, updates):
@@ -302,7 +305,7 @@ def _update_user_sheets(user_id, updates):
     details = ', '.join([f"{k}={v}" for k, v in updates.items()])
     add_log("ユーザー情報更新", f"{user_id} の情報を更新: {details}")
     
-    print(f"✅ Google Sheetsでユーザー更新: {user_id} → {updates}")
+    logger.info(f"✅ Google Sheetsでユーザー更新: {user_id} → {updates}")
     return jsonify({"status": "success"})
 
 @user_bp.route("/delete_user", methods=["POST"])
@@ -322,7 +325,7 @@ def delete_user():
         else:
             return _delete_user_sheets(user_id)
     except Exception as e:
-        print(f"❌ ユーザー削除エラー: {e}")
+        logger.error(f"❌ ユーザー削除エラー: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"message": str(e)}), 500
@@ -339,7 +342,7 @@ def _delete_user_supabase(user_id):
     supabase_db.delete_user(user_id)
     add_log("ユーザー削除", f"{user_name}（{user_id}）を削除")
     
-    print(f"✅ Supabaseでユーザー削除: {user_id} ({user_name})")
+    logger.info(f"✅ Supabaseでユーザー削除: {user_id} ({user_name})")
     return jsonify({"status": "success"})
 
 def _delete_user_sheets(user_id):
@@ -354,7 +357,7 @@ def _delete_user_sheets(user_id):
         user_name = sheet.cell(cell.row, 3).value  # 列3が name列
         sheet.delete_rows(cell.row)
         add_log("ユーザー削除", f"{user_name}（{user_id}）を削除")
-        print(f"✅ Google Sheetsでユーザー削除: {user_id} ({user_name})")
+        logger.info(f"✅ Google Sheetsでユーザー削除: {user_id} ({user_name})")
         return jsonify({"status": "success"})
     else:
         return jsonify({"message": "ユーザーが見つかりません"}), 404

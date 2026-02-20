@@ -16,12 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmPass = document.getElementById('new-pass-confirm').value;
 
         if (newPass !== confirmPass) {
-            alert("❌ 新しいパスワードが一致しません");
+            window.Toast ? Toast.error("新しいパスワードが一致しません") : alert("❌ 新しいパスワードが一致しません");
             return;
         }
 
         if (newPass.length < 8) {
-            alert("❌ パスワードは8文字以上必要です");
+            window.Toast ? Toast.error("パスワードは8文字以上必要です") : alert("❌ パスワードは8文字以上必要です");
             return;
         }
 
@@ -34,13 +34,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const data = await res.json();
             if (res.ok) {
-                alert("✅ パスワードを変更しました！");
+                window.Toast ? Toast.success("パスワードを変更しました！") : alert("✅ パスワードを変更しました！");
                 closeModal('pass-modal');
             } else {
-                alert("❌ エラー: " + data.message);
+                window.Toast ? Toast.error("エラー: " + (data.message||"不明なエラー")) : alert("❌ エラー: " + data.message);
             }
         } catch (e) {
-            alert("❌ 通信エラーが発生しました");
+            window.Toast ? Toast.error("通信エラーが発生しました") : alert("❌ 通信エラーが発生しました");
         }
     };
 });

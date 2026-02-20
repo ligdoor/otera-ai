@@ -5,6 +5,7 @@
 セッション管理、ログイン試行制限、ログ記録を含みます。
 """
 
+import logging
 from flask import Blueprint, render_template, request, session, redirect, url_for
 from services.auth import check_login_attempts, record_login_attempt, authenticate_user
 from utils.decorators import update_session_activity, check_session_timeout
@@ -17,6 +18,8 @@ from utils.session_utils import regenerate_session  # ★追加: セッション
 # ============================================
 
 auth_login_bp = Blueprint('auth_login', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -109,7 +112,7 @@ def admin():
         user_id = request.form.get("user_id")
         password = request.form.get("password")
         
-        print(f"📝 ログイン試行: user_id={user_id}")
+        logger.debug(f"📝 ログイン試行: user_id={user_id}")
         
         # ============================================
         # ログイン試行回数チェック
@@ -180,12 +183,12 @@ def admin():
                 )
                 
                 # 最終ログイン時刻を更新
-                print(f"✅ {user_name} の最終ログイン時刻を更新しました")
+                logger.info(f"✅ {user_name} の最終ログイン時刻を更新しました")
                 update_user(user_id, {
                     'last_login': get_jst_timestamp()
                 })
             
-            print(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
+            logger.info(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
             
             # メイン画面にリダイレクト
             return redirect('/')
@@ -209,7 +212,7 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
             
-            print(f"❌ ログイン失敗: {user_id}")
+            logger.error(f"❌ ログイン失敗: {user_id}")
             
             # ★修正: alert()廃止 → フォームにエラーメッセージを表示
             return render_template('login.html', error='IDまたはパスワードが違います'), 401
@@ -284,7 +287,7 @@ def logout():
             ip_address=request.remote_addr or ''
         )
     
-    print(f"👋 ログアウト: {user_id} ({user_name})")
+    logger.debug(f"👋 ログアウト: {user_id} ({user_name})")
     
     # セッションをクリア
     session.clear()

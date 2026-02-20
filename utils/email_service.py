@@ -1,3 +1,4 @@
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -6,6 +7,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
+
+
+logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
@@ -36,7 +40,7 @@ class EmailService:
             
             return self._send_email(self.admin_email, subject, body)
         except Exception as e:
-            print(f"メール送信エラー: {e}")
+            logger.debug(f"メール送信エラー: {e}")
             return False
     
     def send_approval_notification(self, user_email, username):
@@ -57,7 +61,7 @@ class EmailService:
             
             return self._send_email(user_email, subject, body)
         except Exception as e:
-            print(f"メール送信エラー: {e}")
+            logger.debug(f"メール送信エラー: {e}")
             return False
     
     def send_rejection_notification(self, user_email, username, reason=""):
@@ -79,7 +83,7 @@ class EmailService:
             
             return self._send_email(user_email, subject, body)
         except Exception as e:
-            print(f"メール送信エラー: {e}")
+            logger.debug(f"メール送信エラー: {e}")
             return False
     
     # ============================================================
@@ -223,7 +227,7 @@ class EmailService:
             return self._send_html_email(to_email, subject, html_body, text_body)
             
         except Exception as e:
-            print(f"パスワードリセットメール送信エラー: {e}")
+            logger.debug(f"パスワードリセットメール送信エラー: {e}")
             return False
     
     def _send_email(self, to_email, subject, body):
@@ -242,10 +246,10 @@ class EmailService:
             server.send_message(msg)
             server.quit()
             
-            print(f"メール送信成功: {to_email}")
+            logger.debug(f"メール送信成功: {to_email}")
             return True
         except Exception as e:
-            print(f"メール送信失敗: {e}")
+            logger.debug(f"メール送信失敗: {e}")
             return False
     
     def _send_html_email(self, to_email, subject, html_body, text_body):
@@ -268,10 +272,10 @@ class EmailService:
             server.send_message(msg)
             server.quit()
             
-            print(f"パスワードリセットメール送信成功: {to_email}")
+            logger.debug(f"パスワードリセットメール送信成功: {to_email}")
             return True
         except Exception as e:
-            print(f"HTMLメール送信失敗: {e}")
+            logger.debug(f"HTMLメール送信失敗: {e}")
             return False
 
 # シングルトンインスタンス

@@ -5,6 +5,7 @@ AI質問応答ルート
 自然言語から寺院名を抽出し、適切な回答を返します。
 """
 
+import logging
 from flask import Blueprint, jsonify, request
 import re
 from .common import get_otera_database, get_field_config
@@ -16,6 +17,8 @@ from config import Config
 # ============================================
 
 temple_ai_bp = Blueprint('temple_ai', __name__)
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================
@@ -58,14 +61,14 @@ def extract_temple_name_from_question(question: str) -> str:
     # 質問文中に寺院名が含まれているか確認
     for name in otera_database.keys():
         if name in question:
-            print(f"✅ 完全一致で寺院名を抽出: {name}")
+            logger.info(f"✅ 完全一致で寺院名を抽出: {name}")
             return name
     
     # ============================================
     # ステップ2: 曖昧検索
     # ============================================
     
-    print("完全一致なし、質問文から候補を抽出します")
+    logger.debug("完全一致なし、質問文から候補を抽出します")
     
     # 「〜の」パターンで候補を抽出
     # 例: "東大寺の大仏" → "東大寺"
@@ -74,17 +77,17 @@ def extract_temple_name_from_question(question: str) -> str:
     
     if match:
         candidate = match.group(1)
-        print(f"抽出された候補: {candidate}")
+        logger.debug(f"抽出された候補: {candidate}")
         
         # find_best_match関数で最適な寺院を検索
         temple_name, score = find_best_match(candidate, min_score=20)
         
         if temple_name:
-            print(f"✅ 曖昧検索で寺院名を特定: {temple_name} (スコア: {score})")
+            logger.info(f"✅ 曖昧検索で寺院名を特定: {temple_name} (スコア: {score})")
             return temple_name
     
     # 見つからない
-    print("⚠️ 質問文から寺院名を抽出できませんでした")
+    logger.error("⚠️ 質問文から寺院名を抽出できませんでした")
     return None
 
 
@@ -143,9 +146,9 @@ def ask():
     question = request.json.get("question", "")
     mode = request.json.get("mode", "qa")  # デフォルトはQAモード
     
-    print("========== AI質問応答 開始 ==========")
-    print(f"質問: {question}")
-    print(f"モード: {mode}")
+    logger.debug("========== AI質問応答 開始 ==========")
+    logger.debug(f"質問: {question}")
+    logger.debug(f"モード: {mode}")
     
     # ============================================
     # 寺院名を抽出
@@ -155,12 +158,12 @@ def ask():
     
     # 寺院名が見つからない場合はエラーを返す
     if not temple_name:
-        print("❌ 寺院名を特定できませんでした")
+        logger.error("❌ 寺院名を特定できませんでした")
         return jsonify({
             "answer": "⚠️ 寺院名が見つかりませんでした。正確な寺院名を入力してください。"
         })
     
-    print(f"特定された寺院: {temple_name}")
+    logger.debug(f"特定された寺院: {temple_name}")
     
     # ============================================
     # 寺院情報を取得
@@ -171,7 +174,7 @@ def ask():
     
     # 寺院情報が存在しない場合（理論上は起こらないはず）
     if not temple_info:
-        print(f"❌ 寺院情報が見つかりません: {temple_name}")
+        logger.error(f"❌ 寺院情報が見つかりません: {temple_name}")
         return jsonify({
             "answer": f"❌ {temple_name} の情報が見つかりませんでした。"
         })
@@ -198,15 +201,15 @@ def ask():
     # モードに応じて回答を生成
     if mode == "summary":
         # サマリーモード: 寺院の概要を要約
-        print("サマリーモードで回答を生成します")
+        logger.debug("サマリーモードで回答を生成します")
         answer = generate_static_summary(temple_info, field_config)
     else:
         # QAモード: 質問に対して詳細に回答
-        print("QAモードで回答を生成します")
+        logger.debug("QAモードで回答を生成します")
         answer = generate_answer_with_ai(temple_info, question, field_config)
     
-    print("✅ 回答生成完了")
-    print("========== AI質問応答 終了 ==========")
+    logger.info("✅ 回答生成完了")
+    logger.debug("========== AI質問応答 終了 ==========")
     
     return jsonify({"answer": answer})
 
