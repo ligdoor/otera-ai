@@ -10,6 +10,7 @@ from services.auth import check_login_attempts, record_login_attempt, authentica
 from utils.decorators import update_session_activity, check_session_timeout
 from config import Config
 from flask_extensions import limiter
+from utils.session_utils import regenerate_session  # ★追加: セッション固定攻撃対策
 
 # ============================================
 # Blueprintの定義
@@ -128,8 +129,8 @@ def admin():
                     ip_address=request.remote_addr or ''
                 )
             
-            # エラーメッセージを表示してリダイレクト
-            return f"""<script>alert('{error_msg}'); window.location.href='/admin';</script>"""
+            # ★修正: alert()廃止 → フォームにエラーメッセージを表示
+            return render_template('login.html', error=error_msg), 429
         
         # ============================================
         # 認証実行
@@ -145,8 +146,11 @@ def admin():
             # 成功した試行を記録
             record_login_attempt(user_id, True)
             
-            # セッションをクリアして新しいセッションを開始
-            session.clear()
+            # ★修正: セッション固定攻撃対策
+            # session.clear()だけでは古いセッションIDが再利用される可能性がある
+            # ログイン前後でセッションIDを切り替えて攻撃を防ぐ
+            regenerate_session()
+            
             session['is_admin'] = True
             session['user_name'] = user_name
             session['user_id'] = user_id
@@ -207,8 +211,8 @@ def admin():
             
             print(f"❌ ログイン失敗: {user_id}")
             
-            # エラーメッセージを表示してリダイレクト
-            return """<script>alert('IDまたはパスワードが違います'); window.location.href='/admin';</script>"""
+            # ★修正: alert()廃止 → フォームにエラーメッセージを表示
+            return render_template('login.html', error='IDまたはパスワードが違います'), 401
     
     # ============================================
     # GET: ログインフォーム表示

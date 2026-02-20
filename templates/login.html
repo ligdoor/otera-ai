@@ -25,6 +25,10 @@
         {% if success %}
             <div class="success-message">{{ success }}</div>
         {% endif %}
+
+        {% if error %}
+            <div class="error-message" role="alert">⚠️ {{ error }}</div>
+        {% endif %}
         
         <form method="post" id="login-form">
             <h2>セキュアログイン</h2>

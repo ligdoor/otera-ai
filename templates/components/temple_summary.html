@@ -1,0 +1,94 @@
+{#
+  寺院サマリー表示テンプレート（アコーディオン対応）
+
+  ★修正(重要度:中): services/ai.py でPythonがHTMLをベタ書きしていた部分を
+  Jinja2テンプレートに分離。
+  - HTMLの保守がしやすくなる
+  - Jinja2の自動エスケープ（autoescape）によりXSSが防がれる
+  - デザイン変更がPythonコードを触らずに行える
+
+  Variables:
+    temple_name (str): 寺院名
+    temple_name_js (str): JS用にシングルクォートをエスケープ済みの寺院名（Python側で処理）
+    categories (list): カテゴリのリスト
+      - title (str): カテゴリ表示名
+      - key (str): カテゴリキー（accordion IDに使用）
+      - default_open (bool): 初期表示でアコーディオンを開くか
+      - fields (list): フィールドのリスト
+        - key (str): フィールドキー
+        - label (str): フィールド表示ラベル
+        - value (str): フィールド値（clean済み）
+        - is_address (bool): 住所フィールドか
+        - map_url (str): GoogleマップURL（住所の場合のみ）
+        - address_plain_js (str): JS用コピー住所（シングルクォートエスケープ済み）
+    timestamp (int): アコーディオンID重複防止用タイムスタンプ
+#}
+
+{# ヘッダー部分 #}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
+    <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {{ temple_name }} 情報</div>
+    <button class="favorite-btn-detail"
+            onclick="toggleFavoriteDetail('{{ temple_name_js }}')"
+            data-temple="{{ temple_name }}"
+            style="background:none; border:2px solid #ddd; border-radius:50%;
+                   width:40px; height:40px; font-size:20px; cursor:pointer;
+                   transition:all 0.2s;">
+        ☆
+    </button>
+</div>
+
+{# カテゴリループ #}
+{% for cat in categories %}
+    {% set accordion_id = "acc-" ~ cat.key ~ "-" ~ loop.index0 ~ "-" ~ timestamp %}
+    <div class="accordion-section">
+        <div class="accordion-header {% if cat.default_open %}active{% endif %}"
+             id="header-{{ accordion_id }}"
+             onclick="toggleAccordionFront('header-{{ accordion_id }}', '{{ accordion_id }}')">
+            <div class="accordion-title">
+                <span class="accordion-icon">▶</span>
+                <span>{{ cat.title }}</span>
+            </div>
+        </div>
+        <div class="accordion-content {% if cat.default_open %}active{% endif %}"
+             id="{{ accordion_id }}"
+             {% if cat.default_open %}style="max-height: none;"{% endif %}>
+            <div class="accordion-body">
+
+                {% for item in cat.fields %}
+                    {% set is_last = loop.last %}
+                    <div class="field-item"
+                         style="margin-bottom:{{ '0' if is_last else '10px' }};
+                                padding-bottom:{{ '0' if is_last else '10px' }};
+                                border-bottom:{{ 'none' if is_last else '1px solid #e0e0e0' }};">
+
+                        <div class="field-label-display" style="margin-bottom:4px;">{{ item.label }}:</div>
+
+                        {% if item.is_address and item.value %}
+                            {# 住所フィールド: 地図リンクとコピーボタン付き #}
+                            {# ★ onclick内のクォートはPython側(address_plain_js)でエスケープ済み #}
+                            <div class="field-value-display" style="margin-bottom:6px;">
+                                {{ item.value | safe }}
+                                <button class="copy-btn"
+                                        onclick="event.stopPropagation(); copyToClipboard('{{ item.address_plain_js }}')">📋</button>
+                            </div>
+                            <a href="{{ item.map_url }}"
+                               target="_blank"
+                               style="color:#1a237e; font-weight:bold; text-decoration:underline; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
+                        {% else %}
+                            {# 通常フィールド #}
+                            <div class="{{ 'field-value-display empty' if not item.value else 'field-value-display' }}">
+                                {% if item.value %}
+                                    {{ item.value | safe }}
+                                {% else %}
+                                    記載なし
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+{% endfor %}

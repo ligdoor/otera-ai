@@ -30,27 +30,6 @@
         </div>
     </div>
 
-    <!-- 使い方ガイドボタン（編集者・管理者のみ表示） -->
-    <div id="guide-btn-area-admin" style="display:none; margin-bottom:14px; text-align:right;">
-        <a href="/admin/guide/admin"
-           style="display:inline-flex; align-items:center; gap:7px; background:#f0f4ff; color:#667eea;
-                  border:2px solid #667eea; border-radius:10px; padding:9px 18px;
-                  font-size:0.93rem; font-weight:600; text-decoration:none; transition:all 0.2s;"
-           onmouseover="this.style.background='#667eea';this.style.color='white';"
-           onmouseout="this.style.background='#f0f4ff';this.style.color='#667eea';">
-            <span>📖</span>
-            <span>使い方ガイド</span>
-        </a>
-    </div>
-    <script>
-        // userRole は admin_header.html で定義される
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof userRole !== 'undefined' && (userRole === 'admin' || userRole === 'editor')) {
-                document.getElementById('guide-btn-area-admin').style.display = 'block';
-            }
-        });
-    </script>
-
     <!-- CSV機能とアクセス統計 -->
     <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
         <button class="btn btn-edit" onclick="exportCSV()" style="flex:1; min-width:200px;">

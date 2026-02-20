@@ -3,11 +3,48 @@ from google.genai import types
 from config import Config
 import re
 import time
+import html as html_module  # ★追加: HTMLエスケープ用
 
 # Gemini クライアント初期化
 gemini_client = None
 if Config.GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
+
+
+def _sanitize_text(text: str) -> str:
+    """
+    テキストの危険なHTMLタグ・スクリプトを除去するサニタイズ関数
+    
+    ★修正(重要度:中): Geminiの出力やDBデータをHTMLに埋め込む前に
+    サニタイズしてXSS攻撃を防ぐ。
+    
+    許可タグ: <br> <strong> <em> <div> <span>（スタイル付き）
+    禁止タグ: <script> <iframe> <object> その他実行系タグ
+    
+    Args:
+        text: サニタイズするテキスト
+    
+    Returns:
+        str: サニタイズ済みテキスト
+    """
+    if not text:
+        return ''
+    
+    # 1. <script>タグと中身を削除
+    text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL | re.IGNORECASE)
+    
+    # 2. イベントハンドラ属性を削除（onclick, onerror等）
+    text = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s+on\w+\s*=\s*[^\s>]+', '', text, flags=re.IGNORECASE)
+    
+    # 3. javascript: href/src を削除
+    text = re.sub(r'(href|src)\s*=\s*["\']?\s*javascript:[^"\'>\s]*["\']?', '', text, flags=re.IGNORECASE)
+    
+    # 4. 危険なタグ（iframe, object, embed, form等）を削除
+    dangerous_tags = r'<(iframe|object|embed|form|input|button|select|textarea|link|base|meta)[^>]*/?>'
+    text = re.sub(dangerous_tags, '', text, flags=re.IGNORECASE)
+    
+    return text
 
 def generate_answer_with_ai(temple_info, question, field_config):
     """
@@ -22,14 +59,16 @@ def generate_answer_with_ai(temple_info, question, field_config):
     
     # ★★★ 通夜の質問の場合、専用フォーマットで応答 ★★★
     if is_tsuya_question:
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name}の通夜</div>"]
+        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
+        temple_name_safe = html_module.escape(temple_name)
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name_safe}の通夜</div>"]
         
-        # 通夜関連の項目を取得
-        narimono = temple_info.get('tsuya_narimono', '').strip()
-        ippan = temple_info.get('tsuya_ippan_shoko', '').strip()
-        shinzoku = temple_info.get('tsuya_shinzoku_shoko', '').strip()
-        dokyo = temple_info.get('tsuya_dokyo_length', '').strip()
-        notes = temple_info.get('tsuya_notes', '').strip()
+        # 通夜関連の項目を取得（★修正: エスケープ処理）
+        narimono = html_module.escape(temple_info.get('tsuya_narimono', '') or '')
+        ippan    = html_module.escape(temple_info.get('tsuya_ippan_shoko', '') or '')
+        shinzoku = html_module.escape(temple_info.get('tsuya_shinzoku_shoko', '') or '')
+        dokyo    = html_module.escape(temple_info.get('tsuya_dokyo_length', '') or '')
+        notes    = html_module.escape(temple_info.get('tsuya_notes', '') or '')
         
         response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
         response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
@@ -43,14 +82,16 @@ def generate_answer_with_ai(temple_info, question, field_config):
     
     # ★★★ 葬儀の質問の場合、専用フォーマットで応答 ★★★
     if is_sougi_question:
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name}の葬儀</div>"]
+        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
+        temple_name_safe = html_module.escape(temple_name)
+        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name_safe}の葬儀</div>"]
         
-        # 葬儀関連の項目を取得
-        narimono = temple_info.get('sougi_narimono', '').strip()
-        ippan = temple_info.get('sougi_ippan_shoko', '').strip()
-        shinzoku = temple_info.get('sougi_shinzoku_shoko', '').strip()
-        dokyo = temple_info.get('sougi_dokyo_length', '').strip()
-        notes = temple_info.get('sougi_notes', '').strip()
+        # 葬儀関連の項目を取得（★修正: エスケープ処理）
+        narimono = html_module.escape(temple_info.get('sougi_narimono', '') or '')
+        ippan    = html_module.escape(temple_info.get('sougi_ippan_shoko', '') or '')
+        shinzoku = html_module.escape(temple_info.get('sougi_shinzoku_shoko', '') or '')
+        dokyo    = html_module.escape(temple_info.get('sougi_dokyo_length', '') or '')
+        notes    = html_module.escape(temple_info.get('sougi_notes', '') or '')
         
         response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
         response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
@@ -105,6 +146,8 @@ def generate_answer_with_ai(temple_info, question, field_config):
         
         response_text = response.text
         
+        # ★修正: Geminiの出力をサニタイズ（XSS対策）
+        response_text = _sanitize_text(response_text)
         # 住所のリンクを実際に生成
         address = temple_info.get('address', '')
         if address and '📍' in response_text:
@@ -124,61 +167,48 @@ def generate_answer_with_ai(temple_info, question, field_config):
 
 
 def generate_static_summary(temple_info, field_config):
-    """寺院情報の静的サマリーを生成（アコーディオン対応）"""
-    
+    """
+    寺院情報のサマリーHTMLを生成（アコーディオン対応）
+
+    ★修正(重要度:中): Pythonでベタ書きしていたHTMLを
+    Jinja2テンプレート（templates/components/temple_summary.html）に分離。
+    - HTML保守性の向上
+    - Jinja2の自動エスケープによるXSS防止
+    - デザイン変更がPythonコードを触らずに行える
+
+    Args:
+        temple_info (dict): 寺院データ
+        field_config (list): フィールド設定のリスト
+
+    Returns:
+        str: レンダリング済みHTML文字列
+    """
+    from flask import render_template
+    import urllib.parse
+
     def get(key):
-        value = temple_info.get(key) or ''
-        return value
-    
+        return temple_info.get(key) or ''
+
     def clean_html_selectively(text):
         """
         HTMLを選択的にクリーンアップ
         - 装飾タグ（太字、色など）は残す
         - インラインスタイルの背景色は削除
-        - 不要なタグは削除
         """
         if not text:
             return ''
-        
-        # 1. 背景色のみ削除（文字色は残す）
         text = re.sub(r'background-color\s*:\s*[^;]+;?', '', text)
         text = re.sub(r'background\s*:\s*[^;]+;?', '', text)
-        
-        # 2. <p>タグを<div>に変換
         text = re.sub(r'<p([^>]*)>', r'<div\1>', text)
         text = re.sub(r'</p>', '</div>', text)
-        
-        # 3. 空のスタイル属性を削除
         text = re.sub(r'\s+style\s*=\s*["\'][\s;]*["\']', '', text)
-        
-        # 4. 連続する改行を整理
         text = re.sub(r'(<br[^>]*>\s*){2,}', '<br>', text)
-        
-        # 5. 前後の空白を削除
-        text = text.strip()
-        
-        return text
-    
-    temple_name = get('name')
-    temple_name_escaped = temple_name.replace("'", "\\'")
-    timestamp = int(time.time() * 1000)
-    
-    # ヘッダー部分
-    html = f"""
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-bottom:10px; border-bottom:2px solid #1a237e;">
-        <div style="font-size:1.1em; font-weight:bold; color:#1a237e;">🏯 {temple_name} 情報</div>
-        <button class='favorite-btn-detail' onclick='toggleFavoriteDetail("{temple_name_escaped}")' 
-                data-temple='{temple_name}' 
-                style='background:none; border:2px solid #ddd; border-radius:50%; 
-                    width:40px; height:40px; font-size:20px; cursor:pointer; 
-                    transition:all 0.2s;'>
-            ☆
-        </button>
-    </div>
-    """    
-    
+        return text.strip()
+
+    # ============================================
     # カテゴリ定義
-    categories = {
+    # ============================================
+    category_definitions = {
         'basic': {
             'title': '🏯 基本情報',
             'fields': ['sect', 'address', 'transport'],
@@ -205,80 +235,56 @@ def generate_static_summary(temple_info, field_config):
             'default_open': False
         }
     }
-    
-    cat_index = 0
-    for cat_key, cat_data in categories.items():
-        # このカテゴリに表示する項目を収集
-        fieldsToShow = []
+
+    # ============================================
+    # テンプレートに渡すデータを構築
+    # ============================================
+    categories = []
+
+    for cat_key, cat_data in category_definitions.items():
+        fields_to_show = []
+
         for field in field_config:
-            if field['key'] in cat_data['fields']:
-                value = temple_info.get(field['key'], '')
-                clean_value = clean_html_selectively(value)
-                fieldsToShow.append({
-                    'key': field['key'],
-                    'label': field['label'],
-                    'value': clean_value
-                })
-        
-        # 表示する項目がない場合はスキップ
-        if len(fieldsToShow) == 0:
-            continue
-        
-        is_open = cat_data['default_open']
-        active_class = 'active' if is_open else ''
-        accordion_id = f"acc-{cat_key}-{cat_index}-{timestamp}"
-        cat_index += 1
-        
-        # アコーディオンセクション
-        html += f"""
-        <div class="accordion-section">
-            <div class="accordion-header {active_class}" id="header-{accordion_id}" onclick="toggleAccordionFront('header-{accordion_id}', '{accordion_id}')">
-                <div class="accordion-title">
-                    <span class="accordion-icon">▶</span>
-                    <span>{cat_data['title']}</span>
-                </div>
-            </div>
-            <div class="accordion-content {active_class}" id="{accordion_id}"{' style="max-height: none;"' if is_open else ''}>
-                <div class="accordion-body">
-        """
-        
-        # 各項目を表示
-        for idx, item in enumerate(fieldsToShow):
-            display_value = item['value'] if item['value'].strip() else '記載なし'
-            is_empty = not item['value'].strip()
-            is_last = (idx == len(fieldsToShow) - 1)
-            
-            if item['key'] == 'address' and not is_empty:
-                # 住所の場合：地図リンクとコピーボタンを追加
-                address_plain = re.sub(r'<[^>]+>', '', item['value'])
-                address_plain_escaped = address_plain.replace("'", "\\'").replace('"', '&quot;')
-                map_url = f"https://www.google.com/maps/search/?api=1&query={address_plain}"
-                
-                html += f"""
-                <div class="field-item" style="margin-bottom:{'10px' if not is_last else '0'}; padding-bottom:{'10px' if not is_last else '0'}; border-bottom:{'1px solid #e0e0e0' if not is_last else 'none'};">
-                    <div class="field-label-display" style="margin-bottom:4px;">{item['label']}:</div>
-                    <div class="field-value-display" style="margin-bottom:6px;">{display_value}
-                        <button class="copy-btn" onclick="event.stopPropagation(); copyToClipboard('{address_plain_escaped}')">📋</button>
-                    </div>
-                    <a href="{map_url}" target="_blank" style="color:#1a237e; font-weight:bold; text-decoration:underline; display:inline-block; font-size:0.85rem;">📍地図を開く</a>
-                </div>
-                """
-            else:
-                # その他の項目：HTMLタグを残して表示
-                value_class = 'field-value-display empty' if is_empty else 'field-value-display'
-                
-                html += f"""
-                <div class="field-item" style="margin-bottom:{'10px' if not is_last else '0'}; padding-bottom:{'10px' if not is_last else '0'}; border-bottom:{'1px solid #e0e0e0' if not is_last else 'none'};">
-                    <div class="field-label-display" style="margin-bottom:4px;">{item['label']}:</div>
-                    <div class="{value_class}">{display_value}</div>
-                </div>
-                """
-        
-        # アコーディオンを閉じる
-        html += """
-                </div>
-            </div>
-        </div>
-        """
-    
-    return html
+            if field['key'] not in cat_data['fields']:
+                continue
+
+            raw_value = temple_info.get(field['key'], '') or ''
+            clean_value = clean_html_selectively(raw_value)
+
+            is_address = (field['key'] == 'address')
+            field_entry = {
+                'key':       field['key'],
+                'label':     field['label'],
+                'value':     clean_value,
+                'is_address': is_address,
+            }
+
+            if is_address and clean_value:
+                # 住所フィールド用: プレーンテキストとGoogleマップURLを追加
+                address_plain = re.sub(r'<[^>]+>', '', clean_value)
+                field_entry['address_plain_js'] = address_plain.replace("'", "\\'")  # ★JS用エスケープをPython側で処理
+                field_entry['map_url'] = (
+                    'https://www.google.com/maps/search/?api=1&query='
+                    + urllib.parse.quote(address_plain)
+                )
+
+            fields_to_show.append(field_entry)
+
+        if fields_to_show:
+            categories.append({
+                'key':          cat_key,
+                'title':        cat_data['title'],
+                'default_open': cat_data['default_open'],
+                'fields':       fields_to_show,
+            })
+
+    # ============================================
+    # Jinja2テンプレートでレンダリング
+    # ============================================
+    return render_template(
+        'components/temple_summary.html',
+        temple_name=get('name'),
+        temple_name_js=get('name').replace("'", "\\'"),  # ★JS用エスケープをPython側で処理
+        categories=categories,
+        timestamp=int(time.time() * 1000),
+    )
