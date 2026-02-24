@@ -1,105 +1,252 @@
-/* ==========================================
-   CSS変数定義
-   ========================================== */
+/* ============================================================
+   🎨 カラー設定ファイル（全ページの色はここだけで管理！）
+   ============================================================
+   このファイルを編集するだけで、サイト全体の色が変わります。
+   他のCSSファイルは触らなくてOKです。
+   ============================================================ */
 
 :root {
-    /* === カラーパレット === */
-    
-    /* プライマリーカラー（管理画面と統一：紺系） */
-    --color-primary: #283593;
-    --color-primary-dark: #1a237e;
-    --color-primary-light: #e8eaf6;
-    
-    /* セカンダリーカラー */
-    --color-secondary: #4facfe;
+
+    /* ================================================================
+       ① ページ背景色
+       ================================================================ */
+
+    --bg-page:              #f5f0e8;   /* サイト全体の背景（和紙ベージュ） */
+    --bg-surface:           #faf7f2;   /* カード・パネルの背景 */
+    --bg-surface-alt:       #f0ebe0;   /* やや濃いパネル背景 */
+
+
+    /* ================================================================
+       ② ヘッダー背景色（管理画面・フロント共通）
+       ================================================================ */
+
+    --bg-header-from:       #1a237e;   /* グラデーション 左の色 */
+    --bg-header-to:         #283593;   /* グラデーション 右の色 */
+    --bg-header: linear-gradient(135deg, var(--bg-header-from) 0%, var(--bg-header-to) 100%);
+
+
+    /* ================================================================
+       ③ ログイン・登録・パスワードリセット画面の背景
+       ================================================================ */
+
+    --bg-auth-from:         #1a237e;
+    --bg-auth-to:           #283593;
+    --bg-auth: linear-gradient(135deg, var(--bg-auth-from) 0%, var(--bg-auth-to) 100%);
+
+
+    /* ================================================================
+       ④ アイテム一覧ページのタイトル背景
+       ================================================================ */
+
+    --bg-items-header-from: #1a237e;
+    --bg-items-header-to:   #283593;
+    --bg-items-header: linear-gradient(135deg, var(--bg-items-header-from) 0%, var(--bg-items-header-to) 100%);
+
+
+    /* ================================================================
+       ⑤ フロント画面のチャット（ユーザーメッセージの吹き出し）
+       ================================================================ */
+
+    --bg-chat-user-from:    #5e35b1;
+    --bg-chat-user-to:      #673ab7;
+    --bg-chat-user: linear-gradient(135deg, var(--bg-chat-user-from) 0%, var(--bg-chat-user-to) 100%);
+
+
+    /* ================================================================
+       ⑥ フロント画面の「メニューを開く」ボタン（画面左下の丸ボタン）
+       ================================================================ */
+
+    --bg-menu-btn-from:     #1a237e;
+    --bg-menu-btn-to:       #283593;
+    --bg-menu-btn: linear-gradient(135deg, var(--bg-menu-btn-from) 0%, var(--bg-menu-btn-to) 100%);
+
+
+    /* ================================================================
+       ⑦ プライマリーカラー（リンク・強調色・ボーダー強調など）
+       ================================================================ */
+
+    --color-primary:        #1a237e;   /* メインカラー（紺） */
+    --color-primary-dark:   #0d1a6b;   /* 濃いメインカラー（ホバー時など） */
+    --color-primary-light:  #e8eaf6;   /* 薄いメインカラー（背景・ハイライト） */
+
+    /* 和風テーマ用プライマリー（お寺詳細ページなど） */
+    --color-wa-primary:     #8c4b16;   /* 金茶 */
+    --color-wa-primary-light: #b5632a; /* 金茶ライト */
+    --color-wa-primary-bg:  #f9efe5;   /* 金茶の薄い背景 */
+
+
+    /* ================================================================
+       ⑧ セカンダリー・アクセントカラー（役割バッジなど）
+       ================================================================ */
+
+    --color-secondary:      #4facfe;
     --color-secondary-dark: #00f2fe;
-    
-    /* アクセントカラー */
-    --color-accent-pink: #f093fb;
-    --color-accent-red: #f5576c;
-    --color-accent-green: #43e97b;
-    --color-accent-cyan: #38f9d7;
-    --color-accent-yellow: #fee140;
-    
-    /* グレースケール */
-    --color-gray-50: #f7fafc;
-    --color-gray-100: #f5f5f5;
-    --color-gray-200: #e2e8f0;
-    --color-gray-300: #cbd5e0;
-    --color-gray-400: #a0aec0;
-    --color-gray-500: #718096;
-    --color-gray-600: #4a5568;
-    --color-gray-700: #2d3748;
-    --color-gray-800: #1a202c;
-    --color-gray-900: #1a237e;
-    
-    /* システムカラー */
-    --color-success: #4caf50;
-    --color-success-light: #d4edda;
-    --color-success-dark: #155724;
-    --color-warning: #ffc107;
-    --color-warning-light: #fff3cd;
-    --color-warning-dark: #856404;
-    --color-error: #f44336;
-    --color-error-light: #f8d7da;
-    --color-error-dark: #721c24;
-    --color-info: #2196f3;
-    
-    /* === グラデーション === */
-    --gradient-primary: linear-gradient(135deg, #1a237e 0%, #283593 100%);  /* 管理画面と同色 */
-    --gradient-admin: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-editor: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --gradient-viewer: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --gradient-warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    
-    /* === シャドウ === */
-    --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.3);
-    
-    /* === スペーシング === */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 20px;
-    --spacing-2xl: 24px;
-    --spacing-3xl: 32px;
-    --spacing-4xl: 40px;
-    
-    /* === ボーダーラジウス === */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-full: 9999px;
-    
-    /* === フォントサイズ === */
-    --font-xs: 0.75rem;      /* 12px */
-    --font-sm: 0.875rem;     /* 14px */
-    --font-base: 1rem;       /* 16px */
-    --font-lg: 1.125rem;     /* 18px */
-    --font-xl: 1.25rem;      /* 20px */
-    --font-2xl: 1.5rem;      /* 24px */
-    --font-3xl: 1.875rem;    /* 30px */
-    --font-4xl: 2.25rem;     /* 36px */
-    
-    /* === フォントウェイト === */
-    --font-normal: 400;
-    --font-medium: 500;
+    --color-accent-pink:    #f093fb;
+    --color-accent-red:     #f5576c;
+    --color-accent-green:   #43e97b;
+    --color-accent-cyan:    #38f9d7;
+    --color-accent-yellow:  #fee140;
+
+
+    /* ================================================================
+       ⑨ システムカラー（成功・警告・エラー・情報）
+       ================================================================ */
+
+    --color-success:        #2d6a4f;
+    --color-success-bg:     #eaf4ee;
+    --color-success-light:  #d4edda;
+    --color-success-dark:   #155724;
+
+    --color-warning:        #ffc107;
+    --color-warning-bg:     #fff3cd;
+    --color-warning-dark:   #856404;
+
+    --color-error:          #9b2335;   /* 朱色 */
+    --color-error-bg:       #fdf0f1;
+    --color-error-light:    #f8d7da;
+    --color-error-dark:     #721c24;
+
+    --color-info:           #1a4a6b;   /* 藍色 */
+    --color-info-bg:        #ebf3f9;
+
+    --color-danger:         #9b2335;
+    --color-danger-bg:      #fdf0f1;
+
+
+    /* ================================================================
+       ⑩ テキストカラー
+       ================================================================ */
+
+    --color-text:           #2c2017;   /* メインテキスト（墨色） */
+    --color-text-sub:       #6b5b45;   /* サブテキスト */
+    --color-text-muted:     #9e8c78;   /* 薄いテキスト */
+    --color-text-on-primary: #ffffff;  /* 濃い背景の上のテキスト */
+
+
+    /* ================================================================
+       ⑪ ボーダー・区切り線
+       ================================================================ */
+
+    --color-border:         #ddd5c0;
+    --color-border-light:   #ebe5d8;
+    --color-border-ui:      #e0e0e0;
+
+
+    /* ================================================================
+       ⑫ グレースケール（汎用）
+       ================================================================ */
+
+    --color-gray-50:        #f7fafc;
+    --color-gray-100:       #f5f5f5;
+    --color-gray-200:       #e2e8f0;
+    --color-gray-300:       #cbd5e0;
+    --color-gray-400:       #a0aec0;
+    --color-gray-500:       #718096;
+    --color-gray-600:       #4a5568;
+    --color-gray-700:       #2d3748;
+    --color-gray-800:       #1a202c;
+
+
+    /* ================================================================
+       ⑬ グラデーション（役割バッジ・ウォーニングなど）
+       ================================================================ */
+
+    --gradient-primary:     var(--bg-header);
+    --gradient-admin:       linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-editor:      linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-viewer:      linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    --gradient-warning:     linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+
+
+    /* ================================================================
+       ⑭ シャドウ
+       ================================================================ */
+
+    --shadow-sm:    0 1px 3px rgba(44, 32, 23, 0.08);
+    --shadow-md:    0 4px 16px rgba(44, 32, 23, 0.10);
+    --shadow-lg:    0 8px 32px rgba(44, 32, 23, 0.14);
+    --shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-2xl:   0 20px 60px rgba(0, 0, 0, 0.3);
+
+
+    /* ================================================================
+       ⑮ スペーシング（余白）
+       ================================================================ */
+
+    --spacing-xs:   4px;
+    --spacing-sm:   8px;
+    --spacing-md:   12px;
+    --spacing-lg:   16px;
+    --spacing-xl:   20px;
+    --spacing-2xl:  24px;
+    --spacing-3xl:  32px;
+    --spacing-4xl:  40px;
+
+    --space-xs:     4px;
+    --space-sm:     8px;
+    --space-md:     16px;
+    --space-lg:     24px;
+    --space-xl:     32px;
+    --space-2xl:    48px;
+
+    --sp-xs:        0.25rem;
+    --sp-sm:        0.5rem;
+    --sp-md:        1rem;
+    --sp-lg:        1.5rem;
+    --sp-xl:        2rem;
+    --sp-2xl:       3rem;
+
+
+    /* ================================================================
+       ⑯ ボーダーラジウス（角丸）
+       ================================================================ */
+
+    --radius-sm:    4px;
+    --radius-md:    8px;
+    --radius-lg:    12px;
+    --radius-xl:    16px;
+    --radius-full:  9999px;
+
+
+    /* ================================================================
+       ⑰ フォント
+       ================================================================ */
+
+    --font-serif:   'Noto Serif JP', 'ヒラギノ明朝 ProN', 'Yu Mincho', serif;
+    --font-sans:    'Noto Sans JP', 'ヒラギノ角ゴ ProN', 'Yu Gothic', -apple-system, sans-serif;
+
+    --font-xs:      0.75rem;
+    --font-sm:      0.875rem;
+    --font-base:    1rem;
+    --font-lg:      1.125rem;
+    --font-xl:      1.25rem;
+    --font-2xl:     1.5rem;
+    --font-3xl:     1.875rem;
+    --font-4xl:     2.25rem;
+
+    --font-normal:  400;
+    --font-medium:  500;
     --font-semibold: 600;
-    --font-bold: 700;
-    
-    /* === トランジション === */
-    --transition-fast: 0.15s ease;
-    --transition-base: 0.2s ease;
-    --transition-slow: 0.3s ease;
-    
-    /* === Z-index === */
-    --z-dropdown: 100;
-    --z-sticky: 500;
-    --z-modal: 1000;
-    --z-tooltip: 1100;
+    --font-bold:    700;
+
+
+    /* ================================================================
+       ⑱ トランジション（アニメーション速度）
+       ================================================================ */
+
+    --transition:       0.2s ease;
+    --transition-fast:  0.15s ease;
+    --transition-base:  0.2s ease;
+    --transition-slow:  0.3s ease;
+
+
+    /* ================================================================
+       ⑲ Z-index（重なり順）
+       ================================================================ */
+
+    --z-dropdown:   100;
+    --z-sticky:     500;
+    --z-modal:      1000;
+    --z-tooltip:    1100;
+
 }

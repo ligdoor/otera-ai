@@ -8,6 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- ★ セッションタイムアウト（分）：temple-admin.js が残り5分で警告を出す -->
     <meta name="session-timeout" content="30">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <!-- ★ 和風テーマCSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/temple-admin.css') }}">

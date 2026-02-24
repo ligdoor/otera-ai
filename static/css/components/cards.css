@@ -1,7 +1,7 @@
 /* === 寺院カード === */
 .temple-card {
-  border: 2px solid #e0e0e0;
-  border-left: 5px solid #1a237e;
+  border: 2px solid var(--color-border-ui);
+  border-left: 5px solid var(--color-primary);
   padding: 14px 50px 14px 14px;
   margin-top: 10px;
   border-radius: 8px;
@@ -12,13 +12,13 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .temple-card:hover {
-  border-color: #1a237e;
+  border-color: var(--color-primary);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
 }
 .card-name {
   font-weight: bold;
-  color: #1a237e;
+  color: var(--color-primary);
   font-size: 1.15rem;
   margin-bottom: 6px;
 }

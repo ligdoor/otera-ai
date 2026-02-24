@@ -133,7 +133,7 @@ button:focus,
 select:focus,
 input:focus,
 .header-btn:focus {
-  outline: 3px solid #667eea;
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
 }
 
@@ -174,15 +174,6 @@ input:focus,
  * 余白の8dpグリッドシステム
  * ======================================== */
 
-:root {
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
-}
-
 @media (max-width: 600px) {
   /* ヘッダー */
   header {
@@ -212,7 +203,7 @@ body.dark-mode select {
 body.dark-mode button:focus,
 body.dark-mode select:focus,
 body.dark-mode input:focus {
-  outline-color: #82b1ff;
+  outline-color: var(--color-primary-light);
 }
 
 /* ========================================

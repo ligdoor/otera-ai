@@ -16,57 +16,6 @@
 /* ============================================================
    CSS カスタムプロパティ（色・フォント・間隔の定義）
    ============================================================ */
-:root {
-  /* === カラーパレット（和風） === */
-  --color-bg:          #f5f0e8;   /* 和紙ベージュ（背景） */
-  --color-surface:     #faf7f2;   /* カード・パネル背景 */
-  --color-surface-2:   #f0ebe0;   /* 少し濃いパネル */
-  --color-border:      #ddd5c0;   /* 境界線 */
-  --color-border-light:#ebe5d8;   /* 薄い境界線 */
-
-  /* アクセントカラー（金茶・朱・藍） */
-  --color-primary:     #8c4b16;   /* 金茶（メインアクセント） */
-  --color-primary-light: #b5632a; /* 金茶ライト（ホバー） */
-  --color-primary-bg:  #f9efe5;   /* 金茶の薄い背景 */
-  --color-danger:      #9b2335;   /* 朱色（削除・警告） */
-  --color-danger-bg:   #fdf0f1;   /* 朱色の薄い背景 */
-  --color-info:        #1a4a6b;   /* 藍色（情報） */
-  --color-info-bg:     #ebf3f9;   /* 藍色の薄い背景 */
-  --color-success:     #2d6a4f;   /* 緑（成功） */
-  --color-success-bg:  #eaf4ee;   /* 緑の薄い背景 */
-
-  /* テキスト */
-  --color-text:        #2c2017;   /* メインテキスト（墨色） */
-  --color-text-sub:    #6b5b45;   /* サブテキスト */
-  --color-text-muted:  #9e8c78;   /* 薄いテキスト */
-  --color-text-on-primary: #fff;  /* アクセントの上のテキスト */
-
-  /* === フォント === */
-  --font-serif:  'Noto Serif JP', 'ヒラギノ明朝 ProN', 'Yu Mincho', serif;
-  --font-sans:   'Noto Sans JP', 'ヒラギノ角ゴ ProN', 'Yu Gothic', sans-serif;
-
-  /* === 間隔 === */
-  --sp-xs:  0.25rem;
-  --sp-sm:  0.5rem;
-  --sp-md:  1rem;
-  --sp-lg:  1.5rem;
-  --sp-xl:  2rem;
-  --sp-2xl: 3rem;
-
-  /* === 角丸 === */
-  --radius-sm:  4px;
-  --radius-md:  8px;
-  --radius-lg:  12px;
-  --radius-xl:  16px;
-
-  /* === 影 === */
-  --shadow-sm:  0 1px 3px rgba(44,32,23,0.08);
-  --shadow-md:  0 4px 16px rgba(44,32,23,0.10);
-  --shadow-lg:  0 8px 32px rgba(44,32,23,0.14);
-
-  /* === トランジション === */
-  --transition: 0.2s ease;
-}
 
 
 /* ============================================================
@@ -78,7 +27,7 @@ html { font-size: 16px; scroll-behavior: smooth; }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg);
+  background-color: var(--bg-page);
   color: var(--color-text);
   line-height: 1.7;
   min-height: 100vh;
@@ -179,7 +128,7 @@ img { max-width: 100%; height: auto; display: block; }
    サイドバー
    ============================================================ */
 .sidebar {
-  background: #2c2017;  /* 深い墨色 */
+  background: var(--color-text);  /* 深い墨色 */
   color: rgba(255,255,255,0.85);
   padding: var(--sp-lg) 0;
   min-height: calc(100vh - 56px);

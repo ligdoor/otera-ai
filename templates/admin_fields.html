@@ -4,7 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>項目設定</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base/variables.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        /* ============================================
+           ドラッグ＆ドロップ UX改善スタイル
+           ============================================ */
+
+        /* 掴んでいる行（chosen）: 影を付けて浮いているように見せる */
+        .sortable-chosen {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+            border: 2px solid var(--color-primary) !important;
+            border-radius: var(--radius-md);
+            background: #eef1ff !important;
+            opacity: 1 !important;
+            cursor: grabbing !important;
+            transform: scale(1.02);
+            z-index: 999;
+        }
+
+        /* ゴースト（ドロップ先のプレースホルダー）: 青い点線で挿入位置を示す */
+        .sortable-ghost {
+            opacity: 0;
+            background: transparent !important;
+            border: 2.5px dashed var(--color-primary) !important;
+            border-radius: var(--radius-md);
+            box-shadow: none !important;
+            position: relative;
+        }
+
+        /* ゴーストの上に「ここに挿入」ラベルを表示 */
+        .sortable-ghost::after {
+            content: "▶ ここに移動";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+            color: var(--color-primary);
+            font-weight: bold;
+            white-space: nowrap;
+            opacity: 0.8;
+        }
+
+        /* ドラッグハンドル: カーソルを grab に */
+        .drag-handle {
+            cursor: grab;
+            font-size: 1.2rem;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: var(--color-gray-400);
+            transition: color 0.15s, background 0.15s;
+            user-select: none;
+        }
+        .drag-handle:hover {
+            color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+            color: var(--color-primary);
+        }
+    </style>
 </head>
 <body>
 
@@ -138,7 +199,10 @@
         // SortableJSを初期化（name以外をソート可能に）
         new Sortable(container, {
             handle: '.drag-handle',
-            animation: 150,
+            animation: 200,
+            ghostClass: 'sortable-ghost',    // ドロップ先のプレースホルダー
+            chosenClass: 'sortable-chosen',  // 掴んでいる行
+            dragClass: 'sortable-drag',      // ドラッグ中の実体
             filter: '.locked',
             onMove: function(evt) {
                 return !evt.related.classList.contains('locked');

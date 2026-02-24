@@ -42,10 +42,43 @@
     </style>
 </head>
 <body>
+
+<header style="
+    background: var(--bg-header);
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    box-shadow: var(--shadow-md);
+">
+    <div style="font-size: 1.1rem; font-weight: bold;">🏯 管理画面</div>
+    <div style="display: flex; gap: 10px;">
+        <a href="/admin/users" style="
+            color: white;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: 0.9rem;
+        ">👥 ユーザー管理</a>
+        <a href="/admin" style="
+            color: white;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: 0.9rem;
+        ">🏠 管理トップ</a>
+    </div>
+</header>
+
     <div class="pending-container">
-        <a href="/admin/users" class="btn btn-back" style="margin-bottom: var(--spacing-xl);">
-            ← ユーザー管理に戻る
-        </a>
         
         <h1 class="pending-title">
             <span>⏳</span>

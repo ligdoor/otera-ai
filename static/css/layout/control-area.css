@@ -7,7 +7,7 @@
   background: white;
   padding: 8px 10px;
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.15);
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--color-border-ui);
   box-sizing: border-box;
   z-index: 1000;
   transition: transform 0.3s ease-in-out;
@@ -19,7 +19,7 @@
   position: fixed;
   bottom: 20px;
   left: 20px;
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  background: var(--bg-menu-btn);
   color: white;
   width: 60px;
   height: 60px;
@@ -75,7 +75,7 @@ input[type="text"] {
   padding: 10px;
   font-size: 16px;
   height: 44px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border-ui);
   border-radius: 8px;
   background-color: white;
   color: #333;
@@ -87,7 +87,7 @@ input[type="text"] {
 select:focus,
 input[type="text"]:focus {
   outline: none;
-  border-color: #1a237e;
+  border-color: var(--color-primary);
 }
 .custom-select-wrapper::after {
   content: "▼";
@@ -107,7 +107,7 @@ input[type="text"]:focus {
 button.send-btn {
   padding: 0 18px;
   height: 44px;
-  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  background: var(--bg-menu-btn);
   color: white;
   border: none;
   border-radius: 8px;
@@ -119,6 +119,6 @@ button.send-btn {
   box-shadow: 0 2px 8px rgba(26, 35, 126, 0.3);
 }
 button.send-btn:hover {
-  background: linear-gradient(135deg, #0d47a1 0%, #1a237e 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
   transform: translateY(-2px);
 }

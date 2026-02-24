@@ -5,14 +5,14 @@
 /* === ページ全体のレイアウト === */
 body.admin-page {
     /* ★ 和紙ベージュ背景（管理ページ全体）*/
-    background: #f5f0e8;
+    background: var(--bg-page);
     min-height: 100vh;
     padding: var(--spacing-xl);
 }
 
 body.auth-page {
     /* ★ ログイン画面だけは紺グラデーション維持 */
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    background: var(--bg-auth);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -38,7 +38,7 @@ body.auth-page {
 /* === ヘッダー === */
 .header-admin {
     /* ★ 管理画面(admin.html)と同じ紺系グラデーションに統一 */
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    background: var(--bg-header);
     color: white;
     border-radius: var(--radius-xl);
     padding: var(--spacing-2xl) var(--spacing-3xl);

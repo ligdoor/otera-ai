@@ -5,7 +5,7 @@
 
 /* === ページレイアウト === */
 body.auth-page {
-    background: var(--gradient-primary);
+    background: var(--bg-auth);
     min-height: 100vh;
     display: flex;
     align-items: center;

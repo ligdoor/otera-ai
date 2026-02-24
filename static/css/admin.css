@@ -7,20 +7,6 @@
     box-sizing: border-box; 
 }
 
-/* === 和風テーマ CSS変数 === */
-:root {
-    --wa-bg:       #f5f0e8;
-    --wa-surface:  #faf7f2;
-    --wa-border:   #ddd5c0;
-    --wa-primary:  #8c4b16;
-    --wa-text:     #2c2017;
-    --wa-text-sub: #6b5b45;
-    --wa-danger:   #9b2335;
-    --wa-success:  #2d6a4f;
-    --font-serif:  'Noto Serif JP', 'ヒラギノ明朝 ProN', serif;
-    --font-sans:   'Noto Sans JP', -apple-system, sans-serif;
-}
-
 body { 
     font-family: var(--font-sans);
     margin: 0; 
@@ -31,7 +17,7 @@ body {
 
 /* === ヘッダー === */
 header { 
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    background: var(--bg-header);
     color: white; 
     padding: 12px 15px; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.2); 
@@ -155,12 +141,12 @@ main {
 }
 
 .btn-edit { 
-    background: #1a237e; 
+    background: var(--color-primary); 
     color: white; 
 }
 
 .btn-edit:hover { 
-    background: #0d47a1; 
+    background: var(--color-primary-dark); 
 }
 
 .btn-delete { 
@@ -260,7 +246,7 @@ main {
 .temple-name { 
     font-weight: bold; 
     font-size: 1.2em; 
-    color: #1a237e; 
+    color: var(--color-primary); 
     margin-bottom: 4px; 
 }
 
@@ -341,7 +327,7 @@ main {
 
 .modal-header h2 { 
     margin: 0; 
-    color: #1a237e; 
+    color: var(--color-primary); 
     font-size: 1.3rem; 
 }
 
@@ -403,7 +389,7 @@ main {
 .form-textarea:focus,
 .form-select:focus {
     outline: none; 
-    border-color: #1a237e;
+    border-color: var(--color-primary);
 }
 
 .form-textarea { 
@@ -436,7 +422,7 @@ main {
 
 .log-area h3 { 
     margin-top: 0; 
-    color: #1a237e; 
+    color: var(--color-primary); 
 }
 
 .log-container { 
@@ -521,7 +507,7 @@ main {
 
 .spinner {
     border: 4px solid #f3f3f3; 
-    border-top: 4px solid #1a237e;
+    border-top: 4px solid var(--color-primary);
     border-radius: 50%; 
     width: 50px; 
     height: 50px;
@@ -543,10 +529,10 @@ main {
 .preview-title {
     font-size: 1.2em; 
     font-weight: bold; 
-    color: #1a237e; 
+    color: var(--color-primary); 
     margin-bottom: 15px; 
     padding-bottom: 10px; 
-    border-bottom: 2px solid #1a237e;
+    border-bottom: 2px solid var(--color-primary);
 }
 
 .preview-field {
@@ -643,7 +629,7 @@ main {
     background: white; 
     padding: 20px; 
     border-radius: 10px;
-    border-left: 5px solid #1a237e; 
+    border-left: 5px solid var(--color-primary); 
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
@@ -718,7 +704,7 @@ main {
 
 .field-container h3 {
     margin: 0 0 16px 0; 
-    color: #1a237e; 
+    color: var(--color-primary); 
     font-size: 1.15rem;
     display: flex; 
     align-items: center; 
@@ -806,7 +792,7 @@ main {
 
 .label-input:focus {
     outline: none; 
-    border-color: #1a237e;
+    border-color: var(--color-primary);
 }
 
 .lock-badge {
@@ -851,14 +837,14 @@ main {
     background: white; 
     padding: 20px; 
     border-radius: 12px;
-    border: 2px dashed #1a237e; 
+    border: 2px dashed var(--color-primary); 
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .add-area h3 {
     margin: 0 0 16px 0; 
-    color: #1a237e; 
+    color: var(--color-primary); 
     font-size: 1.15rem;
     display: flex; 
     align-items: center; 
@@ -889,7 +875,7 @@ main {
 
 .add-input:focus {
     outline: none; 
-    border-color: #1a237e;
+    border-color: var(--color-primary);
 }
 
 .add-input::placeholder { 
@@ -1039,7 +1025,7 @@ main {
 
 .accordion-header.active {
     background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
-    border-bottom: 2px solid #1a237e;
+    border-bottom: 2px solid var(--color-primary);
 }
 
 .accordion-title {
@@ -1047,7 +1033,7 @@ main {
     align-items: center;
     gap: 8px;
     font-weight: 600;
-    color: #1a237e;
+    color: var(--color-primary);
     font-size: 1rem;
 }
 
@@ -1135,10 +1121,10 @@ main {
 .preview-title {
     font-size: 1.2em;
     font-weight: bold;
-    color: #1a237e;
+    color: var(--color-primary);
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #1a237e;
+    border-bottom: 2px solid var(--color-primary);
 }
 
 /* スマホ対応 */

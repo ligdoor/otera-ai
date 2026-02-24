@@ -13,15 +13,15 @@
     text-align: center;
     margin-bottom: var(--spacing-3xl, 32px);
     padding: var(--spacing-2xl, 24px);
-    /* ★ 管理画面と同じ紺グラデーション */
-    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    /* ★ variables.css の --bg-items-header で一括管理 */
+    background: var(--bg-items-header);
     color: white;
     border-radius: var(--radius-xl, 16px);
     box-shadow: var(--shadow-sm, 0 2px 4px -1px rgba(0, 0, 0, 0.06));
 }
 
 body.dark-mode .items-header {
-    background: var(--color-gray-800, #1a202c);
+    background: var(--color-gray-800);
 }
 
 .items-header .header-icon {
@@ -54,7 +54,7 @@ body.dark-mode .items-header .items-subtitle {
 .items-count-badge {
     display: inline-flex;
     align-items: baseline;
-    background: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+    background: var(--gradient-primary);
     color: white;
     padding: var(--spacing-sm, 8px) var(--spacing-2xl, 24px);
     border-radius: var(--radius-full, 9999px);
@@ -109,7 +109,7 @@ body.dark-mode .search-methods h2 {
 }
 
 body.dark-mode .method-card {
-    background: var(--color-gray-800, #1a202c);
+    background: var(--color-gray-800);
     border-color: var(--color-gray-700, #2d3748);
 }
 
@@ -162,7 +162,7 @@ body.dark-mode .method-card p {
 }
 
 body.dark-mode .categories-preview {
-    background: var(--color-gray-800, #1a202c);
+    background: var(--color-gray-800);
 }
 
 .categories-preview h3 {
