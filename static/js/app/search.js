@@ -192,7 +192,10 @@ async function sendFreeChat() {
     
     // ★★★ 修正: 入力に寺院名候補が含まれているかチェック ★★★
     const matches = text.matchAll(/([^のは?\s]+)の/g);
-    const candidates = Array.from(matches, m => m[1]);
+    // ★★★ 修正: allTemplesに含まれるものだけを寺院名候補とする（「搬送」などを除外）★★★
+    const candidates = Array.from(matches, m => m[1]).filter(c =>
+        allTemples.some(t => t.includes(c) || c.includes(t))
+    );
     
     console.log('[sendFreeChat] 入力テキスト:', text);
     console.log('[sendFreeChat] 検出された寺院名候補:', candidates);
@@ -273,9 +276,16 @@ async function sendChatRequest(text, mode, showUserMessage = true) {
     
     // ★★★ すべての「〇〇の」パターンを検出 ★★★
     const allMatches = text.matchAll(/([^のは?\s]+)の/g);
-    const candidates = Array.from(allMatches, m => m[1]);
+    const rawCandidates = Array.from(allMatches, m => m[1]);
     
-    console.log('3. 検出されたすべての候補:', candidates);
+    // ★★★ 修正: allTemplesに含まれるものだけを寺院名候補とする ★★★
+    // 例:「大正寺の搬送の持ち物は？」→「搬送」は寺院名リストにないので除外
+    const candidates = rawCandidates.filter(c =>
+        allTemples.some(t => t.includes(c) || c.includes(t))
+    );
+    
+    console.log('3. 検出されたすべての候補(絞込前):', rawCandidates);
+    console.log('3b. 寺院名リストでフィルタ後:', candidates);
     
     if (candidates.length > 0) {
         // ★★★ 最後の候補を優先 ★★★

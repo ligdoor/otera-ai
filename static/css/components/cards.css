@@ -48,3 +48,52 @@
 .favorite-btn:active {
   transform: scale(0.9);
 }
+
+/* === AI回答カード === */
+.ai-answer-card {
+  background: #fff;
+  border: 1px solid #dce3f0;
+  border-left: 4px solid #1a237e;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+}
+.ai-answer-card-title {
+  background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 10px 14px;
+}
+.ai-answer-card-body {
+  padding: 12px 14px;
+}
+.ai-answer-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #eef0f5;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.ai-answer-row:last-child {
+  border-bottom: none;
+}
+.ai-answer-label {
+  min-width: 80px;
+  font-weight: bold;
+  color: #1a237e;
+  flex-shrink: 0;
+}
+.ai-answer-value {
+  color: #333;
+  flex: 1;
+}
+.ai-answer-text {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #333;
+}
+

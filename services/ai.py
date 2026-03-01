@@ -50,6 +50,19 @@ def _sanitize_text(text: str) -> str:
     
     return text
 
+def _strip_html_tags(text: str) -> str:
+    """
+    HTMLタグを除去してプレーンテキストを返す
+    DBに <p>内容</p> 形式で保存されているデータからタグを取り除く
+    """
+    if not text:
+        return ''
+    # <p>タグなどを除去してテキストだけ取り出す
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', '', text)
+    return text.strip()
+
+
 def generate_answer_with_ai(temple_info, question, field_config):
     """
     AIを使って質問に回答を生成
@@ -63,47 +76,56 @@ def generate_answer_with_ai(temple_info, question, field_config):
     
     # ★★★ 通夜の質問の場合、専用フォーマットで応答 ★★★
     if is_tsuya_question:
-        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
         temple_name_safe = html_module.escape(temple_name)
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>🌙 {temple_name_safe}の通夜</div>"]
+        response_parts = [
+            "<div class='ai-answer-card'>",
+            f"<div class='ai-answer-card-title'>🌙 {temple_name_safe}の通夜</div>",
+            "<div class='ai-answer-card-body'>"
+        ]
         
-        # 通夜関連の項目を取得（★修正: エスケープ処理）
-        narimono = html_module.escape(temple_info.get('tsuya_narimono', '') or '')
-        ippan    = html_module.escape(temple_info.get('tsuya_ippan_shoko', '') or '')
-        shinzoku = html_module.escape(temple_info.get('tsuya_shinzoku_shoko', '') or '')
-        dokyo    = html_module.escape(temple_info.get('tsuya_dokyo_length', '') or '')
-        notes    = html_module.escape(temple_info.get('tsuya_notes', '') or '')
+        # ★修正: DBの<p>タグを除去してからHTMLエスケープ
+        def safe_val(raw):
+            return html_module.escape(_strip_html_tags(raw)) if raw else '記載なし'
         
-        response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
-        response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
-        response_parts.append(f"・<strong>一般焼香</strong>: {ippan if ippan else '記載なし'}<br>")
-        response_parts.append(f"・<strong>親族焼香</strong>: {shinzoku if shinzoku else '記載なし'}<br>")
-        response_parts.append(f"・<strong>読経の長さ</strong>: {dokyo if dokyo else '記載なし'}<br>")
-        response_parts.append(f"・<strong>備考</strong>: {notes if notes else '記載なし'}")
-        response_parts.append("</div>")
+        narimono = safe_val(temple_info.get('tsuya_narimono', ''))
+        ippan    = safe_val(temple_info.get('tsuya_ippan_shoko', ''))
+        shinzoku = safe_val(temple_info.get('tsuya_shinzoku_shoko', ''))
+        dokyo    = safe_val(temple_info.get('tsuya_dokyo_length', ''))
+        notes    = safe_val(temple_info.get('tsuya_notes', ''))
+        
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>鳴物・葬具</span><span class='ai-answer-value'>{narimono}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>一般焼香</span><span class='ai-answer-value'>{ippan}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>親族焼香</span><span class='ai-answer-value'>{shinzoku}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>読経の長さ</span><span class='ai-answer-value'>{dokyo}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>備考</span><span class='ai-answer-value'>{notes}</span></div>")
+        response_parts.append("</div></div>")
         
         return "".join(response_parts)
     
     # ★★★ 葬儀の質問の場合、専用フォーマットで応答 ★★★
     if is_sougi_question:
-        # ★修正: DBから来るデータをHTMLエスケープしてXSSを防ぐ
         temple_name_safe = html_module.escape(temple_name)
-        response_parts = [f"<div style='font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #1a237e;'>☀️ {temple_name_safe}の葬儀</div>"]
+        response_parts = [
+            "<div class='ai-answer-card'>",
+            f"<div class='ai-answer-card-title'>☀️ {temple_name_safe}の葬儀</div>",
+            "<div class='ai-answer-card-body'>"
+        ]
         
-        # 葬儀関連の項目を取得（★修正: エスケープ処理）
-        narimono = html_module.escape(temple_info.get('sougi_narimono', '') or '')
-        ippan    = html_module.escape(temple_info.get('sougi_ippan_shoko', '') or '')
-        shinzoku = html_module.escape(temple_info.get('sougi_shinzoku_shoko', '') or '')
-        dokyo    = html_module.escape(temple_info.get('sougi_dokyo_length', '') or '')
-        notes    = html_module.escape(temple_info.get('sougi_notes', '') or '')
+        def safe_val(raw):
+            return html_module.escape(_strip_html_tags(raw)) if raw else '記載なし'
         
-        response_parts.append("<div style='margin-left: 10px; line-height: 1.8;'>")
-        response_parts.append(f"・<strong>鳴物・葬具</strong>: {narimono if narimono else '記載なし'}<br>")
-        response_parts.append(f"・<strong>一般焼香</strong>: {ippan if ippan else '記載なし'}<br>")
-        response_parts.append(f"・<strong>親族焼香</strong>: {shinzoku if shinzoku else '記載なし'}<br>")
-        response_parts.append(f"・<strong>読経の長さ</strong>: {dokyo if dokyo else '記載なし'}<br>")
-        response_parts.append(f"・<strong>備考</strong>: {notes if notes else '記載なし'}")
-        response_parts.append("</div>")
+        narimono = safe_val(temple_info.get('sougi_narimono', ''))
+        ippan    = safe_val(temple_info.get('sougi_ippan_shoko', ''))
+        shinzoku = safe_val(temple_info.get('sougi_shinzoku_shoko', ''))
+        dokyo    = safe_val(temple_info.get('sougi_dokyo_length', ''))
+        notes    = safe_val(temple_info.get('sougi_notes', ''))
+        
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>鳴物・葬具</span><span class='ai-answer-value'>{narimono}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>一般焼香</span><span class='ai-answer-value'>{ippan}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>親族焼香</span><span class='ai-answer-value'>{shinzoku}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>読経の長さ</span><span class='ai-answer-value'>{dokyo}</span></div>")
+        response_parts.append(f"<div class='ai-answer-row'><span class='ai-answer-label'>備考</span><span class='ai-answer-value'>{notes}</span></div>")
+        response_parts.append("</div></div>")
         
         return "".join(response_parts)
     
@@ -133,9 +155,9 @@ def generate_answer_with_ai(temple_info, question, field_config):
 【回答の指示】
 - 質問に対して簡潔に答えてください
 - 寺院名を明記してください
-- 住所にはGoogleマップリンクと📋コピーボタンを付けてください
-  形式: __📍Googleマップを開く__ 📋 コピー
 - 情報がない場合は「記載なし」と答えてください
+- URLやリンクは含めないでください
+- マークダウン記法（**太字**、##見出し など）は使わずプレーンテキストで回答してください
 """
     
     # Gemini APIで回答生成
@@ -150,18 +172,19 @@ def generate_answer_with_ai(temple_info, question, field_config):
         
         response_text = response.text
         
+        # ★修正: Markdownの太字(**テキスト**)を除去
+        response_text = re.sub(r'\*\*(.+?)\*\*', r'\1', response_text)
+        # ★修正: Markdownの見出し(## など)を除去
+        response_text = re.sub(r'^#{1,6}\s+', '', response_text, flags=re.MULTILINE)
+        # ★修正: Markdownのリンク([text](url))を除去
+        response_text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', response_text)
+        # ★修正: URLを除去
+        response_text = re.sub(r'https?://\S+', '', response_text)
         # ★修正: Geminiの出力をサニタイズ（XSS対策）
         response_text = _sanitize_text(response_text)
-        # 住所のリンクを実際に生成
-        address = temple_info.get('address', '')
-        if address and '📍' in response_text:
-            map_url = f"https://www.google.com/maps/search/?api=1&query={address}"
-            address_escaped = address.replace("'", "\\'")
-            # Markdownリンクをdivタグに変換
-            response_text = response_text.replace(
-                "📍Googleマップを開く",
-                f'<div style="display: inline-block; margin: 5px 0;"><a href="{map_url}" target="_blank" style="text-decoration: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; display: inline-block;">📍 Googleマップを開く</a> <button class="copy-btn" onclick="copyToClipboard(\'{address_escaped}\')">📋</button></div>'
-            )
+        
+        # カード形式でラップ
+        response_text = f"<div class='ai-answer-card'><div class='ai-answer-card-body ai-answer-text'>{response_text.replace(chr(10), '<br>')}</div></div>"
         
         return response_text
         
