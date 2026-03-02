@@ -105,7 +105,7 @@ def admin():
     if session.get('is_admin'):
         if not check_session_timeout():
             session.clear()
-            return redirect(url_for('auth.admin'))
+            return redirect(url_for('auth_login.admin'))
         update_session_activity()
         # ★ 修正: 管理画面を表示（すでにログイン済みの場合）
         return render_template("admin.html", user_name=session.get('user_name'))

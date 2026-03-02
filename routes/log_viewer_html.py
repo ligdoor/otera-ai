@@ -17,7 +17,7 @@ log_viewer_html_bp = Blueprint('log_viewer_html', __name__, url_prefix='/admin/l
 def _require_admin():
     """管理者権限チェック"""
     if not session.get('is_admin'):
-        return redirect(url_for('auth.admin'))
+        return redirect(url_for('auth_login.admin'))
     if session.get('role') != 'admin':
         return redirect('/')
     return None
