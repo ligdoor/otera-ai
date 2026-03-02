@@ -20,7 +20,7 @@ def health_detailed():
     # データベース接続チェック
     try:
         if Config.USE_SUPABASE:
-            from services.supabase_db import get_supabase_client
+            from services.database import get_supabase_client
             client = get_supabase_client()
             client.table('temples').select('id').limit(1).execute()
             checks['database'] = {'status': 'healthy', 'type': 'Supabase'}

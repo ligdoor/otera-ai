@@ -41,8 +41,8 @@ from modules.decorators import handle_errors
 ErrorLogger.setup(
     log_level='INFO',
     log_dir='logs',
-    max_bytes=10 * 1024 * 1024,  # 10MB
-    backup_count=30,              # 30世代保持
+    max_bytes=5 * 1024 * 1024,   # 5MB（メモリ削減）
+    backup_count=5,               # 5世代に削減（メモリ削減）
     json_format=False             # JSON形式: True/False
 )
 logger = ErrorLogger.get_logger(__name__)

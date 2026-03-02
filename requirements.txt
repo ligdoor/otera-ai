@@ -13,7 +13,7 @@ gspread==6.1.4
 oauth2client==4.1.3
 
 # データ処理
-pandas==2.2.3
+# pandas: 未使用のため削除（メモリ削減）
 
 # パスワードハッシュ化
 bcrypt==4.2.1
@@ -31,7 +31,7 @@ requests==2.32.3
 Flask-Compress==1.15
 Flask-Caching==2.3.0
 
-# Redis（Flask-Cachingで必要）
+# redis: SimpleCache使用中のため不要（メモリ削減）
 redis==5.0.1
 
 # セキュリティ・監視

@@ -247,7 +247,7 @@ def ask():
     
     # アクセスログを記録
     if Config.USE_SUPABASE:
-        from services import supabase_db
+        from services import database as supabase_db
         supabase_db.add_access_log(temple_name, question)
     
     # モードに応じて回答生成
@@ -353,7 +353,7 @@ def update_temple():
         
         # ★ 修正: add_log の呼び出しを supabase_db に変更
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='編集',
                 details=f"{original_name} の情報を更新 → {new_data['name']}"
@@ -366,7 +366,7 @@ def update_temple():
     else:
         # ★ 修正: エラーログも同様に
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='編集エラー',
                 details=f"エラー: {message}"
@@ -404,7 +404,7 @@ def add_temple():
         
         # ★ 修正: add_log の呼び出しを supabase_db に変更
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='追加',
                 details=f"{name} を新規追加"
@@ -417,7 +417,7 @@ def add_temple():
     else:
         # ★ 修正: エラーログも同様に
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='追加エラー',
                 details=f"エラー: {message}"
@@ -453,7 +453,7 @@ def delete_temple():
         
         # ★ 修正: add_log の呼び出しを supabase_db に変更
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='削除',
                 details=f"{name} を削除"
@@ -466,7 +466,7 @@ def delete_temple():
     else:
         # ★ 修正: エラーログも同様に
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_log(
                 action='削除エラー',
                 details=f"エラー: {message}"
@@ -590,7 +590,7 @@ def get_access_stats():
     try:
         if Config.USE_SUPABASE:
             # Supabase版
-            from services import supabase_db
+            from services import database as supabase_db
             records = supabase_db.get_access_logs(limit=1000)
         else:
             # Google Sheets版
@@ -622,7 +622,7 @@ def get_comments(temple_name):
     try:
         if Config.USE_SUPABASE:
             # Supabase版
-            from services import supabase_db
+            from services import database as supabase_db
             comments = supabase_db.get_comments(temple_name)
         else:
             # Google Sheets版
@@ -654,7 +654,7 @@ def add_comment():
         
         if Config.USE_SUPABASE:
             # Supabase版
-            from services import supabase_db
+            from services import database as supabase_db
             supabase_db.add_comment(temple_name, user_name, comment_text)
         else:
             # Google Sheets版
@@ -683,7 +683,7 @@ def delete_comment():
             return jsonify({"status": "error", "message": "コメントIDが必要です"}), 400
         
         try:
-            from services import supabase_db
+            from services import database as supabase_db
             client = supabase_db.get_supabase_client()
             client.table('comments').delete().eq('id', comment_id).execute()
             

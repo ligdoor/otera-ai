@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def add_log(action, details):
     """ログ記録（データソース自動切り替え）"""
     if Config.USE_SUPABASE:
-        from services import supabase_db
+        from services import database as supabase_db
         from flask import request as flask_request
         user_name = session.get('name', '不明')  # ★修正: user_name → name
         user_id = session.get('user_id', '不明')
@@ -76,7 +76,7 @@ def _get_users_supabase():
     - created_at: TEXT
     - last_login: TEXT
     """
-    from services import supabase_db
+    from services import database as supabase_db
     
     all_users = supabase_db.get_all_users()
     
@@ -163,7 +163,7 @@ def add_user():
 
 def _add_user_supabase(user_id, name, password, role):
     """Supabase版のユーザー追加"""
-    from services import supabase_db
+    from services import database as supabase_db
     
     # 重複チェック
     existing_user = supabase_db.get_user_by_id(user_id)
@@ -263,7 +263,7 @@ def update_user_role():
 
 def _update_user_supabase(user_id, updates):
     """Supabase版のユーザー更新（複数フィールド対応）"""
-    from services import supabase_db
+    from services import database as supabase_db
     
     user = supabase_db.get_user_by_id(user_id)
     if not user:
@@ -332,7 +332,7 @@ def delete_user():
 
 def _delete_user_supabase(user_id):
     """Supabase版のユーザー削除"""
-    from services import supabase_db
+    from services import database as supabase_db
     
     user = supabase_db.get_user_by_id(user_id)
     if not user:

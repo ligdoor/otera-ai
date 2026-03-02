@@ -147,7 +147,7 @@ def get_favorites():
             return APIResponse.unauthorized("ログインが必要です")
         
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             favorites = supabase_db.get_user_favorites(user_id)
             
             return APIResponse.success(
@@ -207,7 +207,7 @@ def toggle_favorite():
                 status_code=503
             )
         
-        from services import supabase_db
+        from services import database as supabase_db
         
         favorites = supabase_db.get_user_favorites(user_id)
         
@@ -262,7 +262,7 @@ def get_notifications():
         unread_only = request.args.get('unread_only', 'false').lower() == 'true'
         
         if Config.USE_SUPABASE:
-            from services import supabase_db
+            from services import database as supabase_db
             notifications = supabase_db.get_user_notifications(user_id, unread_only)
             unread_count = supabase_db.get_unread_count(user_id)
             
@@ -310,7 +310,7 @@ def mark_read(notification_id):
                 status_code=503
             )
         
-        from services import supabase_db
+        from services import database as supabase_db
         success = supabase_db.mark_notification_read(notification_id)
         
         if success:
@@ -348,7 +348,7 @@ def mark_all_read():
                 status_code=503
             )
         
-        from services import supabase_db
+        from services import database as supabase_db
         success = supabase_db.mark_all_notifications_read(user_id)
         
         if success:
@@ -391,7 +391,7 @@ def get_user_settings():
                 status_code=503
             )
         
-        from services import supabase_db
+        from services import database as supabase_db
         client = supabase_db.get_supabase_client()
         
         # user_idからusersテーブルのidを取得
@@ -507,7 +507,7 @@ def save_user_settings():
                 status_code=503
             )
         
-        from services import supabase_db
+        from services import database as supabase_db
         client = supabase_db.get_supabase_client()
         
         # user_idからusersテーブルのidを取得

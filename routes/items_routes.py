@@ -2,7 +2,7 @@
 
 import logging
 from flask import Blueprint, render_template, request, jsonify, session
-from services.supabase_db import get_supabase_client
+from services.database import get_supabase_client
 from functools import wraps
 
 items_bp = Blueprint('items', __name__)

@@ -70,14 +70,18 @@ def extract_temple_name_from_question(question: str) -> str:
     
     logger.debug("完全一致なし、質問文から候補を抽出します")
     
-    # 「〜の」パターンで候補を抽出
-    # 例: "東大寺の大仏" → "東大寺"
-    #     "清水の舞台" → "清水"
-    match = re.search(r'([^のは？\s]+)の', question)
+    # 「〜の」パターンで全候補を抽出し、寺院名リストと照合
+    # JSのsendChatRequestと同じく「最後の候補を優先」
+    all_matches = re.findall(r'([^のは？\s]+)の', question)
     
-    if match:
-        candidate = match.group(1)
-        logger.debug(f"抽出された候補: {candidate}")
+    if all_matches:
+        otera_keys = list(otera_database.keys())
+        # 寺院名リストに含まれる候補だけに絞り込む（「搬送」などを除外）
+        valid_candidates = [c for c in all_matches
+                            if any(k for k in otera_keys if c in k or k in c)]
+        # 絞り込み後に候補があれば最後を優先、なければ全候補の最後を使用
+        candidate = valid_candidates[-1] if valid_candidates else all_matches[-1]
+        logger.debug(f"抽出された候補（最後優先）: {candidate}")
         
         # find_best_match関数で最適な寺院を検索
         temple_name, score = find_best_match(candidate, min_score=20)
@@ -183,13 +187,9 @@ def ask():
     # アクセスログを記録
     # ============================================
     
+    # アクセスログを記録（Supabase使用時のみ）
     if Config.USE_SUPABASE:
-        # Supabase版
         from services.database import add_access_log
-        add_access_log(temple_name, question)
-    else:
-        # Google Sheets版（将来的に廃止予定）
-        from services.data_source import add_access_log
         add_access_log(temple_name, question)
     
     # ============================================

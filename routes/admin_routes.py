@@ -6,7 +6,7 @@ from services.temple_crud import update_fields_data
 from config import Config
 from maintenance import MaintenanceMode
 from datetime import datetime
-from services.supabase_db import get_supabase_client
+from services.database import get_supabase_client
 import csv
 import io
 
@@ -90,7 +90,7 @@ def admin_fields():
 def get_logs():
     """ログ一覧を取得"""
     if Config.USE_SUPABASE:
-        from services import supabase_db
+        from services import database as supabase_db
         try:
             logs = supabase_db.get_recent_logs(limit=50)
             logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
@@ -159,7 +159,7 @@ def import_csv():
         errors = []
         
         from routes.temple_routes import field_config
-        from services import supabase_db
+        from services import database as supabase_db
         from services.data_manager import data_manager
         
         user_name = session.get('user_name', 'unknown')

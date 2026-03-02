@@ -6,7 +6,7 @@ from utils.decorators import login_required, update_session_activity, check_sess
 from config import Config
 from flask_extensions import limiter
 from werkzeug.security import generate_password_hash, check_password_hash
-from services.supabase_db import get_supabase_client
+from services.database import get_supabase_client
 from utils.email_service import email_service
 import uuid
 from datetime import datetime, timedelta
@@ -34,7 +34,7 @@ def admin():
         can_login, error_msg = check_login_attempts(user_id)
         if not can_login:
             if Config.USE_SUPABASE:
-                from services import supabase_db
+                from services import database as supabase_db
                 supabase_db.add_log(
                     user_name='不明',
                     user_id=user_id,
@@ -60,7 +60,7 @@ def admin():
             update_session_activity()
             
             if Config.USE_SUPABASE:
-                from services import supabase_db
+                from services import database as supabase_db
                 
                 role_display = {
                     'admin': '管理者',
@@ -89,7 +89,7 @@ def admin():
             record_login_attempt(user_id, False)
             
             if Config.USE_SUPABASE:
-                from services import supabase_db
+                from services import database as supabase_db
                 supabase_db.add_log(
                     user_name='不明',
                     user_id=user_id,
@@ -120,7 +120,7 @@ def logout():
     user_id = session.get('user_id', 'unknown')
     
     if Config.USE_SUPABASE:
-        from services import supabase_db
+        from services import database as supabase_db
         supabase_db.add_log(
             user_name=user_name,
             user_id=user_id,
@@ -412,7 +412,7 @@ def change_password():
 
 def _change_password_supabase(user_id, current_pass, new_pass):
     """Supabase版のパスワード変更"""
-    from services import supabase_db
+    from services import database as supabase_db
     
     user = supabase_db.get_user_by_id(user_id)
     
