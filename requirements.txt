@@ -31,7 +31,7 @@ requests==2.32.3
 Flask-Compress==1.15
 Flask-Caching==2.3.0
 
-# redis: SimpleCache使用中のため不要（メモリ削減）
+# Redis（Flask-Cachingで必要）
 redis==5.0.1
 
 # セキュリティ・監視
