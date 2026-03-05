@@ -1,3 +1,8 @@
+"""
+【注意】このファイルのBlueprintはmain.pyに登録されていません。
+/health エンドポイントは main.py の health_check() 関数が有効です。
+このファイルは削除しても動作に影響はありません。
+"""
 from flask import Blueprint, jsonify, session, redirect, url_for
 from config import Config
 from utils.helpers import get_jst_timestamp

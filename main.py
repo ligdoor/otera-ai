@@ -301,6 +301,7 @@ except Exception as e:
 # ============================================
 
 @app.route("/health")
+@limiter.exempt  # Fly.ioの定期ヘルスチェックでRedisに不要な書き込みが発生するのを防ぐ
 def health_check():
     """
     システムのヘルスチェック（エラーハンドリング強化版）

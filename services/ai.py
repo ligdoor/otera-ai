@@ -4,16 +4,15 @@ from google.genai import types
 from config import Config
 import re
 import time
-import html as html_module  # ★追加: HTMLエスケープ用
+import html as html_module
 
-# Gemini クライアント初期化
+logger = logging.getLogger(__name__)
+
+# Gemini クライアント初期化（唯一の定義場所）
+# ※ extensions.py にも同様の記述があったが、そちらは未使用のため無害化済み
 gemini_client = None
 if Config.GEMINI_API_KEY:
     gemini_client = genai.Client(api_key=Config.GEMINI_API_KEY)
-
-
-
-logger = logging.getLogger(__name__)
 
 def _sanitize_text(text: str) -> str:
     """
