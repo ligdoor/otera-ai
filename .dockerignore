@@ -46,6 +46,7 @@ venv/
 ENV/
 env/
 .virtualenv/
+.ps1
 
 # ========================================
 # Environment Variables（機密情報）
