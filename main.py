@@ -297,6 +297,20 @@ except Exception as e:
     # データ読み込み失敗は警告のみで継続
 
 # ============================================
+# favicon.ico（ブラウザの自動アクセスを握りつぶす）
+# ============================================
+
+@app.route('/favicon.ico')
+@limiter.exempt
+def favicon():
+    """ブラウザが自動的に /favicon.ico にアクセスするのを処理する"""
+    try:
+        return app.send_static_file('favicon.ico')
+    except Exception:
+        from flask import Response
+        return Response(status=204)  # ファイルがなくても 204 No Content で静かに無視
+
+# ============================================
 # ヘルスチェックエンドポイント
 # ============================================
 
