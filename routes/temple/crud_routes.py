@@ -151,6 +151,21 @@ def update_temple():
             details=f"{original_name} の情報を更新 → {new_data['name']}"
         )
         
+        # アプリ内通知を作成（全体通知）
+        if Config.USE_SUPABASE:
+            try:
+                from flask import session
+                from services.database import create_notification
+                editor = session.get('user_name', '管理者')
+                create_notification(
+                    title='寺院情報を更新しました',
+                    message=f'「{new_data["name"]}」の情報が {editor} によって更新されました。',
+                    notification_type='info',
+                    related_temple=new_data['name']
+                )
+            except Exception as e:
+                logger.warning(f"通知作成エラー（無視）: {e}")
+        
         return jsonify({"status": "success"})
     
     else:
@@ -243,6 +258,21 @@ def add_temple():
             details=f"{name} を新規追加"
         )
         
+        # アプリ内通知を作成（全体通知）
+        if Config.USE_SUPABASE:
+            try:
+                from flask import session
+                from services.database import create_notification
+                editor = session.get('user_name', '管理者')
+                create_notification(
+                    title='新しい寺院が追加されました',
+                    message=f'「{name}」が {editor} によって追加されました。',
+                    notification_type='success',
+                    related_temple=name
+                )
+            except Exception as e:
+                logger.warning(f"通知作成エラー（無視）: {e}")
+        
         return jsonify({"status": "success"})
     
     else:
@@ -324,6 +354,20 @@ def delete_temple():
             action='削除',
             details=f"{name} を削除"
         )
+        
+        # アプリ内通知を作成（全体通知）
+        if Config.USE_SUPABASE:
+            try:
+                from flask import session
+                from services.database import create_notification
+                editor = session.get('user_name', '管理者')
+                create_notification(
+                    title='寺院情報が削除されました',
+                    message=f'「{name}」が {editor} によって削除されました。',
+                    notification_type='warning'
+                )
+            except Exception as e:
+                logger.warning(f"通知作成エラー（無視）: {e}")
         
         return jsonify({"status": "success"})
     

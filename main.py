@@ -111,7 +111,11 @@ app = Flask(__name__,
             static_folder='static',
             static_url_path='/static')
 app.config.from_object(Config)
-limiter.init_app(app)
+try:
+    limiter.init_app(app)
+    logger.info("✅ Flask-Limiter 初期化完了")
+except Exception as e:
+    logger.error(f"⚠️ Flask-Limiter 初期化失敗（レート制限は無効）: {e}")
 
 # ============================================
 # ★ セキュリティミドルウェアを有効化

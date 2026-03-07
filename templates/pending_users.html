@@ -191,7 +191,7 @@
             buttons.forEach(btn => btn.disabled = true);
             
             try {
-                const response = await fetch(`/approve-user/${userId}`, {
+                const response = await fetch(`/admin/approve-user/${userId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ permission })
@@ -242,7 +242,7 @@
             this.disabled = true;
             
             try {
-                const response = await fetch(`/reject-user/${currentRejectId}`, {
+                const response = await fetch(`/admin/reject-user/${currentRejectId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reason })
