@@ -34,6 +34,22 @@ function renderForm(data = {}) {
                 <label class="form-label">${field.label}</label>
                 <input type="text" id="input-${field.key}" class="form-input" value="${value}">
             `;
+            container.appendChild(div);
+
+            // 寺院名（name）の直後にふりがな欄を挿入
+            if (field.key === 'name') {
+                const furiganaDiv = document.createElement('div');
+                furiganaDiv.className = 'form-group';
+                furiganaDiv.innerHTML = `
+                    <label class="form-label">ふりがな <span style="font-size:0.8em;color:#888;">（ひらがなで検索できるようになります）</span></label>
+                    <input type="text" id="input-furigana" class="form-input" 
+                           placeholder="例：だいしょうじ" 
+                           value="${data['furigana'] || ''}"
+                           pattern="[\\u3041-\\u3096\\u309D-\\u309E\\s]*"
+                           title="ひらがなで入力してください">
+                `;
+                container.appendChild(furiganaDiv);
+            }
         } else {
             const editorId = `editor-${field.key}`;
             div.innerHTML = `
@@ -97,6 +113,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (el) formData[field.key] = el.value.trim();
             }
         });
+
+        // ふりがなを収集（fieldConfigに含まれないため個別取得）
+        const furiganaEl = document.getElementById('input-furigana');
+        if (furiganaEl) formData['furigana'] = furiganaEl.value.trim();
         
         if (!formData.name) {
             alert("❌ 寺院名は必須です");

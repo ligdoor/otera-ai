@@ -9,7 +9,7 @@ import logging
 from flask import Blueprint, jsonify, request
 import re
 from .common import get_otera_database, get_field_config
-from .search_routes import find_best_match
+from .search_routes import find_best_match, _is_hiragana, _normalize_dakuten
 from config import Config
 
 # ============================================
@@ -63,6 +63,21 @@ def extract_temple_name_from_question(question: str) -> str:
         if name in question:
             logger.info(f"✅ 完全一致で寺院名を抽出: {name}")
             return name
+
+    # ============================================
+    # ステップ1b: ひらがな検索（furiganaカラム照合）
+    # ============================================
+    # 質問文がひらがな主体の場合、各寺院のfuriganaカラムと照合する
+    if _is_hiragana(question):
+        q_norm = _normalize_dakuten(question)
+        for name, temple_data in otera_database.items():
+            furigana = temple_data.get('furigana', '') or ''
+            if not furigana:
+                continue
+            f_norm = _normalize_dakuten(furigana)
+            if furigana in question or f_norm in q_norm:
+                logger.info(f"✅ ふりがな一致で寺院名を抽出: {name}")
+                return name
     
     # ============================================
     # ステップ2: 曖昧検索

@@ -187,72 +187,47 @@ async function sendFreeChat() {
     const input = document.getElementById('free-input');
     const text = input.value.trim();
     if (!text) return;
-    
+
     let sendText = text;
-    
-    // ★★★ 修正: 入力に寺院名候補が含まれているかチェック ★★★
+
+    // 「〇〇の」パターンで漢字の寺院名候補を抽出
     const matches = text.matchAll(/([^のは?\s]+)の/g);
-    // ★★★ 修正: allTemplesに含まれるものだけを寺院名候補とする（「搬送」などを除外）★★★
     const candidates = Array.from(matches, m => m[1]).filter(c =>
         allTemples.some(t => t.includes(c) || c.includes(t))
     );
-    
+
     console.log('[sendFreeChat] 入力テキスト:', text);
     console.log('[sendFreeChat] 検出された寺院名候補:', candidates);
     console.log('[sendFreeChat] 現在の寺院名:', currentTempleName);
-    
-    // ★★★ 新規追加: 「〇〇の」パターンがない場合、寺院名のみかチェック ★★★
-    if (candidates.length === 0 && !currentTempleName) {
+
+    // 「〇〇の」パターンがない場合 → 寺院名単体 or ひらがな入力の可能性を確認
+    if (candidates.length === 0) {
         console.log('[sendFreeChat] 寺院名のみの可能性をチェック...');
-        
-        // 寺院名検索を試行
+
         const result = await searchTempleByName(text, true);
-        
-        if (result && Array.isArray(result)) {
-            // アコーディオン表示
+
+        if (result && Array.isArray(result) && result.length > 0) {
+            // 寺院が見つかった → アコーディオン表示して終了
             console.log('[sendFreeChat] アコーディオン表示:', result.length, '件');
+            currentTempleName = result[0].name;
             displayTempleAccordion(result, text);
             input.value = '';
             hideMenu();
-            return;  // ここで終了
+            return;
         }
-        
-        // 寺院が見つからない場合は通常通り送信
-        console.log('[sendFreeChat] 寺院名でないため、通常送信');
-    }
-    
-    // ★★★ 追加: currentTempleNameがある状態で、寺院名候補がない場合もチェック ★★★
-    if (candidates.length === 0 && currentTempleName) {
-        console.log('[sendFreeChat] 現在の寺院名がある状態で新しい寺院名をチェック...');
-        
-        // 寺院名検索を試行
-        const result = await searchTempleByName(text, true);
-        
-        if (result && Array.isArray(result)) {
-            // 新しい寺院が見つかった場合
-            console.log('[sendFreeChat] 新しい寺院を発見。currentTempleNameをクリアしてアコーディオン表示');
-            currentTempleName = "";  // クリア
-            displayTempleAccordion(result, text);
-            input.value = '';
-            hideMenu();
-            return;  // ここで終了
+
+        // 見つからなかった場合 → currentTempleNameがあれば付与して送信
+        if (currentTempleName) {
+            sendText = `${currentTempleName}の${text}`;
+            console.log('[sendFreeChat] 寺院名を自動付与:', sendText);
+        } else {
+            console.log('[sendFreeChat] 寺院名なしでそのまま送信');
         }
-        
-        // 寺院が見つからない場合は、currentTempleNameを使って質問
-        console.log('[sendFreeChat] 寺院名でないため、currentTempleNameを付与して送信');
-    }
-    
-    // 候補が含まれていない場合のみ、currentTempleNameを付ける
-    if (candidates.length === 0 && currentTempleName) {
-        sendText = `${currentTempleName}の${text}`;
-        console.log('[sendFreeChat] 寺院名を自動付与:', sendText);
-    } else if (candidates.length > 0) {
-        // 候補が含まれている場合はそのまま送信
-        console.log('[sendFreeChat] 寺院名候補が含まれているため、そのまま送信');
     } else {
-        console.log('[sendFreeChat] 寺院名なしでそのまま送信');
+        // 「〇〇の」パターンあり → そのまま送信
+        console.log('[sendFreeChat] 寺院名候補が含まれているため、そのまま送信');
     }
-    
+
     input.value = '';
     hideMenu();
     sendChatRequest(sendText, 'qa', true);
@@ -408,8 +383,7 @@ async function searchTempleByName(templeName, isTempleNameOnly = false) {
             
             if (allResults.length === 0) {
                 console.log('  候補が見つかりませんでした');
-                alert(`「${templeName}」が見つかりませんでした`);
-                return null;
+                return null;  // alertは出さずnullを返す（呼び出し元で対処）
             }
             
             console.log('  アコーディオン用候補リストを返します:', allResults.length, '件');
