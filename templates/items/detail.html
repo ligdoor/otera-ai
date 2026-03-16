@@ -64,14 +64,52 @@
                 {% if item.description %}
                 <div>
                     <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: var(--color-gray-700);">説明</h3>
-                    <p style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">{{ item.description }}</p>
+                    <div style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">
+                        {% set desc_parts = item.description.split('\n') %}
+                        {% for part in desc_parts %}
+                            {% set trimmed = part.strip() %}
+                            {% if trimmed %}
+                                <p style="margin: 0 0 6px 0;">{{ trimmed }}</p>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
                 {% endif %}
 
                 {% if item.usage %}
                 <div>
                     <h3 style="margin: 0 0 10px 0; font-size: 1.2rem; color: var(--color-gray-700);">使い方</h3>
-                    <p style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">{{ item.usage }}</p>
+                    <div style="margin: 0; line-height: 1.8; color: var(--color-gray-600);">
+                        {% set usage_parts = item.usage.split('\n') %}
+                        {% if usage_parts | length > 1 %}
+                            {# 改行で区切られている場合はそのまま使用 #}
+                            {% for part in usage_parts %}
+                                {% set trimmed = part.strip() %}
+                                {% if trimmed %}
+                                    <p style="margin: 0 0 8px 0;">{{ trimmed }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {# 改行なし・スペース区切りの場合: 「〇〇:」パターンで分割 #}
+                            {% set patterns = ['持ち方:', '鳴らし方:', '叩き方:', '用途:', 'タイミング:', '注意点:', '使用後:', '手入れ:', 'お手入れ:', '保管:', '置き方:', '飾り方:', '読み方:', '唱え方:', '作法:', '礼拝:', 'お参り:'] %}
+                            {% set usage_text = item.usage %}
+                            {# パターンの前に改行を挿入してから分割 #}
+                            {% set modified = namespace(text=usage_text) %}
+                            {% for pat in patterns %}
+                                {% if pat in modified.text and not modified.text.startswith(pat) %}
+                                    {% set modified.text = modified.text.replace(' ' + pat, '\n' + pat) %}
+                                    {% set modified.text = modified.text.replace('　' + pat, '\n' + pat) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% set parts = modified.text.split('\n') %}
+                            {% for part in parts %}
+                                {% set trimmed = part.strip() %}
+                                {% if trimmed %}
+                                    <p style="margin: 0 0 8px 0;">{{ trimmed }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
                 </div>
                 {% endif %}
 
