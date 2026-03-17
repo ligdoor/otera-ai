@@ -31,7 +31,7 @@ class DataManager:
             return self._internal_cache['all_temples']
         
         if self.use_supabase:
-            from services import supabase_db
+            from services import database as supabase_db
             
             # データベースから取得
             logger.info("✅ データベースから取得: temples")
@@ -80,7 +80,7 @@ class DataManager:
             dict: 作成された寺院データ
         """
         if self.use_supabase:
-            from services import supabase_db
+            from services import database as supabase_db
             result = supabase_db.create_temple(temple_data)
             # キャッシュをクリア
             self.clear_cache()
@@ -100,7 +100,7 @@ class DataManager:
             dict: 更新された寺院データ
         """
         if self.use_supabase:
-            from services import supabase_db
+            from services import database as supabase_db
             result = supabase_db.update_temple(name, temple_data)
             # キャッシュをクリア
             self.clear_cache()
@@ -119,7 +119,7 @@ class DataManager:
             bool: 削除成功した場合True
         """
         if self.use_supabase:
-            from services import supabase_db
+            from services import database as supabase_db
             result = supabase_db.delete_temple(name)
             # キャッシュをクリア
             self.clear_cache()

@@ -22,7 +22,7 @@ def update_temple_data(original_name, new_data, otera_database):
     """
     if Config.USE_SUPABASE:
         # Supabase版
-        from services import supabase_db
+        from services import database as supabase_db
         try:
             supabase_db.update_temple(original_name, new_data)
             
@@ -94,7 +94,7 @@ def add_temple_data(new_data, otera_database):
     
     if Config.USE_SUPABASE:
         # Supabase版
-        from services import supabase_db
+        from services import database as supabase_db
         try:
             supabase_db.create_temple(new_data)
             
@@ -152,7 +152,7 @@ def delete_temple_data(name, otera_database):
     
     if Config.USE_SUPABASE:
         # Supabase版
-        from services import supabase_db
+        from services import database as supabase_db
         try:
             supabase_db.delete_temple(name)
             
@@ -203,7 +203,7 @@ def update_fields_data(fields):
     """
     if Config.USE_SUPABASE:
         # Supabase版
-        from services import supabase_db
+        from services import database as supabase_db
         try:
             supabase_db.update_fields_config(fields)
             

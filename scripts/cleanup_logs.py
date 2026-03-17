@@ -11,7 +11,7 @@ def cleanup_old_logs(days=90):
         print("⚠️ Supabase使用時のみ実行可能")
         return
     
-    from services.supabase_db import get_supabase_client
+    from services.database import get_supabase_client
     
     cutoff = datetime.now() - timedelta(days=days)
     cutoff_str = cutoff.strftime('%Y-%m-%d')

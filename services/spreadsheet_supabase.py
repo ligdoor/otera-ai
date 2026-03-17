@@ -10,7 +10,7 @@ from flask import request, session
 from config import Config
 from utils.helpers import get_jst_timestamp
 from services.notification import notify_data_update
-from services import supabase_db
+from services import database as supabase_db
 
 
 

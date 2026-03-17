@@ -52,7 +52,7 @@ def record_login_attempt(user_id, success):
 def add_log(action, details, ip_address=None):
     """操作ログを記録（データソース自動切り替え）"""
     if Config.USE_SUPABASE:
-        from services import supabase_db
+        from services import database as supabase_db
         from flask import session
         user_name = session.get('name', '不明')  # ★修正: user_name → name
         user_id_val = session.get('user_id', '不明')
@@ -91,7 +91,7 @@ def _authenticate_user_supabase(user_id, password):
     - last_login: TIMESTAMPTZ (最終ログイン)
     """
     try:
-        from services import supabase_db
+        from services import database as supabase_db
         
         # ユーザーを取得
         user = supabase_db.get_user_by_id(user_id)

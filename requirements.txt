@@ -38,9 +38,6 @@ redis==5.0.1
 Flask-Limiter==3.5.0
 sentry-sdk[flask]==1.40.0
 
-#rate-limiting
-Flask-Limiter==3.5.0
-
 # Supabase接続
 supabase==2.10.0
 postgrest==0.18.0
