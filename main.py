@@ -266,9 +266,7 @@ try:
     from routes.user_routes import user_bp
     from routes.api_routes import api_bp
     from routes.items_routes import items_bp
-    from routes.log_viewer import log_viewer_bp
-    
-    app.register_blueprint(log_viewer_bp)
+
     app.register_blueprint(user_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(items_bp)

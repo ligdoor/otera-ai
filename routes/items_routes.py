@@ -1,22 +1,13 @@
 # routes/items_routes.py - 仏具図鑑のルート
 
 import logging
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, session
 from services.database import get_supabase_client
-from functools import wraps
+from utils.decorators import login_required
 
 items_bp = Blueprint('items', __name__)
 
 logger = logging.getLogger(__name__)
-
-def login_required(f):
-    """ログイン必須デコレータ"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 # ===================================
 # 仏具図鑑のルート

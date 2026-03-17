@@ -19,7 +19,7 @@ class MaintenanceMode:
         """
         try:
             if Config.USE_SUPABASE:
-                from services.supabase_db import get_supabase_client
+                from services.database import get_supabase_client
                 supabase = get_supabase_client()
                 
                 result = supabase.table('system_settings')\
@@ -48,7 +48,7 @@ class MaintenanceMode:
         """
         try:
             if Config.USE_SUPABASE:
-                from services.supabase_db import get_supabase_client
+                from services.database import get_supabase_client
                 supabase = get_supabase_client()
                 
                 result = supabase.table('system_settings')\
@@ -79,7 +79,7 @@ class MaintenanceMode:
                     'error': 'Google Sheetsモードではメンテナンス機能は利用できません'
                 }
             
-            from services.supabase_db import get_supabase_client
+            from services.database import get_supabase_client
             supabase = get_supabase_client()
             print("✅ Supabaseクライアント取得成功")
             
