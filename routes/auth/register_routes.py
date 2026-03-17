@@ -11,6 +11,7 @@ import bcrypt
 from services.database import get_supabase_client
 from utils.email_service import email_service
 from datetime import datetime
+from flask_extensions import limiter
 
 # ============================================
 # Blueprintの定義
@@ -52,6 +53,7 @@ def register_page():
 # ============================================
 
 @auth_register_bp.route('/register', methods=['POST'])
+@limiter.limit("5 per hour")
 def register():
     """
     新規登録申請を受け付ける

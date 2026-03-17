@@ -56,13 +56,12 @@ def init_security_headers(app: Flask) -> None:
         )
 
         # ============================================================
-        # ★ HTTPS強制（本番環境のみ有効にすること）
+        # ★ HTTPS強制（Fly.ioはHTTPSが保証されているため有効）
         #    一度HTTPSでアクセスしたら、1年間はHTTPSのみを使う
-        #    ※ ローカル開発中はこの行をコメントアウトしてください
         # ============================================================
-        # response.headers['Strict-Transport-Security'] = (
-        #     'max-age=31536000; includeSubDomains'
-        # )
+        response.headers['Strict-Transport-Security'] = (
+            'max-age=31536000; includeSubDomains'
+        )
 
         # ============================================================
         # ★ コンテンツセキュリティポリシー（CSP）
