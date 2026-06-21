@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <!-- ★ 和風テーマCSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/temple-admin.css') }}">
+    <!-- ★ 表示設定モーダルCSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-modal.css') }}">
     <!-- ★ Googleフォント（Noto Serif JP / Noto Sans JP） -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -89,6 +91,7 @@
 {% include 'components/stats_modal.html' %}
 {% include 'components/comment_modal.html' %}
 {% include 'components/log_modal.html' %}
+{% include 'components/settings_modal.html' %}
 
 <!-- JavaScript -->
 <script src="{{ url_for('static', filename='js/admin/main.js') }}"></script>
@@ -103,5 +106,8 @@
 <script src="{{ url_for('static', filename='js/admin/temple-selector.js') }}"></script>
 <!-- ★ 管理画面共通JS（トースト通知・削除確認モーダル・二重送信防止） -->
 <script src="{{ url_for('static', filename='js/temple-admin.js') }}"></script>
+<!-- ★ 表示設定モーダル -->
+<script src="{{ url_for('static', filename='js/settings-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/settings-modal.js') }}"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/cards.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components/tabs.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/font-size.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings-modal.css') }}">
+
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#667eea">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192.png') }}">
@@ -45,8 +45,6 @@
 <script src="{{ url_for('static', filename='js/app/favorites.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app/notifications.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app/voice.js') }}"></script>
-<script src="{{ url_for('static', filename='js/settings-manager.js') }}"></script>
-<script src="{{ url_for('static', filename='js/settings-modal.js') }}"></script>
 
 <!-- 時間帯別挨拶 -->
 {% if session.get('user_name') %}
@@ -83,88 +81,5 @@ if ('serviceWorker' in navigator) {
 </script>
 
 </body>
-
-<!-- <button id="settings-btn" class="header-btn" title="表示設定">⚙️</button> -->
-
-<!-- モーダル本体（bodyの最後の方に配置） -->
-<div id="settings-modal" class="settings-modal">
-    <div class="settings-modal-content">
-        <div class="settings-modal-header">
-            <h2>各種設定</h2>
-            <button id="settings-modal-close" class="settings-modal-close">&times;</button>
-        </div>
-        
-        <div class="settings-modal-body">
-            <!-- フォントサイズ設定 -->
-            <div class="setting-group">
-                <label class="setting-label">フォントサイズ</label>
-                <div class="setting-options">
-                    <label class="setting-option">
-                        <input type="radio" name="fontSize" value="small">
-                        <span>小</span>
-                    </label>
-                    <label class="setting-option">
-                        <input type="radio" name="fontSize" value="normal" checked>
-                        <span>標準</span>
-                    </label>
-                    <label class="setting-option">
-                        <input type="radio" name="fontSize" value="large">
-                        <span>大</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- 行間設定 -->
-            <div class="setting-group">
-                <label class="setting-label">行間</label>
-                <div class="setting-options">
-                    <label class="setting-option">
-                        <input type="radio" name="lineHeight" value="narrow">
-                        <span>狭い</span>
-                    </label>
-                    <label class="setting-option">
-                        <input type="radio" name="lineHeight" value="normal" checked>
-                        <span>標準</span>
-                    </label>
-                    <label class="setting-option">
-                        <input type="radio" name="lineHeight" value="wide">
-                        <span>広い</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- テーマ設定 -->
-            <div class="setting-group">
-                <label class="setting-label">テーマ</label>
-                <div class="setting-options">
-                    <label class="setting-option">
-                        <input type="radio" name="theme" value="light" checked>
-                        <span>ライト</span>
-                    </label>
-                    <label class="setting-option">
-                        <input type="radio" name="theme" value="dark">
-                        <span>ダーク</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- プレビュー -->
-            <div class="setting-group">
-                <label class="setting-label">プレビュー</label>
-                <div class="setting-preview">
-                    <p class="preview-text">
-                        これはサンプルテキストです。フォントサイズと行間の調整結果をここで確認できます。
-                        寺院情報データベースへようこそ。このシステムでは全国の寺院情報を検索できます。
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="settings-modal-footer">
-            <button id="settings-save-btn" class="btn btn-primary">保存</button>
-            <button id="settings-cancel-btn" class="btn btn-secondary">キャンセル</button>
-        </div>
-    </div>
-</div>
 
 </html>

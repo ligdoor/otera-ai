@@ -8,11 +8,16 @@ let unreadCount = 0;
 async function loadUnreadCount() {
     try {
         const res = await fetch('/api/v1/notifications?unread_only=true');
+        // 未ログイン時は通知なしとして静かに終了
+        if (res.status === 401 || res.status === 302) {
+            unreadCount = 0;
+            updateNotificationBadge();
+            return;
+        }
         const data = await res.json();
         if (data.success) {
             unreadCount = data.data.unread_count || 0;
         } else {
-            console.error('未読数取得エラー:', data.error.message);
             unreadCount = 0;
         }
         updateNotificationBadge();
@@ -42,6 +47,13 @@ async function openNotifications() {
     
     try {
         const res = await fetch('/api/v1/notifications');
+        
+        // 未ログイン時はログインを促すメッセージを表示
+        if (res.status === 401 || res.status === 302) {
+            list.innerHTML = '<div class="notification-empty">🔒 通知を見るにはログインが必要です</div>';
+            return;
+        }
+        
         const data = await res.json();
         
         if (!data.success) {

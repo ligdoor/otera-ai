@@ -190,8 +190,21 @@ def admin():
             
             logger.info(f"✅ ログイン成功: {user_id} ({user_name}) - 権限: {role}")
             
-            # メイン画面にリダイレクト
-            return redirect('/')
+            # nextパラメータでリダイレクト先を振り分け
+            next_url = request.args.get('next') or request.form.get('next', '')
+            
+            if next_url == 'settings':
+                # メインの設定モーダルを開く（旧フロー・念のため残す）
+                return redirect('/?next=settings')
+            elif next_url.startswith('/admin/items') or next_url == '/admin/items':
+                # 仏具管理からのログイン → 仏具管理へ
+                return redirect('/admin/items')
+            elif next_url.startswith('/items'):
+                # 仏具図鑑からのログイン → 仏具図鑑へ
+                return redirect(next_url)
+            else:
+                # それ以外（管理画面など）→ 管理画面トップへ
+                return redirect('/admin')
         
         else:
             # ============================================
@@ -292,5 +305,5 @@ def logout():
     # セッションをクリア
     session.clear()
     
-    # ログイン画面にリダイレクト
-    return redirect('/admin')
+    # メイン画面にリダイレクト（ログイン不要のため）
+    return redirect('/')

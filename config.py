@@ -42,7 +42,7 @@ class Config:
     SESSION_TIMEOUT = 1800  # セッションタイムアウト（秒）
     
     # キャッシュ設定（メモリキャッシュ）
-    CACHE_TIMEOUT = 300  # キャッシュ有効期限（秒）
+    CACHE_TIMEOUT = 3600  # キャッシュ有効期限（秒）※1時間。データ更新時はキャッシュクリアで即反映
     
     # Flask-Caching設定
     CACHE_TYPE = os.environ.get("CACHE_TYPE", "SimpleCache")  # 本番: "RedisCache"

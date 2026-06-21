@@ -10,17 +10,15 @@ items_bp = Blueprint('items', __name__)
 logger = logging.getLogger(__name__)
 
 # ===================================
-# 仏具図鑑のルート
+# 仏具図鑑のルート（閲覧はログイン不要）
 # ===================================
 
 @items_bp.route('/items')
-@login_required
 def items_index():
-    """仏具図鑑トップページ"""
+    """仏具図鑑トップページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
-        # 統計情報を取得
         total_count_response = supabase.table('buddhist_items')\
             .select('id', count='exact')\
             .eq('is_public', True)\
@@ -28,15 +26,12 @@ def items_index():
         
         total_count = total_count_response.count if total_count_response.count else 0
         
-        # カテゴリ一覧を取得
         categories_response = supabase.table('item_categories')\
             .select('*')\
             .order('display_order')\
             .execute()
         
         categories = categories_response.data if categories_response.data else []
-        
-        # ユーザー名を取得（ヘッダー表示用）
         user_name = session.get('user_name', 'ゲスト')
         
         return render_template('items/index.html',
@@ -52,18 +47,15 @@ def items_index():
                              user_name=session.get('user_name', 'ゲスト'))
 
 @items_bp.route('/items/gallery')
-@login_required
 def items_gallery():
-    """画像ギャラリーページ"""
+    """画像ギャラリーページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
-        # クエリパラメータ
         category = request.args.get('category', 'all')
         page = int(request.args.get('page', 1))
         per_page = 20
         
-        # 仏具を取得
         query = supabase.table('buddhist_items')\
             .select('*')\
             .eq('is_public', True)
@@ -71,21 +63,18 @@ def items_gallery():
         if category != 'all':
             query = query.eq('category', category)
         
-        # ページネーション
         start = (page - 1) * per_page
         end = start + per_page - 1
         
         items_response = query.range(start, end).order('created_at', desc=True).execute()
         items = items_response.data if items_response.data else []
         
-        # カテゴリ一覧を取得
         categories_response = supabase.table('item_categories')\
             .select('*')\
             .order('display_order')\
             .execute()
         categories = categories_response.data if categories_response.data else []
         
-        # 総件数を取得
         count_response = supabase.table('buddhist_items')\
             .select('id', count='exact')\
             .eq('is_public', True)
@@ -119,9 +108,8 @@ def items_gallery():
                              user_name=session.get('user_name', 'ゲスト'))
 
 @items_bp.route('/items/search')
-@login_required
 def items_search():
-    """名前検索ページ"""
+    """名前検索ページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
@@ -129,7 +117,6 @@ def items_search():
         
         items = []
         if keyword:
-            # 行検索の定義（ま行なら「ま・み・む・め・も」で始まる）
             kana_rows = {
                 'あ': ['あ', 'い', 'う', 'え', 'お'],
                 'か': ['か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'],
@@ -143,13 +130,9 @@ def items_search():
                 'わ': ['わ', 'を', 'ん']
             }
             
-            # keywordが行の代表文字（1文字）の場合は行検索
             if len(keyword) == 1 and keyword in kana_rows:
-                # 行検索: 「ま」→「ま・み・む・め・も」で始まる
                 kana_list = kana_rows[keyword]
-                # OR条件を構築
                 or_conditions = ','.join([f'name_kana.ilike.{kana}%' for kana in kana_list])
-                
                 items_response = supabase.table('buddhist_items')\
                     .select('*')\
                     .eq('is_public', True)\
@@ -157,7 +140,6 @@ def items_search():
                     .order('name_kana')\
                     .execute()
             else:
-                # 通常検索: 名前またはふりがなで部分一致
                 items_response = supabase.table('buddhist_items')\
                     .select('*')\
                     .eq('is_public', True)\
@@ -184,13 +166,11 @@ def items_search():
                              user_name=session.get('user_name', 'ゲスト'))
 
 @items_bp.route('/items/categories')
-@login_required
 def items_categories():
-    """カテゴリ一覧ページ"""
+    """カテゴリ一覧ページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
-        # カテゴリごとの件数を取得
         categories_response = supabase.table('item_categories')\
             .select('*')\
             .order('display_order')\
@@ -198,7 +178,6 @@ def items_categories():
         
         categories = categories_response.data if categories_response.data else []
         
-        # 各カテゴリの件数をカウント
         for category in categories:
             count_response = supabase.table('buddhist_items')\
                 .select('id', count='exact')\
@@ -221,13 +200,11 @@ def items_categories():
                              user_name=session.get('user_name', 'ゲスト'))
 
 @items_bp.route('/items/category/<category_name>')
-@login_required
 def items_category(category_name):
-    """カテゴリ別一覧ページ"""
+    """カテゴリ別一覧ページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
-        # カテゴリの仏具を取得
         items_response = supabase.table('buddhist_items')\
             .select('*')\
             .eq('is_public', True)\
@@ -236,7 +213,6 @@ def items_category(category_name):
             .execute()
         
         items = items_response.data if items_response.data else []
-        
         user_name = session.get('user_name', 'ゲスト')
         
         return render_template('items/category.html',
@@ -252,13 +228,11 @@ def items_category(category_name):
                              user_name=session.get('user_name', 'ゲスト'))
 
 @items_bp.route('/items/detail/<item_id>')
-@login_required
 def item_detail(item_id):
-    """仏具詳細ページ"""
+    """仏具詳細ページ（ログイン不要）"""
     try:
         supabase = get_supabase_client()
         
-        # 仏具情報取得
         item_response = supabase.table('buddhist_items')\
             .select('*')\
             .eq('id', item_id)\
@@ -267,7 +241,6 @@ def item_detail(item_id):
         
         item = item_response.data if item_response.data else None
         
-        # 追加画像取得
         images = []
         if item:
             images_response = supabase.table('item_images')\
@@ -295,7 +268,6 @@ def item_detail(item_id):
 @items_bp.route('/favorites')
 @login_required
 def favorites():
-    """お気に入りページ"""
+    """お気に入りページ（ログイン必要）"""
     user_name = session.get('user_name', 'ゲスト')
     return render_template('favorites.html', user_name=user_name)
-

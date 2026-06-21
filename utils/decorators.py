@@ -72,16 +72,19 @@ def login_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        from flask import request
         # ログインチェック
         if 'user_id' not in session:
-            # ★修正: auth.admin → auth_login.admin
-            return redirect(url_for('auth_login.admin'))
+            # どのページからのログインか next パラメータで伝える
+            next_url = request.path
+            return redirect(url_for('auth_login.admin', next=next_url))
         
         # セッションタイムアウトチェック
         if not check_session_timeout():
             session.clear()
-            # ★修正: auth.admin → auth_login.admin
-            return redirect(url_for('auth_login.admin'))
+            from flask import request as req
+            next_url = req.path
+            return redirect(url_for('auth_login.admin', next=next_url))
         
         # セッションアクティビティを更新
         update_session_activity()

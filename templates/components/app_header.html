@@ -1,19 +1,46 @@
 <header>
-    <div class="header-inner">
-        <div class="header-title-row">
-            <h1>🏯 寺院情報データベース</h1>
-        </div>
-        <div class="header-btn-row">
-            <button class="header-btn" onclick="toggleDarkMode()" title="ダークモード">🌙</button>
-            <button id="font-size-toggle" class="header-btn" title="文字サイズ切り替え">A</button>
-            <button class="header-btn" onclick="openNotifications()" title="通知" style="position: relative;">
-                🔔
-                <span id="notification-badge" class="notification-badge" style="display: none;">0</span>
-            </button>
-            <button id="settings-btn" class="header-btn" title="表示設定" onclick="openSettingsModal()">⚙️</button>
-            <a href="/admin" class="header-btn" title="管理画面">📊</a>
-            <a href="/logout" class="header-btn" onclick="return confirm('ログアウトしますか？')" title="ログアウト">🚪</a>
-        </div>
+  <div class="header-inner">
+    <div class="header-title-row">
+      <h1>🏯 寺院情報データベース</h1>
     </div>
+    <div class="header-btn-row">
+      <button
+        class="header-btn"
+        onclick="toggleDarkMode()"
+        title="ダークモード"
+      >
+        🌙
+      </button>
+      <button
+        id="font-size-toggle"
+        class="header-btn"
+        title="文字サイズ切り替え"
+      >
+        A
+      </button>
+      <button
+        class="header-btn"
+        onclick="openNotifications()"
+        title="通知"
+        style="position: relative"
+      >
+        🔔
+        <span
+          id="notification-badge"
+          class="notification-badge"
+          style="display: none"
+          >0</span
+        >
+      </button>
+      <a href="/admin" class="header-btn" title="管理画面">📊</a>
+      <a
+        href="/logout"
+        class="header-btn"
+        onclick="return confirm('ログアウトしますか？');"
+        title="ログアウト"
+        >🚪</a
+      >
+    </div>
+  </div>
 </header>
 <script src="{{ url_for('static', filename='js/header-offset.js') }}"></script>

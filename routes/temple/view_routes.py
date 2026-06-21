@@ -26,34 +26,63 @@ logger = logging.getLogger(__name__)
 # ============================================
 
 @temple_view_bp.route('/')
-@login_required
 def index():
     """
     メイン画面を表示
-    
-    ログイン済みユーザーに対してアプリケーションのメイン画面を表示します。
+
+    ログイン・未ログインを問わずアクセス可能。
+    設定モーダルを開いたときにログインを求める方式に変更。
     セッションからユーザー名を取得してテンプレートに渡します。
-    
+
     Returns:
         str: レンダリングされたHTMLテンプレート
-    
+
     Template Variables:
-        user_name: ログイン中のユーザー名
-    
+        user_name: ログイン中のユーザー名（未ログインの場合は「ゲスト」）
+
     Route:
         GET /
-    
+
     Authentication:
-        @login_required デコレータにより認証が必要
-    
-    Example:
-        ブラウザで / にアクセスすると、index.htmlが表示されます。
+        不要（設定モーダルを開く際にフロントエンド側でログインを要求）
     """
     # セッションからユーザー名を取得（未設定の場合は「ゲスト」）
     user_name = session.get('user_name', 'ゲスト')
-    
+
     # index.htmlテンプレートをレンダリング
     return render_template('index.html', user_name=user_name)
+
+
+# ============================================
+# ログイン状態確認API
+# ============================================
+
+@temple_view_bp.route('/check_login')
+def check_login():
+    """
+    ログイン状態をJSON形式で返す
+
+    フロントエンドの設定モーダルが開く前にログイン済みかどうかを
+    確認するために使用します。
+
+    Returns:
+        JSON: { "logged_in": true/false }
+
+    Route:
+        GET /check_login
+
+    Authentication:
+        不要（誰でもアクセス可能）
+    """
+    from utils.decorators import check_session_timeout
+    # user_idがセッションになければ未ログイン
+    if 'user_id' not in session:
+        return jsonify({'logged_in': False})
+    # セッションがタイムアウトしていれば未ログイン扱いにしてクリア
+    if not check_session_timeout():
+        session.clear()
+        return jsonify({'logged_in': False})
+    return jsonify({'logged_in': True})
 
 
 # ============================================

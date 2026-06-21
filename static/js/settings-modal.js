@@ -130,10 +130,34 @@ class SettingsModal {
     }
 
     /**
-     * モーダルを開く
+     * ログイン状態をサーバーに確認する
      */
-    open() {
+    async checkLogin() {
+        try {
+            const res = await fetch('/check_login', { credentials: 'same-origin' });
+            if (!res.ok) return false;
+            const data = await res.json();
+            return data.logged_in === true;
+        } catch (e) {
+            console.error('[SettingsModal] ログイン確認エラー:', e);
+            return false;
+        }
+    }
+
+    /**
+     * モーダルを開く（未ログインの場合はログインページへ誘導）
+     */
+    async open() {
         console.log('[SettingsModal] モーダルを開く');
+
+        // ログインチェック
+        const loggedIn = await this.checkLogin();
+        if (!loggedIn) {
+            console.log('[SettingsModal] 未ログインのためログインページへ誘導');
+            // ログイン後に設定を開けるようパラメータ付きで遷移
+            window.location.href = '/admin?next=settings';
+            return;
+        }
 
         // 現在の設定を取得
         const currentSettings = this.settingsManager.getCurrentSettings();
